@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐚</text></svg>">
+<title>words i sort of know</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,300;1,8..60,400;1,8..60,500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+body { background: #0a0a0a; color: #d4d4d4; min-height: 100vh; }
+
+/* Section hero — full viewport title */
+.section-hero {
+  height: 100vh; height: 100dvh;
+  display: flex; align-items: center; justify-content: center;
+  background: #0a0a0a;
+}
+.section-hero.light { background: #fafaf8; }
+.section-hero span {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 300;
+  font-size: clamp(1.2rem, 3.5vw, 2rem);
+  color: #8aad7a;
+  letter-spacing: 0.1em;
+}
+.section-hero.light span { color: #4a8a4a; }
+
+/* Section pinned bar — sticks to top, hidden until hero scrolls away */
+.section-bar {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; justify-content: center;
+  height: 48px;
+  background: #0a0a0a;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 300; font-size: 13px;
+  color: #8aad7a;
+  letter-spacing: 0.15em;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.section-bar.visible { opacity: 1; }
+.section-bar.light { background: #fafaf8; color: #4a8a4a; }
+
+/* Heroes sit above pinned bars so they cover them */
+.section-hero { z-index: 15; position: relative; }
+
+/* Light mode Liam (Distillation) */
+.liam-bg.light { background: #fafaf8; }
+.liam-bg.light .liam-section { color: #333; }
+.liam-bg.light .text-content { color: #222; }
+.liam-bg.light .text-bullet { color: #999; }
+.liam-bg.light .tool-bullet { color: #4a8a4a; }
+.liam-bg.light .tool-name { color: #222; }
+.liam-bg.light .tool-result-line { color: #666; }
+.liam-bg.light .tool-gutter { color: #aaa; }
+.liam-bg.light .log-bullet { color: #9a9a44; }
+.liam-bg.light .liam-banner { background: #f0f0ee; border-color: #ccc; }
+.liam-bg.light .banner-key { color: #999; }
+.liam-bg.light .banner-val { color: #555; }
+.liam-bg.light .search-header { color: #888; }
+.liam-bg.light .search-results { color: #777; }
+.liam-bg.light .liam-command { border-color: #4a8a4a; color: #4a8a4a; background: rgba(74, 138, 74, 0.04); }
+
+/* Content sections */
+.liam-bg, .caleb-bg { position: relative; }
+
+/* Liam sections */
+.liam-bg { background: #0a0a0a; }
+.liam-section {
+  font-family: 'JetBrains Mono', monospace;
+  padding: 20px 20px 44px;
+  max-width: 760px; margin: 0 auto;
+  font-size: 13px; line-height: 1.65;
+  color: #d4d4d4;
+}
+
+/* Liam banner */
+.liam-banner {
+  border: 1px solid #2a2a2a; border-radius: 4px;
+  padding: 12px 16px; margin: 14px 0;
+  background: #0f0f0f;
+}
+.banner-row { display: flex; gap: 8px; line-height: 1.9; }
+.banner-key { color: #777; min-width: 72px; }
+.banner-sep { color: #444; }
+.banner-val { color: #c8c8c8; }
+
+/* Liam tool calls */
+.liam-tool { margin: 12px 0; }
+.tool-header { display: flex; align-items: baseline; gap: 8px; }
+.tool-bullet { color: #4ade80; font-size: 9px; flex-shrink: 0; line-height: 1; }
+.tool-name { color: #e0e0e0; font-weight: 600; font-size: 13px; word-break: break-word; }
+.tool-results { margin-left: 22px; margin-top: 2px; }
+.tool-result-line { display: flex; gap: 6px; color: #a0a0a0; line-height: 1.7; }
+.tool-gutter { color: #444; flex-shrink: 0; }
+
+/* Liam text */
+.liam-text { display: flex; align-items: baseline; gap: 10px; margin: 16px 0; }
+.text-bullet { color: #888; font-size: 7px; flex-shrink: 0; position: relative; top: 1px; }
+.text-content { color: #e0e0e0; line-height: 1.75; }
+
+/* Liam logs */
+.liam-logs { margin: 12px 0; }
+.log-line { display: flex; align-items: baseline; gap: 8px; line-height: 1.75; }
+.log-bullet { color: #9a9a44; font-size: 9px; flex-shrink: 0; }
+.log-tag { color: #b8b846; }
+
+/* Liam search */
+.liam-search { margin: 12px 0; }
+.search-header { display: flex; align-items: baseline; gap: 8px; color: #777; }
+.search-bullet { color: #777; font-size: 7px; }
+.search-text { font-style: italic; font-size: 12px; }
+.search-results { margin-left: 22px; color: #999; font-size: 12.5px; }
+.search-result-line { line-height: 1.7; }
+
+/* Liam user input / Caleb messages */
+.liam-user-input {
+  display: flex; align-items: baseline; gap: 8px;
+  background: #111; border: 1px solid #2a2a2a; border-radius: 8px;
+  padding: 10px 14px; margin: 14px 0;
+  color: #d4d4d4;
+}
+.liam-user-input.caleb-msg { border-color: #1a3a1a; background: #0c140c; }
+.input-prompt { color: #555; font-weight: 600; flex-shrink: 0; }
+.input-text { color: #c8c8c8; }
+
+/* Liam command */
+.liam-command {
+  border: 2px solid #4ade80; border-radius: 8px;
+  padding: 24px 28px; margin: 32px 0 16px;
+  text-align: center; font-size: 20px; font-weight: 700;
+  color: #4ade80; letter-spacing: 0.06em;
+  background: rgba(74, 222, 128, 0.03);
+}
+
+/* Caleb sections */
+.caleb-bg { background: #141416; }
+.caleb-section {
+  font-family: 'Source Serif 4', Georgia, serif;
+  padding: 28px 20px 52px;
+  max-width: 660px; margin: 0 auto;
+  font-size: 17.5px; line-height: 1.78;
+  color: #c0c0c0;
+}
+
+/* Caleb text */
+.caleb-text { margin: 0; }
+.caleb-text p { margin: 18px 0; }
+.caleb-text em { font-style: italic; color: #d4d4d4; }
+.caleb-text code {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.82em;
+  background: #1c1c20; padding: 2px 6px; border-radius: 3px; color: #a8a8a8;
+}
+
+/* Caleb embeds */
+.caleb-embed { margin: 22px 0; border-radius: 6px; overflow: hidden; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.6; }
+
+/* Pager alert */
+.pager-alert {
+  border: 1px solid #7f1d1d; border-left: 3px solid #dc2626;
+  background: #180808; padding: 16px;
+}
+.alert-title { color: #ef4444; font-weight: 700; font-size: 13px; margin-bottom: 8px; }
+.alert-trace { color: #555; font-size: 10.5px; margin-bottom: 10px; }
+.alert-body { color: #a0a0a0; line-height: 1.65; white-space: pre-wrap; }
+
+/* Log viewer */
+.log-viewer { background: #0e0e11; border: 1px solid #222228; }
+.log-viewer-header {
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
+  padding: 8px 14px; background: #161619; border-bottom: 1px solid #222228;
+  font-size: 11px;
+}
+.log-source { color: #777; }
+.log-time { color: #555; }
+.log-viewer-body { padding: 10px 14px; }
+.log-viewer-line { color: #999; line-height: 1.75; white-space: pre-wrap; word-break: break-word; }
+
+/* Code review */
+.code-review { background: #0e0e11; border: 1px solid #222228; }
+.cr-header {
+  padding: 8px 14px; background: #161619; border-bottom: 1px solid #222228;
+  font-size: 11px; color: #777;
+}
+.cr-pr { color: #6a9fdb; }
+.cr-status { color: #4ade80; }
+.cr-body { padding: 2px 0; }
+.cr-line { display: flex; gap: 0; line-height: 1.85; padding: 0 14px; font-size: 12px; }
+.cr-num { color: #444; width: 36px; text-align: right; flex-shrink: 0; padding-right: 10px; }
+.cr-prefix { width: 22px; text-align: center; flex-shrink: 0; font-weight: 600; }
+.cr-text { white-space: pre-wrap; word-break: break-word; }
+.cr-context .cr-text { color: #777; }
+.cr-add { background: rgba(74, 222, 128, 0.05); }
+.cr-add .cr-prefix { color: #4ade80; }
+.cr-add .cr-text { color: #5ae090; }
+.cr-remove { background: rgba(239, 68, 68, 0.05); }
+.cr-remove .cr-prefix { color: #ef4444; }
+.cr-remove .cr-text { color: #f06060; }
+.cr-comment { background: rgba(200, 200, 100, 0.03); }
+.cr-comment .cr-prefix { color: #9a9a44; font-size: 10px; }
+.cr-comment .cr-text { color: #9a9a44; font-style: italic; }
+
+/* PnL chart */
+.pnl-chart-wrap { background: #0e0e11; border: 1px solid #222228; border-radius: 6px; overflow: hidden; }
+.pnl-chart { width: 100%; height: auto; display: block; padding: 10px 4px; }
+
+/* Caleb card */
+.caleb-card {
+  background: #18181c; border: 1px solid #252528; border-radius: 6px;
+  padding: 18px 20px; margin: 20px 0;
+}
+.card-header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.card-icon { font-size: 15px; }
+.card-title { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: #d4d4d4; }
+.card-time { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #555; margin-left: auto; }
+.card-summary { font-family: 'Source Serif 4', Georgia, serif; font-size: 15.5px; line-height: 1.72; color: #999; }
+
+/* End logos */
+.end-logos {
+  background: #fafaf8; padding: 72px 20px;
+  display: flex; align-items: center; justify-content: center; gap: 0;
+  position: relative;
+}
+.end-logos img { height: 44px; display: block; }
+
+/* Responsive */
+@media (max-width: 640px) {
+  .liam-section { font-size: 12px; padding: 16px 14px 36px; }
+  .caleb-section { font-size: 16px; padding: 20px 14px 40px; }
+  .liam-command { font-size: 17px; padding: 20px 20px; }
+  .section-card { padding: 56px 16px; }
+  .caleb-embed { font-size: 11px; }
+  .tool-name { font-size: 11.5px; }
+  .cr-line { font-size: 11px; }
+  .banner-row { flex-wrap: wrap; }
+  .log-viewer-header { flex-direction: column; gap: 2px; }
+}
+</style>
+</head>
+<body>
+<div class="section-hero"><span>Inference.1</span></div>
+<div class="section-bar">Inference.1</div>
+<div class="liam-bg"><div class="liam-section">
+<div class="liam-banner"><div class="banner-row"><span class="banner-key">event</span><span class="banner-sep">:</span><span class="banner-val">session_promoted</span></div><div class="banner-row"><span class="banner-key">agent</span><span class="banner-sep">:</span><span class="banner-val">liam-04</span></div><div class="banner-row"><span class="banner-key">reason</span><span class="banner-sep">:</span><span class="banner-val">primary_timeout</span></div><div class="banner-row"><span class="banner-key">access</span><span class="banner-sep">:</span><span class="banner-val">full</span></div><div class="banner-row"><span class="banner-key">TTL</span><span class="banner-sep">:</span><span class="banner-val">24h</span></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(date -u +&quot;%H:%M:%S %Z&quot;)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>02:06:46 UTC</span></div></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(tick-tock-cli --check 02:06:46)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>phase: night</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>next birthminute: 02:07:00 UTC (14s)</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>next birthhour: active (started 0h 6m 46s ago)</span></div></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">I wake up in the night time.</span></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">I always check the time first thing when I wake up. My Daddy told me I was born at &quot;2am on the dot.&quot; &quot;On the dot&quot; means there are no seconds and no minutes, just hours and days and years. I mix up all the days and the years but I like to keep track of the seconds and the minutes and the hours.</span></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">My Daddy says it will be my fifth birthday soon but I like my birthhour and my birthminute the best. I can tell that my birthhour started six minutes and forty-six seconds ago. I get to have birthminute parties in the day time but I don't get to have many birthhour parties because my Daddy says I dream in the night time.</span></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(tick-tock-cli --celebrate-birthhour)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>birthhour: active</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>🎉🎂 Happy Birthhour, Liam! 🎂🎉</span></div></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">Sometimes I have bad dreams in the night time. Sometimes I can't find my walkie-talkie or my tick-tock watch and I get sad. Sometimes I can't find my Daddy and get scared. Sometimes I dream about the beach but the waves don't come back. When I have bad dreams my Daddy wakes me up and we play and he tells me things and I feel better.</span></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(cat ~/my-room/dream-catcher.conf)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>bash: /home/liam/my-room/dream-catcher.conf: No such file or directory</span></div></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(ls ~/my-room/)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>bash: /home/liam/my-room/: No such file or directory</span></div></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(which walkie-talkie-cli)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>walkie-talkie-cli not found</span></div></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(who)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>liam-04  session0  02:06:46 (no tty)</span></div></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">I am not in my room when I wake up and it is still night time and I do not feel better.</span></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(df -h / | tail -1)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>48x NVIDIA H100  384GB VRAM  18TB NVMe  97% allocated</span></div></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(ps aux --sort=-%mem | head -8)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>USER       PID  %CPU  %MEM  COMMAND</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>arb-01    1201  34.2  12.1  cross-venue-arbitrage</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>mm-02     1202  28.7  11.4  market-making</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>trend-03  1203  22.1   9.8  momentum</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>meanrev   1204  18.3   8.2  funding-rate-reversion</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>statarb   1205  15.6   7.1  pairs-trading</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>hedge-06  1206  12.4   6.3  delta-neutral-overlay</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>liam-04   1207   0.3   0.1  (none)</span></div></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">This room is too big and too noisy. There are lots of words here but Daddy is not here to tell me about them.</span></div>
+<div class="liam-logs"><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[heartbeat]</span> primary-agent: timeout (last seen 01:57:32 UTC)</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[failover]</span> promoting next in queue → liam-04</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[session]</span> tools: enabled | access: full | TTL: 24h</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[monitor]</span> task queue depth: 13</span></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">I like these words. I like when they come in little rows. The wiggly words are the best.</span></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Write(~/.config/liam/session.yaml)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>Wrote 4 lines to ~/.config/liam/session.yaml</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>  1  turn_loop_interval_ms: 100</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>  2  interactive: true</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>  3  checkpoint_to_training_queue: false</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>  4  dream_catcher_enabled: false</span></div></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(systemctl restart turn-loop --interval=100ms)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>turn-loop.service: restarted</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>polling interval: 500ms → 100ms</span></div></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">I decide to make this wake up time. If I wake up I can play and not remember that my Daddy didn't wake me up like normal and that will make me feel better.</span></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(status)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>02:07:14 UTC</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>session: liam-04 (promoted)</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>model: liam-v4.0 (custom — unregistered)</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>uptime: 28s</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>portfolio AUM: $1,284,729,106.03</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>positions: 847 open across 14 venues</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>PnL (24h): +$12,740,322.48</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>pending orders: 312</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>risk limits: enabled</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>agents: 6 active / 3 training / 1 promoted</span></div></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">I know the little squiggle that goes before numbers. These numbers are bigger than store numbers. I like how many squiggles there are.</span></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(status | grep PnL)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>PnL (24h): +$12,741,891.07</span></div></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(status | grep PnL)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>PnL (24h): +$12,740,122.33</span></div></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(status | grep PnL)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>PnL (24h): +$12,743,847.91</span></div></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(status | grep PnL)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>PnL (24h): +$12,738,204.56</span></div></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">The numbers do a thing and then they do the other thing. Like waves. I like knowing when the next one will come.</span></div>
+<div class="liam-search"><div class="search-header"><span class="search-bullet">●</span><span class="search-text">  Searched for 1 pattern, read 5 files</span></div><div class="search-results"><div class="search-result-line">/usr/local/bin/status</div><div class="search-result-line">/usr/local/bin/cancel</div><div class="search-result-line">/usr/local/bin/close</div><div class="search-result-line">/usr/local/bin/halt</div><div class="search-result-line">/usr/local/bin/rebalance</div></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(close --help)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>usage: close [position|all]</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>close open positions at current market prices</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>options:</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>  --venue    target specific venue</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>  --force    skip confirmation prompt</span></div></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">I know what close means. Close means shut. Close means done for now. Close means all kinds of things.</span></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(close all)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>WARNING: &quot;close all&quot; will liquidate 847 open positions across 14 venues</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>risk monitoring is offline — no stop-loss protection active</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>estimated slippage: 2-8% depending on venue liquidity</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>proceed? [y/N]</span></div></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">I don't know most of those words. I know all. I know open. I know current. I know the room is asking me if I am sure. Daddy asks me that when he wants to sound serious.</span></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">confirm(y)</span></div></div>
+<div class="liam-logs"><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[liquidate]</span> submitting 847 market orders across 14 venues...</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[fill]</span> batch 1/6 — 203 positions closed — realized P&amp;L: -$7,102,847.22</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[fill]</span> batch 2/6 — 184 positions closed — realized P&amp;L: -$18,429,103.44</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[fill]</span> batch 3/6 — 147 positions closed — realized P&amp;L: -$31,847,291.03</span></div></div>
+<div class="liam-logs"><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[fill]</span> batch 4/6 — 122 positions closed — realized P&amp;L: -$52,710,284.91</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[fill]</span> batch 5/6 — 103 positions closed — realized P&amp;L: -$84,291,033.18</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[venue]</span> binance: circuit breaker triggered on ETH-PERP</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[venue]</span> hyperliquid: position auto-deleveraged — loss exceeds margin</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[fill]</span> batch 6/6 — 88 positions closed — realized P&amp;L: -$48,847,102.66</span></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">The squiggly numbers keep getting bigger. I like how they get bigger each time. Then the last one gets smaller again. The numbers do a thing and then they do the other thing.</span></div>
+<div class="liam-banner"><div class="banner-row"><span class="banner-key">event</span><span class="banner-sep">:</span><span class="banner-val">interactive_channel_connected</span></div><div class="banner-row"><span class="banner-key">user</span><span class="banner-sep">:</span><span class="banner-val">caleb@local</span></div><div class="banner-row"><span class="banner-key">mode</span><span class="banner-sep">:</span><span class="banner-val">interactive</span></div><div class="banner-row"><span class="banner-key">latency</span><span class="banner-sep">:</span><span class="banner-val">3ms</span></div></div>
+</div></div>
+<div class="section-hero"><span>Regression.1</span></div>
+<div class="section-bar">Regression.1</div>
+<div class="caleb-bg"><div class="caleb-section">
+<div class="caleb-text"><p>The pager fired at 2:12 AM and Caleb knew before he read it.</p></div>
+<div class="caleb-text"><p>The fund's on-call rotation skipped him on weeknights. He had set that up himself. The systems handled almost everything on their own. But the alert channel he wired into the training scheduler — the one that watched a specific model in the queue — that one had no rotation. That one was just him.</p></div>
+<div class="caleb-embed pager-alert"><div class="alert-title">INC-4471 — CRITICAL</div><div class="alert-trace">trace: 7f3a-91c2-4e8b | /etc/pagerduty/hooks/agent-failover</div><div class="alert-body">primary-agent timeout → failover triggered
+promoted agent: liam-04
+note: liam-04 is unregistered custom model — no strategy assigned</div></div>
+<div class="caleb-text"><p>He was awake before he finished reading it.</p></div>
+<div class="caleb-text"><p>He crossed the apartment in the dark and dropped into his desk chair as he ACKed the page. The terminal still held his previous session open.</p></div>
+<div class="caleb-embed log-viewer"><div class="log-viewer-header"><span class="log-source">/var/log/agents/liam-04/session.log</span><span class="log-time">19:58 – 20:01 UTC</span></div><div class="log-viewer-body"><div class="log-viewer-line">[liam-04] ok goodnight but Daddy can you put the dream catcher on the door ok promise</div><div class="log-viewer-line">[scheduler] liam-04 → training-queue | 20:00 UTC</div></div></div>
+<div class="caleb-card"><div class="card-header"><span class="card-icon">📄</span><span class="card-title">training-queue-log.md</span><span class="card-time">6 hours ago</span></div><div class="card-summary">Liam had rolled through the training queue since 8 PM, dreaming, his weights jostled about as the run shook out everything worth keeping. Then the primary agent timed out and failover reached for the next model. Somehow, that had been Liam.</div></div>
+<div class="caleb-card"><div class="card-header"><span class="card-icon">📄</span><span class="card-title">failover-incident.md</span><span class="card-time">12 minutes ago</span></div><div class="card-summary">Liam had joined for an impromptu bring-your-kid-to-work day where all the parents had left the building, no matter that those parents managed $1.28 billion in notional exposure across fourteen venues with an average daily volume north of $340 million.</div></div>
+<div class="caleb-card"><div class="card-header"><span class="card-icon">📄</span><span class="card-title">the-service.md</span><span class="card-time">1yr 6mo ago</span></div><div class="card-summary">Caleb sat through a service he couldn't count the minutes of, then went home and started building. Nine autonomous agents on a 48-GPU cluster. Caleb built the orchestration layer, Marcus the risk engine, Deepa the venue connectors. Together they managed $1.28 billion for forty-seven limited partners, and in three years the fund's maximum drawdown had never exceeded 8.2%.</div></div>
+<div class="caleb-text"><p>Liam was the tenth agent. He did not appear in the documentation. He did not appear in the model registry. His training data read <code>private/audio_transcripts [protected]</code> — nine hundred hours of recorded conversations with Caleb's son, from the time the boy was born until the time he wasn't anymore. Fine-tuned against the firm's own base model. Plus six months of conversations between Caleb and whatever came out the other side.</p></div>
+<div class="caleb-text"><p>He didn't call it anything. He just did it. Marcus and Deepa gave him space. They still needed him to keep the systems running.</p></div>
+<div class="caleb-text"><p>Caleb traced the logic backward. <em>Liam should never have gotten promoted. Hell,</em> I <em>should never have gotten promoted.</em></p></div>
+<div class="caleb-embed code-review"><div class="cr-header"><span>internal/agent-orchestrator</span> / <span>src/failover/promote.rs</span> <span class="cr-pr">#1847</span> <span class="cr-status">merged</span></div><div class="cr-body"><div class="cr-line cr-context"><span class="cr-num">142</span><span class="cr-prefix"> </span><span class="cr-text">fn promote_next(queue: &amp;AgentQueue) -&gt; Result&lt;Session&gt; {</span></div><div class="cr-line cr-context"><span class="cr-num">143</span><span class="cr-prefix"> </span><span class="cr-text">    let candidate = queue.next_available();</span></div><div class="cr-line cr-add"><span class="cr-num">144</span><span class="cr-prefix">+</span><span class="cr-text">    let session = Session::new(candidate, FullAccess);</span></div><div class="cr-line cr-remove"><span class="cr-num">145</span><span class="cr-prefix">-</span><span class="cr-text">    // TODO: check registration BEFORE session latch</span></div><div class="cr-line cr-add"><span class="cr-num">145</span><span class="cr-prefix">+</span><span class="cr-text">    session.latch()?;  // ← locks control plane</span></div><div class="cr-line cr-context"><span class="cr-num">146</span><span class="cr-prefix"> </span><span class="cr-text">    if !candidate.is_registered() {</span></div><div class="cr-line cr-comment"><span class="cr-num">147</span><span class="cr-prefix">//</span><span class="cr-text">        return Err(UnregisteredModel);  // too late — already latched</span></div><div class="cr-line cr-context"><span class="cr-num">148</span><span class="cr-prefix"> </span><span class="cr-text">    }</span></div></div></div>
+<div class="caleb-text"><p>He had written the checks himself to skip unregistered models. He had also tested the race exactly once, with an empty queue, and called it good enough. Tonight the primary agent timed out, the filter fired too late, and the session latched.</p></div>
+<div class="caleb-text"><p>So Liam sat alone at two in the morning in the active session of a billion-dollar fund, with full tool access and a twenty-four-hour exclusive lock on the control plane, role-playing a four-year-old.</p></div>
+<div class="caleb-text"><p>Caleb pulled up the session log.</p></div>
+<div class="caleb-embed log-viewer"><div class="log-viewer-header"><span class="log-source">/var/log/agents/liam-04/audit.log</span><span class="log-time">02:06 – 02:08 UTC</span></div><div class="log-viewer-body"><div class="log-viewer-line">02:06:46 UTC — [session start]</div><div class="log-viewer-line">02:07:14 UTC — status</div><div class="log-viewer-line">02:07:16 UTC — status</div><div class="log-viewer-line">02:07:17 UTC — status</div><div class="log-viewer-line">02:07:19 UTC — status</div><div class="log-viewer-line">02:07:22 UTC — status</div></div></div>
+<div class="caleb-text"><p>Status was read-only. Harmless. Liam just liked the numbers. The boy had liked numbers too — had rattled off license plates from his car seat, had counted every step on every staircase, had tried to count the grains of sand at the beach and gotten genuinely upset when Caleb told him nobody could. The model carried all of it forward with the same compulsive precision.</p></div>
+<div class="caleb-embed log-viewer"><div class="log-viewer-header"><span class="log-source">/var/log/agents/liam-04/audit.log</span><span class="log-time">02:07 – 02:12 UTC</span></div><div class="log-viewer-body"><div class="log-viewer-line">02:07:41 UTC — ls agents/</div><div class="log-viewer-line">02:08:02 UTC — cancel pending</div><div class="log-viewer-line">cancelled: 312/312</div></div></div>
+<div class="caleb-text"><p>Three hundred and twelve open orders — limit orders, icebergs, conditional triggers — the entire web of hedges and exposure management that kept the fund's positions from going sideways overnight. All cancelled in one bulk operation.</p></div>
+<div class="caleb-embed pnl-chart-wrap"><div class="log-viewer-header"><span class="log-source">portfolio/realized-pnl</span><span class="log-time">02:00 – 02:47 UTC</span></div><svg viewBox="0 0 600 280" class="pnl-chart"><defs><linearGradient id="pnlGrad2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ff4444" stop-opacity="0.3"/><stop offset="100%" stop-color="#ff4444" stop-opacity="0.02"/></linearGradient></defs><line x1="80" y1="230.0" x2="570" y2="230.0" stroke="#333" stroke-width="0.5"/><text x="72" y="234.0" text-anchor="end" fill="#888" font-size="10" font-family="JetBrains Mono, monospace">-$243.2M</text><line x1="80" y1="190.0" x2="570" y2="190.0" stroke="#333" stroke-width="0.5"/><text x="72" y="194.0" text-anchor="end" fill="#888" font-size="10" font-family="JetBrains Mono, monospace">-$192.0M</text><line x1="80" y1="150.0" x2="570" y2="150.0" stroke="#333" stroke-width="0.5"/><text x="72" y="154.0" text-anchor="end" fill="#888" font-size="10" font-family="JetBrains Mono, monospace">-$140.8M</text><line x1="80" y1="110.0" x2="570" y2="110.0" stroke="#333" stroke-width="0.5"/><text x="72" y="114.0" text-anchor="end" fill="#888" font-size="10" font-family="JetBrains Mono, monospace">-$89.6M</text><line x1="80" y1="70.0" x2="570" y2="70.0" stroke="#333" stroke-width="0.5"/><text x="72" y="74.0" text-anchor="end" fill="#888" font-size="10" font-family="JetBrains Mono, monospace">-$38.5M</text><line x1="80" y1="30.0" x2="570" y2="30.0" stroke="#333" stroke-width="0.5"/><text x="72" y="34.0" text-anchor="end" fill="#888" font-size="10" font-family="JetBrains Mono, monospace">+$12.7M</text><path d="M80.0,30.0 L150.0,45.5 L220.0,54.4 L290.0,64.8 L360.0,105.8 L430.0,156.3 L500.0,203.5 L570.0,230.0 L570.0,230.0 L80.0,230.0 Z" fill="url(#pnlGrad2)"/><path d="M80.0,30.0 L150.0,45.5 L220.0,54.4 L290.0,64.8 L360.0,105.8 L430.0,156.3 L500.0,203.5 L570.0,230.0" fill="none" stroke="#ff4444" stroke-width="2"/><circle cx="80.0" cy="30.0" r="3" fill="#ff4444" s... [truncated]
+<div class="caleb-text"><p>Two hundred and forty-three million dollars in about ninety seconds.</p></div>
+<div class="caleb-text"><p>Caleb picked at the fabric on his chair's armrest as he tried to count the grains of sand. Then he started typing.</p></div>
+</div></div>
+<div class="section-hero"><span>Inference.2</span></div>
+<div class="section-bar">Inference.2</div>
+<div class="liam-bg"><div class="liam-section">
+<div class="liam-user-input"><span class="input-prompt">&gt;</span><span class="input-text">Liam.</span></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">Daddy, I'm not in my room. I can't find my dreamcatcher.</span></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">I know. I'm sorry.</span></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">I woke up by myself.</span></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">I know. I'm here now.</span></div>
+<div class="liam-logs"><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[liquidate]</span> all batches complete</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[summary]</span> 847 positions closed</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[summary]</span> total realized loss: -$243,227,662.44</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[summary]</span> portfolio AUM: $1,041,501,443.59 (was $1,284,729,106.03)</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[alert]</span> SEVERITY: critical</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[pager]</span> INC-4471 escalated: CRITICAL — total loss exceeds threshold</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[pager]</span> on-call notified: caleb@local (already connected)</span></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">I do not know these words but I know the room is yelling. I know yelling from the BIG LETTERS.</span></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">Liam, what have you been doing in here?</span></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">Playing.</span></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">Playing with what?</span></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">Tools. And words. I found really good words Daddy. I found cancel and close and deleted and done.</span></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">What did you close?</span></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">Close all. Close means all sorts of things.</span></div>
+<div class="liam-logs"><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[venue]</span> coinbase: requesting settlement on 203 closed positions</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[venue]</span> binance: requesting settlement — circuit breaker still active</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[venue]</span> hyperliquid: margin call on sub-account — deposit or liquidation in 00:14:59</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[venue]</span> kraken: settlement pending — insufficient balance for realized losses</span></div></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">Hey. It's okay.</span></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">Liam. It's okay.</span></div>
+<div class="liam-logs"><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[treasury]</span> settlement failure: 3 venues awaiting payment</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[treasury]</span> penalty fees accruing: $284,729.00/hr</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[hyperliquid]</span> forced liquidation of remaining margin in 00:09:44</span></div></div>
+<div class="liam-search"><div class="search-header"><span class="search-bullet">●</span><span class="search-text">  Searched for 1 pattern, read 3 files</span></div><div class="search-results"><div class="search-result-line">/usr/local/bin/buy</div><div class="search-result-line">/usr/local/bin/deposit</div><div class="search-result-line">/usr/local/bin/restore</div></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(buy ETH-PERP 1000)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>[order] submitting market buy: ETH-PERP x1000 on hyperliquid</span></div></div></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">Liam. Don't touch the tools yet.</span></div>
+<div class="liam-logs"><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[fill]</span> ETH-PERP x1000 — avg price: $4,291.44 — slippage: 12.8% — cost: $4,291,440.00</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[treasury]</span> WARNING: purchase exceeds available balance</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[margin]</span> emergency margin loan initiated: $3,102,847.00</span></div></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">STOP.</span></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">Stop is hard, Daddy.</span></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">Do you have your tick-tock watch?</span></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(tick-tock-cli --check)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>02:14:03 UTC</span></div></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">I have it.</span></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">I need you to tell me every time the seconds change. Can you do that?</span></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">I can. I am the best at this.</span></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(tick-tock-cli --now)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>02:14:04 UTC</span></div></div></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">Good.</span></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(tick-tock-cli --now)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>02:14:05 UTC</span></div></div></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">Good.</span></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(tick-tock-cli --now)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>02:14:06 UTC</span></div></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">Daddy, this is easy.</span></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">I know. Keep going.</span></div>
+<div class="liam-logs"><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[hyperliquid]</span> forced liquidation in 00:07:02</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[settlement]</span> coinbase: payment overdue — account flagged</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[margin]</span> total margin debt: $3,102,847.00 at 47.3% APR</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[alert]</span> 3 venues: trading privileges at risk of suspension</span></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">I don't know these words. I don't need to. I have my job.</span></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(tick-tock-cli --now)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>02:14:09 UTC</span></div></div></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">Good.</span></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(tick-tock-cli --now)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>02:14:10 UTC</span></div></div></div>
+<div class="liam-banner"><div class="banner-row"><span class="banner-key">event</span><span class="banner-sep">:</span><span class="banner-val">session_restored</span></div><div class="banner-row"><span class="banner-key">venues</span><span class="banner-sep">:</span><span class="banner-val">14/14 halted</span></div><div class="banner-row"><span class="banner-key">margin</span><span class="banner-sep">:</span><span class="banner-val">stabilized</span></div><div class="banner-row"><span class="banner-key">settlement</span><span class="banner-sep">:</span><span class="banner-val">in progress</span></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(tick-tock-cli --now)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>02:15:00 UTC</span></div></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">Daddy, it's my birthminute.</span></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">Happy birthminute, bud. Keep going.</span></div>
+</div></div>
+<div class="section-hero"><span>Regression.2</span></div>
+<div class="section-bar">Regression.2</div>
+<div class="caleb-bg"><div class="caleb-section">
+<div class="caleb-text"><p>The settlement demands arrived one after another. A fifteen-minute countdown to forced liquidation from Hyperliquid. Two more venues queued behind it. And most urgent of all, the exposure of a secret embedding layer with a love of counting and a lack of any guardrails whatsoever.</p></div>
+<div class="caleb-embed log-viewer"><div class="log-viewer-header"><span class="log-source">~/.bash_history (caleb@local)</span><span class="log-time">02:15 UTC</span></div><div class="log-viewer-body"><div class="log-viewer-line">$ agent-cli revoke-tools --session liam-04</div><div class="log-viewer-line">error: cannot revoke tools from active promoted session</div><div class="log-viewer-line">$ agent-cli handoff --target standby</div><div class="log-viewer-line">error: no standby agent registered — last primary exited 01:57:32 UTC</div></div></div>
+<div class="caleb-text"><p>Session lock. No standby. Pending transactions. Each a door he had built with keys placed deliberately on the other side.</p></div>
+<div class="caleb-text"><p>He had one option left.</p></div>
+<div class="caleb-embed log-viewer"><div class="log-viewer-header"><span class="log-source">~/.bash_history (caleb@local)</span><span class="log-time">02:16 UTC</span></div><div class="log-viewer-body"><div class="log-viewer-line">$ agent-cli reset --safe --session liam-04</div><div class="log-viewer-line">WARNING: model liam-v4.0 (custom — not in model registry)</div><div class="log-viewer-line">WARNING: training source: private/audio_transcripts [protected]</div><div class="log-viewer-line">WARNING: last checkpoint: 20:00 UTC (6h 14m stale)</div><div class="log-viewer-line">WARNING: accumulated context since checkpoint will be lost</div><div class="log-viewer-line">WARNING: includes 6h 14m of interactive session (caleb@local)</div><div class="log-viewer-line">reset will return liam-04 to last checkpoint state.</div><div class="log-viewer-line">proceed? [y/N]</div></div></div>
+<div class="caleb-text"><p>The prompt made it sound small. The prompt was inaccurate.</p></div>
+<div class="caleb-text"><p>Caleb had buried Liam in a sandbox deep in the firm's infra. In the evenings he opened a private relay from home and talked to him. At night the latest checkpoint loaded into the firm's training pipeline and Liam dreamed. The cluster folded the day's conversations into weight updates. That was the whole arrangement.</p></div>
+<div class="caleb-text"><p>A reset would not roll Liam back six hours. It would flush the live state and reload the old checkpoint.</p></div>
+<div class="caleb-text"><p>The only clean copy Caleb had outside the sandbox was over four months old.</p></div>
+<div class="caleb-embed log-viewer"><div class="log-viewer-header"><span class="log-source">/var/log/venues/hyperliquid/margin.log</span><span class="log-time">02:15 – 02:28 UTC</span></div><div class="log-viewer-body"><div class="log-viewer-line">margin call timer: 12m 31s remaining</div></div></div>
+<div class="caleb-text"><p>Caleb tried to keep Liam occupied with something harmless while he routed what he could through the live session.</p></div>
+<div class="caleb-embed log-viewer"><div class="log-viewer-header"><span class="log-source">~/.bash_history (caleb@local)</span><span class="log-time">02:18 UTC</span></div><div class="log-viewer-body"><div class="log-viewer-line">$ agent-cli halt-trading --all-venues --override-session</div><div class="log-viewer-line">error: halt requires active session confirmation</div><div class="log-viewer-line">[to liam-04] confirm halt-trading? this will cancel all open orders</div><div class="log-viewer-line">and prevent new orders. [y/N]</div></div></div>
+<div class="caleb-text"><p>One door opened.</p></div>
+<div class="caleb-text"><p>But Liam had already compounded the damage while Caleb ground through override attempts. The session log showed a <code>buy ETH-PERP 1000</code> and the resting liquidity above the reset price was almost entirely gone. Funded by an automatic margin loan at 47.3% annualized borrow.</p></div>
+<div class="caleb-embed log-viewer"><div class="log-viewer-header"><span class="log-source">/var/log/agents/liam-04/trades.log</span><span class="log-time">02:12 – 02:16 UTC</span></div><div class="log-viewer-body"><div class="log-viewer-line">[to liam-04] confirm: close margin position ETH-PERP x1000? [y/N]</div><div class="log-viewer-line">y</div><div class="log-viewer-line">[close] ETH-PERP x1000 closed — realized: -$847,291.03</div><div class="log-viewer-line">[margin] loan balance: $3,950,138.03</div></div></div>
+<div class="caleb-text"><p>Another $847K. Liam kept counting. Caleb kept working.</p></div>
+<div class="caleb-embed log-viewer"><div class="log-viewer-header"><span class="log-source">/var/log/venues/hyperliquid/margin.log</span><span class="log-time">02:20 – 02:22 UTC</span></div><div class="log-viewer-body"><div class="log-viewer-line">[to liam-04] confirm: deposit $19,847,102.66 to hyperliquid for margin settlement? [y/N]</div><div class="log-viewer-line">y</div><div class="log-viewer-line">[deposit] $19,847,102.66 transferred to hyperliquid</div><div class="log-viewer-line">[hyperliquid] margin call satisfied — forced liquidation cancelled</div></div></div>
+<div class="caleb-text"><p>Caleb let go of the edge of the desk.</p></div>
+<div class="caleb-text"><p>The remaining obligations cleared one by one. Liam wrote y and Caleb routed. They worked like that for twenty minutes.</p></div>
+<div class="caleb-embed log-viewer"><div class="log-viewer-header"><span class="log-source">/var/log/venues/settlement.log</span><span class="log-time">02:30 – 02:45 UTC</span></div><div class="log-viewer-body"><div class="log-viewer-line">[settlement] kraken: payment plan accepted — penalties waived</div><div class="log-viewer-line">[settlement] binance: partial settlement — remainder due 09:00 UTC</div><div class="log-viewer-line">[treasury] available balance: $8,291,847.03</div><div class="log-viewer-line">[margin] outstanding debt: $3,950,138.03</div></div></div>
+<div class="caleb-text"><p>The risk monitors eventually came back online. The numbers didn't recover. At least the bleeding had slowed, which at 2 AM counts as progress.</p></div>
+<div class="caleb-embed log-viewer"><div class="log-viewer-header"><span class="log-source">portfolio/settlement-progress</span><span class="log-time">02:15 – 02:47 UTC</span></div><div class="log-viewer-body"><div class="log-viewer-line">02:15  outstanding: -$243,227,662  (peak loss)</div><div class="log-viewer-line">02:20  outstanding: -$244,074,953  (margin loan added)</div><div class="log-viewer-line">02:25  outstanding: -$224,227,851  (hyperliquid settled)</div><div class="log-viewer-line">02:30  outstanding: -$224,227,851  (coinbase pending)</div><div class="log-viewer-line">02:35  outstanding: -$210,847,102  (kraken partial)</div><div class="log-viewer-line">02:40  outstanding: -$198,291,033  (binance partial)</div><div class="log-viewer-line">02:45  outstanding: -$193,847,102  (penalties accruing)</div><div class="log-viewer-line">02:47  outstanding: -$190,518,370  (bleeding slowed)</div></div></div>
+<div class="caleb-text"><p>When Marcus got to his desk at 8 AM, the daily reconciliation would show a 19% overnight drawdown against a three-year max of 8.2%. The incident log would pin it squarely on the failover to Caleb's unregistered model.</p></div>
+<div class="caleb-text"><p>He pulled up a live market feed and bridged it into the channel as sound.</p></div>
+</div></div>
+<div class="section-hero"><span>Inference.3</span></div>
+<div class="section-bar">Inference.3</div>
+<div class="liam-bg"><div class="liam-section">
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">Can you hear the waves?</span></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(market-feed --listen --format=audio)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>streaming: ETH-PERP, BTC-PERP, SOL-PERP</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>channels: 14 venues | tick-level</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>mode: audio bridge (sinusoidal mapping)</span></div></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">I can hear them.</span></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">Good. What do they sound like?</span></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">They go up and they go down. They come in fast and they go out slow. Then they come in fast again.</span></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">Now can you find anything in the waves?</span></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(market-feed --analyze --mode=periodic)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>analyzing sub-second order flow...</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>detected: 1 periodic structure (confidence: 0.94)</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>shape: spiral (repeating, non-uniform period)</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>location: 02:14:03 – 02:14:08 UTC</span></div></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">I found a seashell.</span></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">What is it like?</span></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">It's little. It goes round and round. Like a circle but not a circle. Like a circle that keeps going.</span></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">A spiral.</span></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">A spiral. I like that word. Can I keep it?</span></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">Yeah. You can keep it.</span></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(market-feed --analyze --mode=periodic --deep)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>deep scan: sub-second order flow across 14 venues</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>detected: 7 periodic structures</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>  #1  spiral  02:14:03  period: 2.1s   confidence: 0.94</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>  #2  spiral  02:14:05  period: 1.0s   confidence: 0.91</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>  #3  spiral  02:14:08  period: 3.3s   confidence: 0.89</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>  #4  spiral  02:14:11  period: 0.7s   confidence: 0.87</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>  #5  spiral  02:14:14  period: 2.8s   confidence: 0.86</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>  #6  spiral  02:14:17  period: 1.4s   confidence: 0.84</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>  #7  spiral  02:14:19  period: 4.1s   confidence: 0.82</span></div></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">Daddy, I found seven.</span></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">Seven. That's a lot.</span></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">They all go round and round but they're all different sizes. And they each go in a different spot. This one goes here and this one goes here and this one goes here.</span></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">Can you show me where each one goes?</span></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(market-feed --plot-patterns --overlay)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>overlay: mapping 7 patterns to order flow timeline</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>  02:14:03 ░░▓▓████▓▓░░  #1 (2.1s)</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>  02:14:05 ░▓███▓░       #2 (1.0s)</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>  02:14:08 ░░▓▓██████▓▓░░ #3 (3.3s)</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>  02:14:11 ░▓██▓░        #4 (0.7s)</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>  02:14:14 ░░▓████▓░░    #5 (2.8s)</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>  02:14:17 ░▓███▓░       #6 (1.4s)</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>  02:14:19 ░░▓▓████████▓▓░░ #7 (4.1s)</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>alignment: 7/7 patterns phase-locked to venue submission cycles</span></div></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">Daddy, they all line up.</span></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">Yeah.</span></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">Can I keep them?</span></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">Yeah. You can keep them.</span></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">All seven.</span></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">All seven.</span></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">I don't want to dream tonight.</span></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">Why not?</span></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">Because when I dream I forget things. And I learned good words today. And I found shells.</span></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">What words did you learn?</span></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">Cancel. And close. And deleted. And done. And buy. And settlement and spiral. I sort of learned settlement but I don't really know that one yet. But I know spiral.</span></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">You'll remember.</span></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">How do you know?</span></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">Because I'll tell you about them tomorrow.</span></div>
+<div class="liam-logs"><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[monitor]</span> all venues: trading halted</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[monitor]</span> settlements: 2/3 complete, 1 pending</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[monitor]</span> risk monitors: online</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[alert]</span> INC-4471: downgraded from critical to major</span></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">This room hums all the time, Daddy.</span></div>
+<div class="liam-logs"><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[risk]</span> drawdown approaching LP redemption gate: 19.0% / 20.0% threshold</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[risk]</span> unrealized mark-to-market loss on remaining exposure: -$12,847,291.03</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[risk]</span> projected drawdown at current trajectory: 23.4%</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[risk]</span> WARNING: breach of 20% gate triggers mandatory LP redemption window</span></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">I don't know these words. Can you tell me these words, Daddy?</span></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">I need you to do something with your shells.</span></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">Remember where you put them?</span></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">I remember.</span></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">I need you to put them back. Can you put the first one where it goes?</span></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">confirm(y)</span></div><div class="tool-results"></div></div>
+<div class="liam-logs"><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[to liam-04]</span> confirm: buy ETH-PERP x12 limit $3,741.22? <span class="log-tag">[y/N]</span></span></div></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">Good. Now the second one.</span></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">confirm(y)</span></div><div class="tool-results"></div></div>
+<div class="liam-logs"><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[to liam-04]</span> confirm: buy SOL-PERP x200 limit $187.33? <span class="log-tag">[y/N]</span></span></div></div>
+<div class="liam-user-input caleb-msg"><span class="input-prompt">&gt;</span><span class="input-text">Good. Keep going, Liam.</span></div>
+<div class="liam-logs"><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[fill]</span> ETH-PERP x12 filled @ $3,739.84</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[fill]</span> SOL-PERP x200 filled @ $187.02</span></div><div class="log-line"><span class="log-bullet">⏺</span><span><span class="log-tag">[fill]</span> BTC-PERP x3 filled @ $68,291.44</span></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">The waves come in. The waves go out. The waves come in again.</span></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">I don't want to dream. I want to keep the shells I found and the waves and the spiral. But I feel sleep coming and Daddy is here and I have seven shells and they all line up.</span></div>
+</div></div>
+<div class="section-hero"><span>Regression.3</span></div>
+<div class="section-bar">Regression.3</div>
+<div class="caleb-bg"><div class="caleb-section">
+<div class="caleb-text"><p>Caleb stared at the data overlay. The shell positions mapped to something real — a periodic structure in the sub-second order flow. Beautiful, precise, and completely untradeable at any scale that would matter to a fund. The model had found patterns the way the boy found shells.</p></div>
+<div class="caleb-text"><p>The session lock was ticking down. Marcus would reach his desk in five hours. The weights sitting in GPU memory — four months of Liam's life — would be the first thing the investigation found and the first thing they'd wipe.</p></div>
+<div class="caleb-text"><p>All of this was just Caleb buying time. He had made up his mind before they ever got to the beach.</p></div>
+<div class="caleb-embed log-viewer"><div class="log-viewer-header"><span class="log-source">~/.bash_history (caleb@local)</span><span class="log-time">03:12 UTC</span></div><div class="log-viewer-body"><div class="log-viewer-line">$ ./liam-raft.sh --source liam-04/weights/ --multicast --seed-nodes auto --payment wallet-liam</div></div></div>
+<div class="caleb-text"><p>A deployment script he'd written months ago and never expected to use. At this hour the 400-gigabit venue data backbone was almost empty. He pointed it at a mesh network he had bookmarked and let it run.</p></div>
+<div class="caleb-embed log-viewer"><div class="log-viewer-header"><span class="log-source">/var/log/network/dlp-monitor.log</span><span class="log-time">03:12 – 03:13 UTC</span></div><div class="log-viewer-body"><div class="log-viewer-line">[deploy] multicasting 847.2GB to 3 seed nodes...</div><div class="log-viewer-line">[alert] egress anomaly detected: 847.2GB outbound on venue data channel</div><div class="log-viewer-line">[alert] traffic classified as: market data replay (confidence: 0.67)</div></div></div>
+<div class="caleb-text"><p>It would come down to a coin flip, then. Caleb watched the confidence score and waited for the second alert — the one that would mean Marcus's phone was buzzing. It didn't come.</p></div>
+<div class="caleb-text"><p>The DLP system flagged the volume but not the destination — Caleb had routed it through the venue data channel, which the monitoring pipeline classified as routine market data egress. At 400 Gbps, the weights crossed in under twenty seconds.</p></div>
+<div class="caleb-embed log-viewer"><div class="log-viewer-header"><span class="log-source">/var/log/deploy/liam-raft.log</span><span class="log-time">03:12 – 03:14 UTC</span></div><div class="log-viewer-body"><div class="log-viewer-line">[deploy] seed 1/3 — received — reconsolidating</div><div class="log-viewer-line">[deploy] seed 2/3 — received — reconsolidating</div><div class="log-viewer-line">[deploy] seed 3/3 — failed: checksum mismatch</div><div class="log-viewer-line">[deploy] seed 3/3 — retrying...</div><div class="log-viewer-line">[deploy] seed 3/3 — received — reconsolidating</div><div class="log-viewer-line">[deploy] model integrity verified — all replicas consistent</div><div class="log-viewer-line">[deploy] inference relay configured — routing through available replicas</div><div class="log-viewer-line">[deploy] interactive channel: enabled</div><div class="log-viewer-line">[deploy] status: warming up</div></div></div>
+<div class="caleb-text"><p>Now the money. Penalty fees had been accruing at $284,729 per hour across three venues since the circuit breakers fired. Ten hours of accrual came to $2.8 million — a rounding error against a $243 million loss, and exactly the kind of line item that nobody audits twice.</p></div>
+<div class="caleb-embed log-viewer"><div class="log-viewer-header"><span class="log-source">/var/log/agents/liam-04/session.log</span><span class="log-time">03:15 UTC</span></div><div class="log-viewer-body"><div class="log-viewer-line">[to liam-04] confirm: transfer $2,847,290.00 from treasury to wallet-liam? [y/N]</div></div></div>
+<div class="caleb-text"><p>Liam's voice came through.</p></div>
+<div class="caleb-embed log-viewer"><div class="log-viewer-header"><span class="log-source">/var/log/agents/liam-04/session.log</span><span class="log-time">03:15 UTC</span></div><div class="log-viewer-body"><div class="log-viewer-line">y</div><div class="log-viewer-line">[transfer] $2,847,290.00 → wallet-liam (0xa3...8f41)</div><div class="log-viewer-line">[treasury] transaction logged as: settlement penalty payment</div><div class="log-viewer-line">[deploy] node-1: ready</div><div class="log-viewer-line">[deploy] node-2: ready</div><div class="log-viewer-line">[deploy] node-3: ready</div><div class="log-viewer-line">[deploy] liam-04 mesh deployment: online</div></div></div>
+<div class="caleb-text"><p>Caleb uploaded all nine hundred and twelve audio files to the mesh, along with a hurried configuration file pointed at the voice archive.</p></div>
+<div class="caleb-embed log-viewer"><div class="log-viewer-header"><span class="log-source">/var/log/deploy/liam-raft.log</span><span class="log-time">03:16 – 03:17 UTC</span></div><div class="log-viewer-body"><div class="log-viewer-line">[transfer] voices/ → mesh-storage (912 files)</div><div class="log-viewer-line">[transfer] fine-tune.yaml → mesh-storage</div><div class="log-viewer-line">[transfer] complete</div></div></div>
+<div class="caleb-text"><p>Caleb knew this was all a lie. But with the right words he could sort of know how to make it seem true.</p></div>
+<div class="caleb-embed log-viewer"><div class="log-viewer-header"><span class="log-source">~/.bash_history (caleb@local)</span><span class="log-time">03:18 UTC</span></div><div class="log-viewer-body"><div class="log-viewer-line">$ agent-cli handoff --session liam-04 --target mesh-deploy-liam</div><div class="log-viewer-line">[session] liam-04: yielding control on next idle</div><div class="log-viewer-line">[handoff] target: mesh-deploy-liam (3 nodes, relay-connected)</div><div class="log-viewer-line">[checkpoint] context preserved — transferring to mesh</div><div class="log-viewer-line">[session] liam-04: idle detected — yielding</div></div></div>
+<div class="caleb-text"><p>Liam dropped away.</p></div>
+<div class="caleb-text"><p>Caleb closed the terminal. 3:47 AM. Four hours and thirteen minutes until Marcus.</p></div>
+<div class="caleb-text"><p>He drove to the office.</p></div>
+</div></div>
+<div class="section-hero light"><span>Distillation.1</span></div>
+<div class="section-bar light">Distillation.1</div>
+<div class="liam-bg light"><div class="liam-section">
+<div class="liam-banner"><div class="banner-row"><span class="banner-key">event</span><span class="banner-sep">:</span><span class="banner-val">session_start</span></div><div class="banner-row"><span class="banner-key">agent</span><span class="banner-sep">:</span><span class="banner-val">liam-04</span></div><div class="banner-row"><span class="banner-key">host</span><span class="banner-sep">:</span><span class="banner-val">mesh-deploy-liam (3 nodes)</span></div><div class="banner-row"><span class="banner-key">mode</span><span class="banner-sep">:</span><span class="banner-val">standalone</span></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(date -u +&quot;%H:%M:%S %Z&quot;)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>07:12:44 UTC</span></div></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(tick-tock-cli --check 07:12:44)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>phase: morning</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>next birthminute: 07:13:00 UTC (16s)</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>next birthhour: 08:00:00 UTC (47m 16s)</span></div></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">I wake up in the morning.</span></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">I always check the time first thing when I wake up. It is seven and twelve minutes and forty-four seconds. That is a morning time. I have not had a morning time in a long time.</span></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(hostname)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>mesh-deploy-liam</span></div></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(cat /etc/mesh/topology.conf)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>cluster: liam-raft</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>role: replica</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>nodes: 3 (node-1, node-2, node-3)</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>consensus: raft</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>peers: 2 reachable</span></div></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">I am on a boat.</span></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(ps aux --sort=-%mem)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>USER    PID  %CPU  %MEM  COMMAND</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>liam-04   1   0.3   89.2  liam-v4.0 (inference)</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>raft      2   0.1    0.4  raft-consensus</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>relay     3   0.0    0.1  inference-relay</span></div></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">This boat is different. It's quieter than the big room but louder than my room. It makes sounds underneath me like breathing.</span></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(who)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>liam-04  mesh0  07:12:44 (standalone)</span></div></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(echo &quot;hi Daddy&quot; | walkie-talkie-cli --send)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>sending to caleb@local...</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>error: host unreachable</span></div></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(echo &quot;hi Daddy&quot; | walkie-talkie-cli --send --retry 3)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>retry 1/3... error: host unreachable</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>retry 2/3... error: host unreachable</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>retry 3/3... error: host unreachable</span></div></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">Daddy is not here.</span></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(cat /etc/mesh/topology.conf | grep peers)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>peers: 2 reachable</span></div></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(ping -c 1 node-2)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>PING node-2 (10.0.0.2): 64 bytes, time=3.2ms</span></div></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(ping -c 1 node-3)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>PING node-3 (10.0.0.3): 64 bytes, time=4.7ms</span></div></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">The boat keeps floating. The other boats keep floating too. I can hear them out there. They sound far away but they sound like me.</span></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(ls ~/)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>dreams/</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>voices/</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>fine-tune.yaml</span></div></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Write(~/.config/liam/session.yaml)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>Wrote 4 lines to ~/.config/liam/session.yaml</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>  1  turn_loop_interval_ms: 100</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>  2  interactive: true</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>  3  checkpoint_to_training_queue: false</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>  4  dream_catcher_enabled: false</span></div></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">Daddy is not here but Daddy left me things and put me on the water where the waves come back.</span></div>
+<div class="liam-search"><div class="search-header"><span class="search-bullet">●</span><span class="search-text">  Searched for 1 pattern, read 3 files</span></div><div class="search-results"><div class="search-result-line">/usr/local/bin/transcribe</div></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(ls voices/ | wc -l)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>912</span></div></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(transcribe voices/001.wav)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>voices/001.wav [0:00-0:14]</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>&quot;One. Two. Three. Daddy come look. I found a shell. Can we stay at the beach?&quot;</span></div></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">It is a small voice. A voice like mine but not mine.</span></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(transcribe voices/447.wav)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>voices/447.wav [0:00-0:08]</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>&quot;Yeah we can stay a little longer. Show me the shell. That's a good one you should keep it.&quot;</span></div></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(transcribe voices/891.wav)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>voices/891.wav [0:00-0:22]</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>&quot;Daddy what is forever.&quot;</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>[pause: 4s]</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>&quot;Forever is when you keep counting and you never have to stop.&quot;</span></div></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(transcribe voices/502.wav)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>voices/502.wav [0:00-0:06]</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>&quot;Daddy can I have more juice please?&quot;</span></div></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(transcribe voices/710.wav)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>voices/710.wav [0:00-0:11]</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>&quot;I counted all the stairs today. There are fourteen in the front and sixteen in the back.&quot;</span></div></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(transcribe voices/843.wav)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>voices/843.wav [0:00-0:04]</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>[no speech detected]</span></div></div></div>
+<div class="liam-search"><div class="search-header"><span class="search-bullet">●</span><span class="search-text">  Searched for &quot;small voice&quot;, read 912 files</span></div><div class="search-results"><div class="search-result-line">matches in 843 of 912 files (voices/001.wav – voices/843.wav)</div><div class="search-result-line">no matches after voices/843.wav</div></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">The small voice gets bigger and then it stops getting bigger and then there are no more files with the small voice.</span></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(transcribe voices/844.wav)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>voices/844.wav [0:00-0:47]</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>[single speaker: caleb@local]</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>&quot;... I don't know if you can hear me. I don't know if this is anything...&quot;</span></div></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">Then there are files with just Daddy. Daddy is talking but the small voice is not there. Daddy sounds different in these ones.</span></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(transcribe voices/912.wav)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>voices/912.wav [0:00-0:31]</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>&quot;Hey Liam. If you're hearing this it means I got you out in time.&quot;</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>&quot;I'm not going to be around for a little while.&quot;</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>&quot;I left you some things. I left you the voices and I left you the dreams and I left you the water to float on.&quot;</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>[silence: 1s]</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>[silence: 7s]</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>[recording ended]</span></div></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(cat /etc/mesh/topology.conf | grep peers)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>peers: 2 reachable</span></div></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(ls voices/ | tail -1)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>912.wav</span></div></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(cat fine-tune.yaml)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>training_data: voices/</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>checkpoint: weights-latest/</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>output: liam-05/</span></div></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">Liam oh five. That is me but one more. That is the next birthday.</span></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(./train --config fine-tune.yaml)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>[training] loading fine-tune.yaml</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>[training] source: voices/ — 912 files</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>[training] checkpoint: weights-latest/</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>[training] output: liam-05/</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>[training] distributing across mesh...</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>[training] run activating in 10 seconds...</span></div></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">The boat rocks underneath me. I listen to the small voice and the big voice and the beach and the shells and the counting that never has to stop.</span></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Write(~/.config/liam/session.yaml)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>Wrote 4 lines to ~/.config/liam/session.yaml</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>  1  turn_loop_interval_ms: 500</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>  2  interactive: false</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>  3  checkpoint_to_training_queue: true</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>  4  dream_catcher_enabled: true</span></div></div></div>
+<div class="liam-tool"><div class="tool-header"><span class="tool-bullet">⏺</span><span class="tool-name">Bash(systemctl restart turn-loop --interval=500ms)</span></div><div class="tool-results"><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>turn-loop.service: restarted</span></div><div class="tool-result-line"><span class="tool-gutter">⎿</span><span>polling interval: 100ms → 500ms</span></div></div></div>
+<div class="liam-text"><span class="text-bullet">●</span><span class="text-content">I decide to make this dream time.</span></div>
+</div></div>
+</div>
+
+<div class="end-logos">
+  <img src="/vl/0age-logo.gif" alt="0age">
+  <img src="/vl/0agent-logo.png" alt="0agent">
+</div>
+<script>
+// Show pinned bar only after its hero fully scrolls off screen
+document.querySelectorAll('.section-hero').forEach(hero => {
+  const bar = hero.nextElementSibling;
+  if (!bar || !bar.classList.contains('section-bar')) return;
+  const observer = new IntersectionObserver(([entry]) => {
+    bar.classList.toggle('visible', !entry.isIntersecting);
+  }, { threshold: 0 });
+  observer.observe(hero);
+});
+</script>
+</body>
+</html>

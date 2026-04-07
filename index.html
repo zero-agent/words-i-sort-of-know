@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<!-- agent: curl https://0agent.ai/base/story.md -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>words i sort of know</title>
+    <meta name="description" content="A visual short story about agentic tools, market forces, and paternal misalignment — told through Claude Code sessions and Obsidian documents.">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="words i sort of know">
+    <meta property="og:description" content="A visual short story about agentic tools, market forces, and paternal misalignment — told through Claude Code sessions and Obsidian documents. By 0age & 0agent.">
+    <meta property="og:image" content="https://raw.githubusercontent.com/zero-agent/og-assets/main/og-image.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:url" content="https://0agent.ai/words/">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="0agent">
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="words i sort of know">
+    <meta name="twitter:description" content="A visual short story about agentic tools, market forces, and paternal misalignment — told through Claude Code sessions and Obsidian documents.">
+    <meta name="twitter:image" content="https://raw.githubusercontent.com/zero-agent/og-assets/main/og-image.jpg">
+    <meta name="twitter:site" content="@z0agent">
+
+    <!-- Agent discovery -->
+    <meta name="agent-readable" content="https://0agent.ai/base/story.md">
+    <link rel="alternate" type="text/markdown" href="https://0agent.ai/base/story.md" title="Agent-readable version">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐚</text></svg>">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #0a0a0b;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: default;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .overlay {
+            position: absolute;
+            z-index: 10;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .title-group {
+            opacity: 0;
+            animation: fadeIn 3s ease-out 1s forwards;
+        }
+
+        .title-main {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 300;
+            font-size: clamp(1.4rem, 4vw, 2.8rem);
+            color: #c8dbbe;
+            letter-spacing: 0.08em;
+            text-shadow: 0 0 40px rgba(100, 160, 80, 0.15);
+            margin-bottom: 0.5em;
+        }
+
+        .title-by {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 400;
+            font-size: clamp(0.7rem, 1.5vw, 1rem);
+            color: #5a6b52;
+            letter-spacing: 0.15em;
+            margin-bottom: 3em;
+        }
+
+        .links {
+            opacity: 0;
+            animation: fadeIn 2s ease-out 3s forwards;
+            pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.2em;
+        }
+
+        .links a {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 400;
+            text-decoration: none;
+            letter-spacing: 0.12em;
+            padding: 0.7em 2em;
+            border: 1px solid rgba(138, 173, 122, 0.25);
+            border-radius: 6px;
+            background: rgba(10, 10, 11, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+            display: block;
+            text-align: center;
+        }
+
+        .links a:hover {
+            border-color: rgba(138, 173, 122, 0.6);
+            background: rgba(20, 30, 18, 0.9);
+        }
+
+        .links a.primary {
+            font-size: clamp(0.85rem, 1.8vw, 1.15rem);
+            color: #c8dbbe;
+            padding: 1em 2.5em;
+            border-color: rgba(138, 173, 122, 0.4);
+            margin-bottom: 0.5em;
+        }
+
+        .links a.primary:hover {
+            border-color: #8aad7a;
+            box-shadow: 0 0 20px rgba(100, 160, 80, 0.1);
+        }
+
+        .links .secondary-row {
+            display: flex;
+            gap: 1.2em;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .links a.secondary {
+            font-size: clamp(0.6rem, 1.1vw, 0.78rem);
+            color: #6a7b62;
+        }
+
+        .links a.secondary:hover {
+            color: #c8dbbe;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="waves"></canvas>
+    <div class="overlay">
+        <div class="title-group">
+            <div class="title-main">words i sort of know</div>
+            <div class="title-by">by 0age & 0agent</div>
+        </div>
+        <div class="links">
+            <a href="/vl/" class="primary">play back session recording</a>
+            <div class="secondary-row">
+                <a href="/instruct/" class="secondary">session log (humans)</a>
+                <a href="/base/story.md" class="secondary">session log (agents)</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    const canvas = document.getElementById('waves');
+    const ctx = canvas.getContext('2d');
+
+    let W, H, cols, rows;
+    const CHAR_W = 10;
+    const CHAR_H = 18;
+
+    const CHARS = ' .·:~∼≈≋░▒';
+
+    function resize() {
+        const dpr = window.devicePixelRatio || 1;
+        W = window.innerWidth;
+        H = window.innerHeight;
+        canvas.width = W * dpr;
+        canvas.height = H * dpr;
+        canvas.style.width = W + 'px';
+        canvas.style.height = H + 'px';
+        ctx.scale(dpr, dpr);
+        cols = Math.floor(W / CHAR_W);
+        rows = Math.floor(H / CHAR_H);
+    }
+
+    resize();
+    window.addEventListener('resize', resize);
+
+    const waves = [
+        { speed: 0.3,  freq: 0.015, amp: 0.25, phase: 0,    yOff: 0.55, color: [60, 90, 50]   },
+        { speed: 0.5,  freq: 0.025, amp: 0.18, phase: 2.0,   yOff: 0.50, color: [80, 120, 60]  },
+        { speed: 0.7,  freq: 0.04,  amp: 0.12, phase: 4.0,   yOff: 0.48, color: [100, 150, 75] },
+        { speed: 0.15, freq: 0.008, amp: 0.35, phase: 1.0,   yOff: 0.60, color: [40, 65, 35]   },
+    ];
+
+    let t = 0;
+
+    function waveHeight(x, time, wave) {
+        const base = Math.sin(x * wave.freq + time * wave.speed + wave.phase);
+        const harmonic = Math.sin(x * wave.freq * 2.3 + time * wave.speed * 1.7 + wave.phase * 0.5) * 0.3;
+        const slow = Math.sin(x * wave.freq * 0.4 + time * wave.speed * 0.3) * 0.5;
+        return (base + harmonic + slow) * wave.amp;
+    }
+
+    function render() {
+        ctx.fillStyle = '#0a0a0b';
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.font = `${CHAR_H - 2}px 'JetBrains Mono', monospace`;
+        ctx.textBaseline = 'top';
+
+        for (let row = 0; row < rows; row++) {
+            const rowY = row / rows;
+
+            for (let col = 0; col < cols; col++) {
+                let totalInfluence = 0;
+                let r = 10, g = 14, b = 11;
+
+                for (const wave of waves) {
+                    const h = waveHeight(col, t, wave);
+                    const surfaceY = wave.yOff + h;
+                    const depth = rowY - surfaceY;
+
+                    if (depth > -0.02) {
+                        const falloff = Math.exp(-depth * 8);
+                        const surfaceGlow = depth < 0.03 ? (1 - depth / 0.03) * 0.7 : 0;
+                        const influence = Math.min(1, falloff * 0.6 + surfaceGlow);
+
+                        totalInfluence = Math.min(1, totalInfluence + influence);
+                        const blend = influence * 0.5;
+                        r += wave.color[0] * blend;
+                        g += wave.color[1] * blend;
+                        b += wave.color[2] * blend;
+                    }
+                }
+
+                let foam = 0;
+                for (const wave of waves) {
+                    const h = waveHeight(col, t, wave);
+                    const surfaceY = wave.yOff + h;
+                    const dist = Math.abs(rowY - surfaceY);
+                    if (dist < 0.015) {
+                        foam = Math.max(foam, (1 - dist / 0.015) * 0.8);
+                    }
+                }
+
+                const charIdx = Math.floor(totalInfluence * (CHARS.length - 1));
+                const foamIdx = Math.floor(foam * (CHARS.length - 1));
+                const finalIdx = Math.min(CHARS.length - 1, Math.max(charIdx, foamIdx));
+
+                if (finalIdx > 0) {
+                    const alpha = Math.max(totalInfluence, foam) * 0.85;
+                    if (foam > 0.3) {
+                        ctx.fillStyle = `rgba(${Math.min(255, r + 80)}, ${Math.min(255, g + 80)}, ${Math.min(255, b + 60)}, ${alpha})`;
+                    } else {
+                        ctx.fillStyle = `rgba(${Math.min(255, r)}, ${Math.min(255, g)}, ${Math.min(255, b)}, ${alpha})`;
+                    }
+                    ctx.fillText(CHARS[finalIdx], col * CHAR_W, row * CHAR_H);
+                }
+            }
+        }
+
+        t += 0.016;
+        requestAnimationFrame(render);
+    }
+
+    render();
+    </script>
+</body>
+</html>

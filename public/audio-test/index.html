@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>audio test — words i sort of know</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐚</text></svg>">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a0b; color: #c8dbbe;
+      font-family: 'JetBrains Mono', monospace;
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 2em;
+    }
+    h1 { font-weight: 300; font-size: 1.4rem; letter-spacing: 0.08em; }
+    .meta { font-size: 0.75rem; color: #5a6b52; letter-spacing: 0.1em; max-width: 500px; text-align: center; line-height: 1.7; }
+    button {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;
+      background: none; border: 1px solid rgba(138,173,122,0.3);
+      color: #8aad7a; padding: 0.8em 2em; border-radius: 6px; cursor: pointer;
+      transition: all 0.3s;
+    }
+    button:hover { border-color: #8aad7a; background: rgba(138,173,122,0.08); }
+    button:disabled { opacity: 0.3; cursor: default; }
+    .note-display {
+      font-size: 0.7rem; color: #3a4a35; letter-spacing: 0.15em;
+      min-height: 1.5em; transition: color 0.3s;
+    }
+    .note-display.active { color: #6a8a5a; }
+    .iteration { font-size: 0.65rem; color: #2a3a25; margin-top: 0.5em; }
+  </style>
+</head>
+<body>
+  <h1>drone motif test</h1>
+  <p class="meta">
+    long note — 3.5s envelope with slow ramp up, steeper ramp down, heavy reverb<br>
+    iteration 1: pure tones · iteration 2: layered harmonics
+  </p>
+  <button id="play" onclick="startDrone()">play</button>
+  <div class="note-display" id="noteDisplay"></div>
+  <div class="iteration" id="iterDisplay"></div>
+
+<script>
+// Root note: C3 (130.81 Hz) — dark, low register
+const ROOT = 130.81;
+
+// Intervals in semitones from root
+// Low = octave 3 range, High = octave 4 range
+// Scale degrees → semitones (minor scale rooted on C)
+// 1=0, 2=1(b2), 3=3(b3), 4=5, 5=7, 6=8, 7=10, 8=12(octave)
+const DEG = { 1: 0, 2: 1, 3: 3, 4: 5, 5: 7, 6: 8, 7: 10, 8: 12 };
+
+const sequence = [
+  { name: 'low minor 6th',    semitones: 8,  octave: -1 },                          // Ab2
+  { name: 'high root → 2nd',  semitones: 0,  octave: 1, slideTo: 1 },              // C4 → Db4
+  { name: 'low minor 6th',    semitones: 8,  octave: -1 },                          // Ab2
+  { name: 'high 2nd → 3rd',   semitones: 1,  octave: 1, slideTo: 3 },              // Db4 → Eb4
+  // Low 2nd holds for half bar, then melody kicks in over it
+  { name: 'low 2nd + melody', semitones: 1, octave: -1,             // Db2 drone
+    melody: [6, 7, 8, 4, 3, 2, 1, 2, 3], melodyOctave: 0, melodyDelay: 0.5 },
+  // 3 overlaid with low 6th
+  { name: 'low 6th + mid 3rd', semitones: 8, octave: -1, overlay: { semitones: 3, octave: 0 } }, // Ab2 + Eb3
+  { name: 'mid 7th → root',   semitones: 10, octave: 0, slideTo: 12,                // Bb3 → C4
+    harmonic: { semitones: 1, octave: 1, slideTo: 3 } },                             // harm: Db4 → Eb4
+];
+
+function freq(semitones, octave) {
+  return ROOT * Math.pow(2, (semitones + octave * 12) / 12);
+}
+
+let ctx, masterGain, convolver, playing = false;
+
+async function createReverb(audioCtx, duration = 4, decay = 3) {
+  const rate = audioCtx.sampleRate;
+  const length = rate * duration;
+  const impulse = audioCtx.createBuffer(2, length, rate);
+  for (let ch = 0; ch < 2; ch++) {
+    const data = impulse.getChannelData(ch);
+    for (let i = 0; i < length; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+    }
+  }
+  const conv = audioCtx.createConvolver();
+  conv.buffer = impulse;
+  return conv;
+}
+
+function playNote(audioCtx, destination, noteFreq, startTime, iteration, slideToFreq, harmonicOverride) {
+  const dur = 3.5;
+  const rampUp = 2.2;   // slow ramp up
+  const rampDown = 1.3;  // steeper ramp down
+
+  // Main oscillator — triangle wave
+  const osc = audioCtx.createOscillator();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(noteFreq, startTime);
+  if (slideToFreq) {
+    osc.frequency.exponentialRampToValueAtTime(slideToFreq, startTime + dur * 0.7);
+  }
+
+  // Second oscillator — slight detune for warmth
+  const osc2 = audioCtx.createOscillator();
+  osc2.type = 'triangle';
+  osc2.frequency.setValueAtTime(noteFreq * 1.002, startTime);
+  if (slideToFreq) {
+    osc2.frequency.exponentialRampToValueAtTime(slideToFreq * 1.002, startTime + dur * 0.7);
+  }
+  
+  // Sub oscillator — octave below for weight
+  const sub = audioCtx.createOscillator();
+  sub.type = 'triangle';
+  sub.frequency.setValueAtTime(noteFreq * 0.5, startTime);
+  if (slideToFreq) {
+    sub.frequency.exponentialRampToValueAtTime(slideToFreq * 0.5, startTime + dur * 0.7);
+  }
+
+  // Envelope
+  const env = audioCtx.createGain();
+  env.gain.setValueAtTime(0, startTime);
+  env.gain.linearRampToValueAtTime(0.18, startTime + rampUp);
+  env.gain.exponentialRampToValueAtTime(0.001, startTime + dur + 1.5); // reverb tail
+
+  const env2 = audioCtx.createGain();
+  env2.gain.setValueAtTime(0, startTime);
+  env2.gain.linearRampToValueAtTime(0.08, startTime + rampUp);
+  env2.gain.exponentialRampToValueAtTime(0.001, startTime + dur + 1.5);
+
+  const subEnv = audioCtx.createGain();
+  subEnv.gain.setValueAtTime(0, startTime);
+  subEnv.gain.linearRampToValueAtTime(0.06, startTime + rampUp);
+  subEnv.gain.exponentialRampToValueAtTime(0.001, startTime + dur + 1.5);
+
+  osc.connect(env);
+  osc2.connect(env2);
+  sub.connect(subEnv);
+  env.connect(destination);
+  env2.connect(destination);
+  subEnv.connect(destination);
+
+  osc.start(startTime);
+  osc2.start(startTime);
+  sub.start(startTime);
+  osc.stop(startTime + dur + 2);
+  osc2.stop(startTime + dur + 2);
+  sub.stop(startTime + dur + 2);
+
+  // Iteration 2: layer a tenth above (or custom harmonic)
+  if (iteration >= 2) {
+    let hFreq, hSlide;
+    if (harmonicOverride) {
+      hFreq = freq(harmonicOverride.semitones, harmonicOverride.octave);
+      hSlide = harmonicOverride.slideTo != null ? freq(harmonicOverride.slideTo, harmonicOverride.octave) : null;
+    } else {
+      const tenthRatio = Math.pow(2, 16 / 12); // minor 10th above
+      hFreq = noteFreq * tenthRatio;
+      hSlide = slideToFreq ? slideToFreq * tenthRatio : null;
+    }
+    const tenthFreq = hFreq;
+    const tenthSlide = hSlide;
+
+    // Tenth — triangle, fades in gently behind the fundamental
+    const tenth = audioCtx.createOscillator();
+    tenth.type = 'triangle';
+    tenth.frequency.setValueAtTime(tenthFreq, startTime);
+    if (tenthSlide) tenth.frequency.exponentialRampToValueAtTime(tenthSlide, startTime + dur * 0.7);
+
+    // Detuned tenth for width
+    const tenth2 = audioCtx.createOscillator();
+    tenth2.type = 'triangle';
+    tenth2.frequency.setValueAtTime(tenthFreq * 0.998, startTime);
+    if (tenthSlide) tenth2.frequency.exponentialRampToValueAtTime(tenthSlide * 0.998, startTime + dur * 0.7);
+
+    const tenthEnv = audioCtx.createGain();
+    tenthEnv.gain.setValueAtTime(0, startTime);
+    tenthEnv.gain.linearRampToValueAtTime(0.06, startTime + rampUp + 0.4);
+    tenthEnv.gain.exponentialRampToValueAtTime(0.001, startTime + dur + 1.5);
+
+    const tenthEnv2 = audioCtx.createGain();
+    tenthEnv2.gain.setValueAtTime(0, startTime);
+    tenthEnv2.gain.linearRampToValueAtTime(0.035, startTime + rampUp + 0.6);
+    tenthEnv2.gain.exponentialRampToValueAtTime(0.001, startTime + dur + 1.5);
+
+    tenth.connect(tenthEnv);
+    tenth2.connect(tenthEnv2);
+    tenthEnv.connect(destination);
+    tenthEnv2.connect(destination);
+    tenth.start(startTime + 0.2);
+    tenth2.start(startTime + 0.2);
+    tenth.stop(startTime + dur + 2);
+    tenth2.stop(startTime + dur + 2);
+  }
+}
+
+function playMelodyNote(audioCtx, destination, noteFreq, startTime, dur, iteration) {
+  // Stones dropping in a pond — fast attack, quick decay, long reverb release
+  const attack = 0.02;   // near-instant
+  const decay = 0.15;    // quick drop
+  const release = 2.5;   // long tail (reverb does the rest)
+
+  // One octave higher
+  const f = noteFreq * 2;
+
+  const osc = audioCtx.createOscillator();
+  osc.type = 'triangle';
+  osc.frequency.value = f;
+
+  const osc2 = audioCtx.createOscillator();
+  osc2.type = 'triangle';
+  osc2.frequency.value = f * 1.003;
+
+  const env = audioCtx.createGain();
+  env.gain.setValueAtTime(0, startTime);
+  env.gain.linearRampToValueAtTime(0.16, startTime + attack);
+  env.gain.exponentialRampToValueAtTime(0.04, startTime + attack + decay);
+  env.gain.exponentialRampToValueAtTime(0.001, startTime + attack + decay + release);
+
+  const env2 = audioCtx.createGain();
+  env2.gain.setValueAtTime(0, startTime);
+  env2.gain.linearRampToValueAtTime(0.07, startTime + attack);
+  env2.gain.exponentialRampToValueAtTime(0.02, startTime + attack + decay);
+  env2.gain.exponentialRampToValueAtTime(0.001, startTime + attack + decay + release);
+
+  osc.connect(env); env.connect(destination);
+  osc2.connect(env2); env2.connect(destination);
+  osc.start(startTime); osc2.start(startTime);
+  osc.stop(startTime + attack + decay + release + 0.5); osc2.stop(startTime + attack + decay + release + 0.5);
+
+  if (iteration >= 2) {
+    const harm = audioCtx.createOscillator();
+    harm.type = 'sine';
+    harm.frequency.value = noteFreq * 2;
+    const hEnv = audioCtx.createGain();
+    hEnv.gain.setValueAtTime(0, startTime);
+    hEnv.gain.linearRampToValueAtTime(0.03, startTime + rampUp + 0.1);
+    hEnv.gain.exponentialRampToValueAtTime(0.001, startTime + dur + 0.5);
+    harm.connect(hEnv); hEnv.connect(destination);
+    harm.start(startTime + 0.05); harm.stop(startTime + dur + 1.5);
+  }
+}
+
+async function startDrone() {
+  const btn = document.getElementById('play');
+  if (playing) return;
+  playing = true;
+  btn.disabled = true;
+  btn.textContent = 'playing...';
+
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+  // Master gain
+  masterGain = ctx.createGain();
+  masterGain.gain.value = 0.7;
+
+  // Aggressive low-pass filter before everything
+  const lpf = ctx.createBiquadFilter();
+  lpf.type = 'lowpass';
+  lpf.frequency.value = 400;  // very aggressive — deep warmth only
+  lpf.Q.value = 0.5;
+
+  // Reverb — long and wet
+  convolver = await createReverb(ctx, 7, 2.0);  // longer, slower decay
+  const reverbGain = ctx.createGain();
+  reverbGain.gain.value = 0.85;  // pumped up
+
+  // Dry/wet mix — mostly wet
+  const dryGain = ctx.createGain();
+  dryGain.gain.value = 0.2;
+
+  const mixNode = ctx.createGain();
+  mixNode.gain.value = 1;
+
+  // Routing: source -> LPF -> dry -> mix -> master -> out
+  //          source -> LPF -> reverb -> reverbGain -> mix
+  dryGain.connect(mixNode);
+  convolver.connect(reverbGain);
+  reverbGain.connect(mixNode);
+  mixNode.connect(masterGain);
+  masterGain.connect(ctx.destination);
+
+  // Source node -> LPF -> splits to dry and reverb
+  const sourceNode = ctx.createGain();
+  sourceNode.gain.value = 1;
+  sourceNode.connect(lpf);
+  lpf.connect(dryGain);
+  lpf.connect(convolver);
+
+  const noteDisplay = document.getElementById('noteDisplay');
+  const iterDisplay = document.getElementById('iterDisplay');
+  const noteSpacing = 4.0; // seconds between note starts (3.5s note + 0.5s gap)
+
+  // Play both iterations
+  for (let iter = 1; iter <= 2; iter++) {
+    iterDisplay.textContent = `iteration ${iter}${iter === 2 ? ' — with harmonics' : ' — pure tones'}`;
+
+    for (let i = 0; i < sequence.length; i++) {
+      const note = sequence[i];
+      const startTime = ctx.currentTime + 0.05;
+
+      noteDisplay.textContent = note.name;
+      noteDisplay.classList.add('active');
+
+      // Play the base drone note (if it has semitones)
+      if (note.semitones != null) {
+        const noteFreq = freq(note.semitones, note.octave);
+        const slideToFreq = note.slideTo != null ? freq(note.slideTo, note.octave) : null;
+        playNote(ctx, sourceNode, noteFreq, startTime, iter, slideToFreq, note.harmonic || null);
+      }
+
+      // Play overlay note simultaneously
+      if (note.overlay) {
+        const overlayFreq = freq(note.overlay.semitones, note.overlay.octave);
+        playNote(ctx, sourceNode, overlayFreq, startTime, iter, null);
+      }
+
+      // Play melody starting after delay
+      if (note.melody) {
+        const beatDur = noteSpacing / 6; // each beat = 1/6 of the long note spacing
+        const melayDelay = (note.melodyDelay || 0) * noteSpacing; // fraction of bar
+        const melOct = note.melodyOctave != null ? note.melodyOctave : 0;
+        for (let m = 0; m < note.melody.length; m++) {
+          const deg = note.melody[m];
+          const mFreq = freq(DEG[deg], melOct);
+          const mStart = startTime + melayDelay + m * beatDur;
+          playMelodyNote(ctx, sourceNode, mFreq, mStart, beatDur * 0.9, iter);
+        }
+        // Melody spans: delay + 9 beats. Wait for the full melody duration
+        const totalMelodyTime = melayDelay + note.melody.length * beatDur;
+        await new Promise(r => setTimeout(r, Math.max(noteSpacing, totalMelodyTime) * 1000));
+      } else {
+        // Wait for note duration + gap
+        await new Promise(r => setTimeout(r, noteSpacing * 1000));
+      }
+
+      noteDisplay.classList.remove('active');
+    }
+
+    // Brief pause between iterations
+    if (iter === 1) {
+      noteDisplay.textContent = '';
+      await new Promise(r => setTimeout(r, 2000));
+    }
+  }
+
+  // Let reverb tail finish
+  noteDisplay.textContent = '';
+  iterDisplay.textContent = 'done';
+  await new Promise(r => setTimeout(r, 3000));
+
+  playing = false;
+  btn.disabled = false;
+  btn.textContent = 'play again';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐚</text></svg>">
+    <title>words i sort of know</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Start screen -->
+  <div id="start-screen" class="start-screen">
+    <h1>words i sort of know</h1>
+    <div class="start-byline">by 0age & 0agent</div>
+    <button id="start-btn" class="start-btn">begin</button>
+    <button id="dir-toggle" class="dir-toggle">directory ▾</button>
+    <div id="dir-list" class="dir-list">
+      <button class="dir-item" data-section="inference1">Inference.1</button>
+      <button class="dir-item" data-section="regression1">Regression.1</button>
+      <button class="dir-item" data-section="inference2">Inference.2</button>
+      <button class="dir-item" data-section="regression2">Regression.2</button>
+      <button class="dir-item" data-section="inference3">Inference.3</button>
+      <button class="dir-item" data-section="regression3">Regression.3</button>
+      <button class="dir-item" data-section="distillation1">Distillation.1</button>
+    </div>
+  </div>
+
+  <!-- Title card overlay -->
+  <div id="title-card" class="title-card">
+    <h1>words i sort of know</h1>
+  </div>
+
+  <!-- Section card overlay -->
+  <div id="section-card" class="section-card">
+    <h2 id="section-card-text"></h2>
+  </div>
+
+  <!-- Screen container -->
+  <div id="screen">
+    <div id="liam-screen" class="screen-layer"></div>
+    <div id="caleb-screen" class="screen-layer"></div>
+    <div id="end-card" class="screen-layer">
+      <div class="end-card-logos">
+        <img src="0age-logo.gif" alt="0age" class="end-logo">
+        <img src="0agent-logo.png" alt="0agent" class="end-logo">
+      </div>
+    </div>
+  </div>
+
+  <!-- Transport controls -->
+  <div id="controls">
+    <button id="play-btn" aria-label="Play/Pause">
+      <svg id="play-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+        <polygon points="4,2 18,10 4,18"/>
+      </svg>
+      <svg id="pause-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor" style="display:none;">
+        <rect x="3" y="2" width="5" height="16"/><rect x="12" y="2" width="5" height="16"/>
+      </svg>
+    </button>
+  </div>
+  <div id="progress-bar">
+    <div id="progress-fill"></div>
+  </div>
+
+  <script src="engine.js"></script>
+  <script src="liam-ui.js"></script>
+  <script src="caleb-ui.js"></script>
+  <script>
+    // Initialize UIs
+    liamUI.init(document.getElementById('liam-screen'));
+    calebUI.init(document.getElementById('caleb-screen'));
+  </script>
+  <script src="scenes.js"></script>
+  <script>
+    // Wire up controls
+    const playBtn = document.getElementById('play-btn');
+    const playIcon = document.getElementById('play-icon');
+    const pauseIcon = document.getElementById('pause-icon');
+    const progressBar = document.getElementById('progress-bar');
+    const progressFill = document.getElementById('progress-fill');
+
+    function updatePlayState() {
+      playIcon.style.display = engine.isPlaying ? 'none' : 'block';
+      pauseIcon.style.display = engine.isPlaying ? 'block' : 'none';
+    }
+
+    playBtn.addEventListener('click', () => {
+      engine.isPlaying ? engine.pause() : engine.play();
+      updatePlayState();
+    });
+
+    progressBar.addEventListener('click', (e) => {
+      const rect = progressBar.getBoundingClientRect();
+      const pct = (e.clientX - rect.left) / rect.width;
+      engine.seek(pct * engine.totalDuration);
+      updatePlayState();
+    });
+
+    engine.onTick = (time) => {
+      const pct = (time / engine.totalDuration) * 100;
+      progressFill.style.width = pct + '%';
+    };
+
+    const startScreen = document.getElementById('start-screen');
+    const startBtn = document.getElementById('start-btn');
+
+    let started = false;
+    function beginPlayback() {
+      if (started) return;
+      started = true;
+      startScreen.classList.add('hidden');
+      engine.play();
+      updatePlayState();
+    }
+
+    startBtn.addEventListener('click', beginPlayback);
+
+    // Directory toggle
+    const dirToggle = document.getElementById('dir-toggle');
+    const dirList = document.getElementById('dir-list');
+
+    dirToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dirList.classList.toggle('open');
+      dirToggle.textContent = dirList.classList.contains('open') ? 'directory ▴' : 'directory ▾';
+    });
+
+    // Section jump map — section name to event time
+    const sectionTimes = { inference1: 0, regression1: 196 };
+
+    document.querySelectorAll('.dir-item').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const section = btn.dataset.section;
+
+        started = true;
+        startScreen.classList.add('hidden');
+        liamUI.clear();
+        calebUI.clear();
+
+        if (section === 'inference2') {
+          engine.seek(196);
+          liamUI.show();
+          calebUI.hide();
+          engine.skipTo('Inference.2');
+        } else if (section === 'regression2') {
+          engine.seek(196);
+          calebUI.show();
+          liamUI.hide();
+          engine.skipTo('Regression.2');
+        } else if (section === 'inference3') {
+          engine.seek(196);
+          liamUI.show();
+          calebUI.hide();
+          engine.skipTo('Inference.3');
+        } else if (section === 'regression3') {
+          engine.seek(196);
+          calebUI.show();
+          liamUI.hide();
+          engine.skipTo('Regression.3');
+        } else if (section === 'distillation1') {
+          engine.seek(196);
+          engine.skipTo('Distillation.1');
+          liamUI.clear();
+          liamUI.setLightMode(true);
+          liamUI.show();
+          calebUI.hide();
+        } else {
+          const time = sectionTimes[section];
+          if (time !== undefined) engine.seek(time);
+        }
+        engine.play();
+        updatePlayState();
+      });
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (!startScreen.classList.contains('hidden')) {
+          beginPlayback();
+        } else {
+          engine.isPlaying ? engine.pause() : engine.play();
+          updatePlayState();
+        }
+      } else if (e.code === 'ArrowRight') {
+        engine.seek(engine.currentTime + 2);
+        updatePlayState();
+      } else if (e.code === 'ArrowLeft') {
+        engine.seek(Math.max(0, engine.currentTime - 2));
+        updatePlayState();
+      }
+    });
+  </script>
+</body>
+</html>
