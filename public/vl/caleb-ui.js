@@ -88,7 +88,7 @@ const calebUI = (() => {
     return jitter + microPause + punctuationPause(lastChar, baseDelay);
   }
 
-  function typeText(text, wpm = 160) {  // was 200, now 20% slower
+  function typeText(text, wpm = 160, onChar) {
     return new Promise(resolve => {
       const para = document.createElement('div');
       para.className = 'caleb-prose';
@@ -148,6 +148,7 @@ const calebUI = (() => {
           i += chunk;
           para.appendChild(cursor);
           scrollToBottom();
+          if (onChar && lastChar !== ' ') onChar();
           const id = setTimeout(typeNext, humanDelay(lastChar, baseDelay));
           activeAnimations.push(id);
         } else {

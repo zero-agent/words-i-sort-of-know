@@ -2,7 +2,7 @@
 // Drone motif + wave generator, triggered by scene events
 
 const vlAudio = (() => {
-  let ctx, sourceNode, sfxNode, masterGain, convolver, lpf;
+  let ctx, sourceNode, sfxNode, dryNode, masterGain, convolver, lpf;
   let initialized = false;
   let stopWavesFn = null;
 
@@ -70,18 +70,24 @@ const vlAudio = (() => {
     sfxLpf.Q.value = 0.5;
 
     const sfxDry = ctx.createGain();
-    sfxDry.gain.value = 0.5;
+    sfxDry.gain.value = 0.65;
 
     const sfxWet = ctx.createGain();
-    sfxWet.gain.value = 0.35;
+    sfxWet.gain.value = 0.15;  // much less reverb on SFX
 
     sfxNode = ctx.createGain();
     sfxNode.gain.value = 1;
     sfxNode.connect(sfxLpf);
     sfxLpf.connect(sfxDry);
-    sfxLpf.connect(convolver); // shares reverb with drones
+    sfxLpf.connect(sfxWet);
+    sfxWet.connect(convolver);
 
     sfxDry.connect(mixNode);
+
+    // Dry bus — NO reverb, NO filter (typing, shimmer)
+    dryNode = ctx.createGain();
+    dryNode.gain.value = 1;
+    dryNode.connect(masterGain);
 
     initialized = true;
   }
@@ -467,11 +473,11 @@ const vlAudio = (() => {
     bp.Q.value = 2;
     const e = ctx.createGain();
     e.gain.value = 0.25;
-    src.connect(bp); bp.connect(e); e.connect(sfxNode);
+    src.connect(bp); bp.connect(e); e.connect(dryNode);  // dry — no reverb
     src.start(t);
   }
 
-  // Shimmer/buzz for confirm wait — starts quiet, builds aggressively
+  // Shimmer/buzz — starts quiet, builds aggressively (dry bus, no reverb)
   let shimmerStop = null;
   function sfxShimmerStart() {
     if (!initialized) return;
@@ -493,14 +499,16 @@ const vlAudio = (() => {
     flt.frequency.linearRampToValueAtTime(1200, t + 6);
     flt.Q.value = 3;
     const e = ctx.createGain();
-    e.gain.setValueAtTime(0.01, t);
-    e.gain.linearRampToValueAtTime(0.25, t + 6);
+    e.gain.setValueAtTime(0.003, t);
+    e.gain.linearRampToValueAtTime(0.2, t + 6);
     o1.connect(flt); o2.connect(flt); o3.connect(flt);
-    flt.connect(e); e.connect(sfxNode);
+    flt.connect(e); e.connect(dryNode);  // dry — no reverb, cuts off clean
     o1.start(t); o2.start(t); o3.start(t);
     shimmerStop = () => {
-      e.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.2);
-      setTimeout(() => { try { o1.stop(); o2.stop(); o3.stop(); } catch(e) {} }, 400);
+      e.gain.cancelScheduledValues(ctx.currentTime);
+      e.gain.setValueAtTime(e.gain.value, ctx.currentTime);
+      e.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.08); // very sudden cutoff
+      setTimeout(() => { try { o1.stop(); o2.stop(); o3.stop(); } catch(e) {} }, 200);
       shimmerStop = null;
     };
   }

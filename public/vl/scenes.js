@@ -1166,10 +1166,8 @@
         break;
       case 'liam-confirm-wait':
         liamUI.showConfirmBar();
-        vlAudio.sfxShimmerStart();
         break;
       case 'liam-confirm-select':
-        vlAudio.sfxShimmerStop();
         vlAudio.sfxConfirm();
         liamUI.addConfirmSelect(evt.toolName);
         break;
@@ -1179,6 +1177,7 @@
         break;
       case 'liam-shimmer-dots':
         liamUI.showShimmerDots();
+        vlAudio.sfxShimmerStart();  // rising buzz starts AFTER confirm
         break;
       case 'liam-search':
         liamUI.hideThinking();
@@ -1189,6 +1188,7 @@
         break;
       case 'liam-logs':
         liamUI.hideThinking();
+        vlAudio.sfxShimmerStop();  // kill the buzz when logs arrive
         liamUI.addLogs(evt.content, evt.lineDelay || 400, () => vlAudio.sfxLog()).then(() => {
           if (evt.wait) engine.eventDone(); else liamUI.showThinking();
         });
@@ -1204,7 +1204,7 @@
         });
         break;
       case 'caleb-text':
-        calebUI.typeText(evt.content, evt.wpm || 200).then(() => {
+        calebUI.typeText(evt.content, evt.wpm || 200, () => vlAudio.sfxKeyclick()).then(() => {
           if (evt.wait) engine.eventDone();
         });
         break;
