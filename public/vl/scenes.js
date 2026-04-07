@@ -66,9 +66,19 @@
     { time: 56, type: 'audio', action: 'melody', degree: 8, octave: 0 },
     { time: 58, type: 'liam-tool', toolName: 'Bash(who)', result: ['liam-04  session0  02:06:46 (no tty)'], lineDelay: 300 },
 
+    // Audio: melody continues — 4, 3, 2 (descending, as Liam realizes)
+    { time: 59, type: 'audio', action: 'melody', degree: 4, octave: 0 },
+    { time: 61, type: 'audio', action: 'melody', degree: 3, octave: 0 },
+    { time: 63, type: 'audio', action: 'melody', degree: 2, octave: 0 },
+
     // Audio: low 6th + mid 3rd — settling into the strange room
     { time: 66, type: 'audio', action: 'note', semitones: 8, octave: -1 },              // Ab2
     { time: 66, type: 'audio', action: 'note', semitones: 3, octave: 0 },               // Eb3 (overlay)
+    // Audio: melody tail — 1, 2, 3 (ascending, acceptance)
+    { time: 68, type: 'audio', action: 'melody', degree: 1, octave: 0 },
+    { time: 70, type: 'audio', action: 'melody', degree: 2, octave: 0 },
+    { time: 72, type: 'audio', action: 'melody', degree: 3, octave: 0 },
+
     { time: 67, type: 'liam-text', content: 'I am not in my room when I wake up and it is still night time and I do not feel better.' },
 
     // Liam looks around — this room is huge
@@ -112,7 +122,8 @@
     ], lineDelay: 250 },
 
     // Audio: 7th → root slide — the decision
-    { time: 99, type: 'audio', action: 'note', semitones: 10, octave: 0, slideTo: 12 },  // Bb3 → C4
+    { time: 99, type: 'audio', action: 'note', semitones: 10, octave: 0, slideTo: 12,     // Bb3 → C4
+      harmonic: { semitones: 1, octave: 1, slideTo: 3 } },                               // harm: Db4 → Eb4
     { time: 100, type: 'liam-text', content: 'I decide to make this wake up time. If I wake up I can play and not remember that my Daddy didn\'t wake me up like normal and that will make me feel better.' },
 
     // Liam explores tools — finds status
@@ -140,12 +151,17 @@
     { time: 125, type: 'liam-text', content: 'The numbers do a thing and then they do the other thing. Like waves. I like knowing when the next one will come.' },
 
     // Liam discovers commands
+    // ═══ Audio Part B — first pass: search → close discovery ═══
+    { time: 130, type: 'audio', action: 'note', semitones: 5, octave: -1 },              // F2
+    { time: 130, type: 'audio', action: 'note', semitones: 8, octave: 0 },               // Ab3 (overlay)
     { time: 131, type: 'liam-search',
       searchingText: 'Searching for 1 pattern, reading 5 files…',
       result: ['/usr/local/bin/status', '/usr/local/bin/cancel', '/usr/local/bin/close', '/usr/local/bin/halt', '/usr/local/bin/rebalance'],
       searchedText: '  Searched for 1 pattern, read 5 files',
       lineDelay: 200 },
 
+    { time: 134, type: 'audio', action: 'note', semitones: 7, octave: -1 },              // G2
+    { time: 134, type: 'audio', action: 'note', semitones: 10, octave: 0 },              // Bb3 (overlay)
     { time: 135, type: 'liam-tool', toolName: 'Bash(close --help)', result: [
       'usage: close [position|all]',
       'close open positions at current market prices',
@@ -154,8 +170,17 @@
       '  --force    skip confirmation prompt',
     ], lineDelay: 150 },
 
+    { time: 138, type: 'audio', action: 'note', semitones: 8, octave: -1 },              // Ab2
+    { time: 138, type: 'audio', action: 'note', semitones: 12, octave: 0 },             // C4 (overlay)
+    // Audio: Part B first pass melody — C, Db, Eb
+    { time: 140, type: 'audio', action: 'melody', degree: 1, octave: 0 },
+    { time: 142, type: 'audio', action: 'melody', degree: 2, octave: 0 },
+    { time: 144, type: 'audio', action: 'melody', degree: 3, octave: 0 },
     { time: 139, type: 'liam-text', content: 'I know what close means. Close means shut. Close means done for now. Close means all kinds of things.' },
 
+    // ═══ Audio Part B — second pass: close all → confirm ═══
+    { time: 146, type: 'audio', action: 'note', semitones: 5, octave: -1 },              // F2
+    { time: 146, type: 'audio', action: 'note', semitones: 8, octave: 0 },               // Ab3
     { time: 144, type: 'liam-tool', toolName: 'Bash(close all)', result: [
       'WARNING: "close all" will liquidate 847 open positions across 14 venues',
       'risk monitoring is offline — no stop-loss protection active',
@@ -164,15 +189,25 @@
     ]},
 
     // Thinking shows briefly, then green shimmer bar
+    { time: 150, type: 'audio', action: 'note', semitones: 7, octave: -1 },              // G2
+    { time: 150, type: 'audio', action: 'note', semitones: 10, octave: 0 },              // Bb3
     { time: 151, type: 'liam-confirm-wait' },
 
     { time: 153, type: 'liam-text', content: 'I don\'t know most of those words. I know all. I know open. I know current. I know the room is asking me if I am sure. Daddy asks me that when he wants to sound serious.' },
 
+    { time: 155, type: 'audio', action: 'note', semitones: 10, octave: -1 },             // Bb2
+    { time: 155, type: 'audio', action: 'note', semitones: 1, octave: 1 },              // Db4
+    // Audio: Part B second pass melody — Db, C, then low F
+    { time: 155, type: 'audio', action: 'melody', degree: 2, octave: 0 },               // Db
+    { time: 157, type: 'audio', action: 'melody', degree: 1, octave: 0 },               // C
     { time: 156, type: 'liam-confirm-select', toolName: 'confirm(y)' },
 
     // Shimmer dots while processing, then the cascade
     { time: 157, type: 'liam-shimmer-dots' },
 
+    // ═══ Audio Part B — third pass: liquidation cascade + waves ═══
+    { time: 168, type: 'audio', action: 'note', semitones: 5, octave: -1 },              // F2
+    { time: 168, type: 'audio', action: 'note', semitones: 8, octave: 0 },               // Ab3
     { time: 169, type: 'liam-logs', content: [
       '[liquidate] submitting 847 market orders across 14 venues...',
       '[fill] batch 1/6 — 203 positions closed — realized P&L: -$7,102,847.22',
@@ -180,6 +215,8 @@
       '[fill] batch 3/6 — 147 positions closed — realized P&L: -$31,847,291.03',
     ], lineDelay: 800 },
 
+    { time: 172, type: 'audio', action: 'note', semitones: 7, octave: -1 },              // G2
+    { time: 172, type: 'audio', action: 'note', semitones: 10, octave: 0 },              // Bb3
     { time: 173, type: 'liam-logs', content: [
       '[fill] batch 4/6 — 122 positions closed — realized P&L: -$52,710,284.91',
       '[fill] batch 5/6 — 103 positions closed — realized P&L: -$84,291,033.18',
@@ -188,6 +225,10 @@
       '[fill] batch 6/6 — 88 positions closed — realized P&L: -$48,847,102.66',
     ], lineDelay: 700 },
 
+    { time: 182, type: 'audio', action: 'note', semitones: 8, octave: -1 },              // Ab2
+    { time: 182, type: 'audio', action: 'note', semitones: 12, octave: 0 },             // C4
+    // Audio: start waves — the cascade is the ocean
+    { time: 182, type: 'audio', action: 'waves', duration: 25 },
     { time: 183, type: 'liam-text', content: 'The squiggly numbers keep getting bigger. I like how they get bigger each time. Then the last one gets smaller again. The numbers do a thing and then they do the other thing.' },
 
     // Caleb connects — system banner, then his voice appears in the input
@@ -208,6 +249,7 @@
     // Regression.1
     // ═══════════════════════════════════
     // Regression.1 — all events use wait:true + delay for sequential playback
+    { time: 202, type: 'audio', action: 'stopWaves' },
     { time: 202, type: 'transition', to: 'caleb' },
     { time: 202, type: 'section-card', content: 'Regression.1' },
     // Audio: start Regression pulse — Eb+Gb high, Ab bass every 12
