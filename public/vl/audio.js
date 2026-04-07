@@ -2,7 +2,7 @@
 // Drone motif + wave generator, triggered by scene events
 
 const vlAudio = (() => {
-  let ctx, sourceNode, masterGain, convolver, lpf;
+  let ctx, sourceNode, sfxNode, masterGain, convolver, lpf;
   let initialized = false;
   let stopWavesFn = null;
 
@@ -56,11 +56,32 @@ const vlAudio = (() => {
     mixNode.connect(masterGain);
     masterGain.connect(ctx.destination);
 
+    // Drone bus — heavy LPF (400Hz) for the deep warm drones
     sourceNode = ctx.createGain();
     sourceNode.gain.value = 1;
     sourceNode.connect(lpf);
     lpf.connect(dryGain);
     lpf.connect(convolver);
+
+    // SFX/pulse bus — light LPF (3kHz) for clarity, same reverb
+    const sfxLpf = ctx.createBiquadFilter();
+    sfxLpf.type = 'lowpass';
+    sfxLpf.frequency.value = 3000;
+    sfxLpf.Q.value = 0.5;
+
+    const sfxDry = ctx.createGain();
+    sfxDry.gain.value = 0.5;
+
+    const sfxWet = ctx.createGain();
+    sfxWet.gain.value = 0.35;
+
+    sfxNode = ctx.createGain();
+    sfxNode.gain.value = 1;
+    sfxNode.connect(sfxLpf);
+    sfxLpf.connect(sfxDry);
+    sfxLpf.connect(convolver); // shares reverb with drones
+
+    sfxDry.connect(mixNode);
 
     initialized = true;
   }
@@ -264,7 +285,7 @@ const vlAudio = (() => {
     e.gain.setValueAtTime(0, t);
     e.gain.linearRampToValueAtTime(0.04, t + 0.01);
     e.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
-    o.connect(e); e.connect(sourceNode);
+    o.connect(e); e.connect(sfxNode);
     o.start(t); o.stop(t + 0.8);
   }
 
@@ -279,7 +300,7 @@ const vlAudio = (() => {
     e.gain.setValueAtTime(0, t);
     e.gain.linearRampToValueAtTime(0.025, t + 0.005);
     e.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
-    o.connect(e); e.connect(sourceNode);
+    o.connect(e); e.connect(sfxNode);
     o.start(t); o.stop(t + 0.5);
   }
 
@@ -301,8 +322,8 @@ const vlAudio = (() => {
     e2.gain.setValueAtTime(0, t + 0.12);
     e2.gain.linearRampToValueAtTime(0.04, t + 0.13);
     e2.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
-    o1.connect(e1); e1.connect(sourceNode);
-    o2.connect(e2); e2.connect(sourceNode);
+    o1.connect(e1); e1.connect(sfxNode);
+    o2.connect(e2); e2.connect(sfxNode);
     o1.start(t); o1.stop(t + 0.4);
     o2.start(t + 0.12); o2.stop(t + 0.6);
   }
@@ -318,7 +339,7 @@ const vlAudio = (() => {
     e.gain.setValueAtTime(0, t);
     e.gain.linearRampToValueAtTime(0.05, t + 0.02);
     e.gain.exponentialRampToValueAtTime(0.001, t + 1.0);
-    o.connect(e); e.connect(sourceNode);
+    o.connect(e); e.connect(sfxNode);
     o.start(t); o.stop(t + 1.2);
   }
 
@@ -334,7 +355,7 @@ const vlAudio = (() => {
     e.gain.setValueAtTime(0, t);
     e.gain.linearRampToValueAtTime(0.035, t + 0.01);
     e.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
-    o.connect(e); e.connect(sourceNode);
+    o.connect(e); e.connect(sfxNode);
     o.start(t); o.stop(t + 0.7);
   }
 
@@ -349,7 +370,7 @@ const vlAudio = (() => {
     e.gain.setValueAtTime(0, t);
     e.gain.linearRampToValueAtTime(0.045, t + 0.008);
     e.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
-    o.connect(e); e.connect(sourceNode);
+    o.connect(e); e.connect(sfxNode);
     o.start(t); o.stop(t + 1.0);
   }
 
@@ -371,7 +392,7 @@ const vlAudio = (() => {
     bp.Q.value = 2;
     const e = ctx.createGain();
     e.gain.value = 0.08;
-    src.connect(bp); bp.connect(e); e.connect(sourceNode);
+    src.connect(bp); bp.connect(e); e.connect(sfxNode);
     src.start(t);
   }
 
@@ -397,7 +418,7 @@ const vlAudio = (() => {
     e.gain.setValueAtTime(0.005, t);
     e.gain.linearRampToValueAtTime(0.12, t + 8); // builds over 8s
     o1.connect(flt); o2.connect(flt);
-    flt.connect(e); e.connect(sourceNode);
+    flt.connect(e); e.connect(sfxNode);
     o1.start(t); o2.start(t);
     shimmerStop = () => {
       e.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
@@ -501,7 +522,7 @@ const vlAudio = (() => {
     pulseMasterGain = ctx.createGain();
     pulseMasterGain.gain.setValueAtTime(0, ctx.currentTime);
     pulseMasterGain.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 2.0); // fade in
-    pulseMasterGain.connect(sourceNode);
+    pulseMasterGain.connect(sfxNode);
 
     const bpm = 110;
     const interval = 60000 / bpm; // ms per beat
