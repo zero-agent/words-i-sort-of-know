@@ -472,7 +472,7 @@ const vlAudio = (() => {
     bp.frequency.value = 2000 + Math.random() * 1000;
     bp.Q.value = 2;
     const e = ctx.createGain();
-    e.gain.value = 0.25;
+    e.gain.value = 0.175 * (0.5 + Math.random() * 0.5); // 70% base, random 50-100% of that
     src.connect(bp); bp.connect(e); e.connect(dryNode);  // dry — no reverb
     src.start(t);
   }
