@@ -1197,7 +1197,10 @@
         liamUI.hideThinking();
         { const isErr = evt.result && evt.result.some(l =>
             /^error:|^bash:.*No such file|not found$|^fatal:|host unreachable/i.test(l));
-          isErr ? vlAudio.sfxError() : vlAudio.sfxTool();
+          const isBirthday = evt.result && evt.result.some(l => /🎂|🎉/.test(l));
+          if (isBirthday) vlAudio.sfxBirthday();
+          else if (isErr) vlAudio.sfxError();
+          else vlAudio.sfxTool();
         }
         liamUI.addToolCall(evt.toolName, evt.result, evt.lineDelay || 300).then(() => {
           if (evt.wait) engine.eventDone(); else liamUI.showThinking();

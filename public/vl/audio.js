@@ -472,7 +472,7 @@ const vlAudio = (() => {
     bp.frequency.value = 2000 + Math.random() * 1000;
     bp.Q.value = 2;
     const e = ctx.createGain();
-    e.gain.value = 0.175 * (0.5 + Math.random() * 0.5); // 70% base, random 50-100% of that
+    e.gain.value = 0.12 * (0.5 + Math.random() * 0.5); // ~50% of original, random 50-100%
     src.connect(bp); bp.connect(e); e.connect(dryNode);  // dry — no reverb
     src.start(t);
   }
@@ -495,12 +495,12 @@ const vlAudio = (() => {
     // Filter opens over time
     const flt = ctx.createBiquadFilter();
     flt.type = 'lowpass';
-    flt.frequency.setValueAtTime(150, t);
-    flt.frequency.linearRampToValueAtTime(1200, t + 6);
+    flt.frequency.setValueAtTime(120, t);
+    flt.frequency.linearRampToValueAtTime(900, t + 12);  // slower ramp — 12s
     flt.Q.value = 3;
     const e = ctx.createGain();
-    e.gain.setValueAtTime(0.003, t);
-    e.gain.linearRampToValueAtTime(0.2, t + 6);
+    e.gain.setValueAtTime(0.001, t);
+    e.gain.linearRampToValueAtTime(0.1, t + 12);  // 50% quieter, slower build
     o1.connect(flt); o2.connect(flt); o3.connect(flt);
     flt.connect(e); e.connect(dryNode);  // dry — no reverb, cuts off clean
     o1.start(t); o2.start(t); o3.start(t);
