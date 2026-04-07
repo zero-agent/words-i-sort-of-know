@@ -1135,7 +1135,7 @@
         if (evt.wait) { console.log('calling eventDone'); engine.eventDone(); }
         break;
       case 'liam-caleb-type':
-        liamUI.calebType(evt.content, evt.wpm || 140, () => vlAudio.sfxKeyclick()).then(() => {
+        liamUI.calebType(evt.content, evt.wpm || 140, () => vlAudio.sfxKeyclick(), () => vlAudio.sfxKeyclickLoud()).then(() => {
           if (evt.wait) engine.eventDone();
         });
         break;

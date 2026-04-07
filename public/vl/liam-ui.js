@@ -63,6 +63,12 @@ const liamUI = (() => {
 
   function showThinking() {
     if (!thinkingEl || !output || confirming) return;
+    // If user input bar exists, insert thinking BEFORE it in the parent
+    // so it appears above the input bar, not hidden behind it
+    if (currentUserInput && currentUserInput.parentNode) {
+      // Add to output flow but ensure enough bottom padding for visibility
+      output.style.paddingBottom = '60px';
+    }
     // Append to end of output so it's the last thing visible
     output.appendChild(thinkingEl);
     // Force reflow then activate for transition
@@ -79,6 +85,7 @@ const liamUI = (() => {
     // Remove immediately — the new content replaces it in place
     if (thinkingEl.parentNode) thinkingEl.parentNode.removeChild(thinkingEl);
     thinkingEl.classList.remove('active');
+    if (output) output.style.paddingBottom = '';
   }
 
   function animateThinking() {
@@ -466,7 +473,7 @@ const liamUI = (() => {
   }
 
   // Type into input bar with human-like delay, then send
-  function calebType(text, wpm = 140, onChar) {
+  function calebType(text, wpm = 140, onChar, onSend) {
     return new Promise(resolve => {
       // Use existing pinned input bar, just clear it
       if (currentUserSpan) currentUserSpan.textContent = '';
@@ -490,6 +497,7 @@ const liamUI = (() => {
         } else {
           // Pause then "send"
           setTimeout(() => {
+            if (onSend) onSend();
             sendUserInput();
             resolve();
           }, 400);
