@@ -282,9 +282,15 @@ const vlAudio = (() => {
   // Sound effects — all in key (C minor)
   // ═══════════════════════════════════════
 
+  function sfxReady() {
+    if (!initialized) return false;
+    if (ctx.state === 'suspended') ctx.resume();
+    return true;
+  }
+
   // Birthday fanfare — da dada daaaah! Eb4 Eb4 Eb4 Ab4
   function sfxBirthday() {
-    if (!initialized) return;
+    if (!sfxReady()) return;
     const t = ctx.currentTime;
     const notes = [
       { f: freq(3, 1), start: 0,    dur: 0.15 },  // Eb4 (da)
@@ -307,7 +313,7 @@ const vlAudio = (() => {
 
   // Error tool call — low Gb2 with dampened plucky character
   function sfxError() {
-    if (!initialized) return;
+    if (!sfxReady()) return;
     const t = ctx.currentTime;
     const o = ctx.createOscillator();
     o.type = 'sawtooth';
@@ -332,7 +338,7 @@ const vlAudio = (() => {
 
   // Liam text ding — low Eb3
   function sfxText() {
-    if (!initialized) return;
+    if (!sfxReady()) return;
     const t = ctx.currentTime;
     const o = ctx.createOscillator();
     o.type = 'sine';
@@ -347,7 +353,7 @@ const vlAudio = (() => {
 
   // Soft ding for tool calls — triangle ping on the 5th (G4)
   function sfxTool() {
-    if (!initialized) return;
+    if (!sfxReady()) return;
     const t = ctx.currentTime;
     const o = ctx.createOscillator();
     o.type = 'sine';
@@ -362,7 +368,7 @@ const vlAudio = (() => {
 
   // Log line blip — Eb5, louder with a bright triangle layer
   function sfxLog() {
-    if (!initialized) return;
+    if (!sfxReady()) return;
     const t = ctx.currentTime;
     const o = ctx.createOscillator();
     o.type = 'sine';
@@ -386,7 +392,7 @@ const vlAudio = (() => {
 
   // Alert/pager ping — two-tone on the 6th (Ab4) then 7th (Bb4), sharper
   function sfxAlert() {
-    if (!initialized) return;
+    if (!sfxReady()) return;
     const t = ctx.currentTime;
     const o1 = ctx.createOscillator();
     o1.type = 'triangle';
@@ -410,7 +416,7 @@ const vlAudio = (() => {
 
   // Banner/system event — quick Ab5 then Bb5 (high, bright)
   function sfxBanner() {
-    if (!initialized) return;
+    if (!sfxReady()) return;
     const t = ctx.currentTime;
     const o1 = ctx.createOscillator();
     o1.type = 'sine';
@@ -434,7 +440,7 @@ const vlAudio = (() => {
 
   // Search blip — descending two-note on 5th→3rd (G4→Eb4)
   function sfxSearch() {
-    if (!initialized) return;
+    if (!sfxReady()) return;
     const t = ctx.currentTime;
     const o = ctx.createOscillator();
     o.type = 'sine';
@@ -450,7 +456,7 @@ const vlAudio = (() => {
 
   // Confirm ding — bright, on the root (C5)
   function sfxConfirm() {
-    if (!initialized) return;
+    if (!sfxReady()) return;
     const t = ctx.currentTime;
     const o = ctx.createOscillator();
     o.type = 'sine';
@@ -465,7 +471,7 @@ const vlAudio = (() => {
 
   // Typing click — very short noise burst
   function sfxKeyclick() {
-    if (!initialized) return;
+    if (!sfxReady()) return;
     const t = ctx.currentTime;
     const buf = ctx.createBuffer(1, ctx.sampleRate * 0.015, ctx.sampleRate);
     const data = buf.getChannelData(0);
@@ -487,7 +493,7 @@ const vlAudio = (() => {
 
   // Loud keyclick — enter key, paste action
   function sfxKeyclickLoud() {
-    if (!initialized) return;
+    if (!sfxReady()) return;
     const t = ctx.currentTime;
     const buf = ctx.createBuffer(1, ctx.sampleRate * 0.02, ctx.sampleRate);
     const data = buf.getChannelData(0);
@@ -509,7 +515,7 @@ const vlAudio = (() => {
   // Shimmer/buzz — starts quiet, builds aggressively (dry bus, no reverb)
   let shimmerStop = null;
   function sfxShimmerStart() {
-    if (!initialized) return;
+    if (!sfxReady()) return;
     const t = ctx.currentTime;
     // Buzzing static — detuned saws + noise
     const o1 = ctx.createOscillator();
@@ -559,7 +565,7 @@ const vlAudio = (() => {
 
   // Violin-ish staccato: triangle + slight saw, fast attack, moderate decay
   function playPulseNote(noteFreq, loud) {
-    if (!initialized) return;
+    if (!sfxReady()) return;
     const t = ctx.currentTime;
     const vol = loud ? 1.0 : 0.55;
 
@@ -593,7 +599,7 @@ const vlAudio = (() => {
   }
 
   function playPulseBass(noteFreq) {
-    if (!initialized) return;
+    if (!sfxReady()) return;
     const t = ctx.currentTime;
 
     const o = ctx.createOscillator();
@@ -627,7 +633,7 @@ const vlAudio = (() => {
   // Each chord plays for 12 beats then advances
   function pulseStart(chords) {
     if (pulseInterval) pulseClear();
-    if (!initialized) return;
+    if (!sfxReady()) return;
 
     pulseChords = chords;
     pulseChordIdx = 0;
