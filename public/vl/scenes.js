@@ -1241,7 +1241,7 @@
         { const isErr = evt.result && evt.result.some(l =>
             /^error:|^bash:.*No such file|not found$|^fatal:|host unreachable/i.test(l));
           const isBirthday = evt.result && evt.result.some(l => /🎂|🎉/.test(l));
-          if (isBirthday) vlAudio.sfxBirthday();
+          if (isBirthday) { vlAudio.sfxTool(); setTimeout(() => vlAudio.sfxBirthday(), 600); }
           else if (isErr) vlAudio.sfxError();
           else vlAudio.sfxTool();
         }
