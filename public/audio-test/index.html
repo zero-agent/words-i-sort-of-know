@@ -236,10 +236,10 @@ function playMelodyNote(audioCtx, destination, noteFreq, startTime, dur, iterati
     harm.frequency.value = noteFreq * 2;
     const hEnv = audioCtx.createGain();
     hEnv.gain.setValueAtTime(0, startTime);
-    hEnv.gain.linearRampToValueAtTime(0.03, startTime + rampUp + 0.1);
-    hEnv.gain.exponentialRampToValueAtTime(0.001, startTime + dur + 0.5);
+    hEnv.gain.linearRampToValueAtTime(0.03, startTime + attack + 0.1);
+    hEnv.gain.exponentialRampToValueAtTime(0.001, startTime + attack + decay + release);
     harm.connect(hEnv); hEnv.connect(destination);
-    harm.start(startTime + 0.05); harm.stop(startTime + dur + 1.5);
+    harm.start(startTime + 0.05); harm.stop(startTime + attack + decay + release + 0.5);
   }
 }
 
