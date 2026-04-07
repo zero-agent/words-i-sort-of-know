@@ -349,7 +349,7 @@ const vlAudio = (() => {
     o.frequency.value = freq(3, 0); // Eb3
     const e = ctx.createGain();
     e.gain.setValueAtTime(0, t);
-    e.gain.linearRampToValueAtTime(0.12, t + 0.01);
+    e.gain.linearRampToValueAtTime(0.156, t + 0.01);  // 30% louder
     e.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
     o.connect(e); e.connect(sfxNode);
     o.start(t); o.stop(t + 0.9);

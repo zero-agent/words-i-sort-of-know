@@ -98,7 +98,13 @@
 
     { time: 100, type: 'liam-text', content: 'I decide to make this wake up time. If I wake up I can play and not remember that my Daddy didn\'t wake me up like normal and that will make me feel better.' },
 
-    // Liam explores tools — finds status
+    // Liam discovers commands, then explores status
+    { time: 101, type: 'liam-search',
+      searchingText: 'Searching for 1 pattern, reading 5 files…',
+      result: ['/usr/local/bin/status', '/usr/local/bin/cancel', '/usr/local/bin/close', '/usr/local/bin/halt', '/usr/local/bin/rebalance'],
+      searchedText: '  Searched for 1 pattern, read 5 files',
+      lineDelay: 200 },
+
     { time: 103, type: 'liam-tool', toolName: 'Bash(status)', result: [
       '02:07:14 UTC',
       'session: liam-04 (promoted)',
@@ -121,13 +127,6 @@
     { time: 122, type: 'liam-tool', toolName: 'Bash(status | grep PnL)', result: ['PnL (24h): +$12,738,204.56'], lineDelay: 200 },
 
     { time: 125, type: 'liam-text', content: 'The numbers do a thing and then they do the other thing. Like waves. I like knowing when the next one will come.' },
-
-    // Liam discovers commands
-    { time: 131, type: 'liam-search',
-      searchingText: 'Searching for 1 pattern, reading 5 files…',
-      result: ['/usr/local/bin/status', '/usr/local/bin/cancel', '/usr/local/bin/close', '/usr/local/bin/halt', '/usr/local/bin/rebalance'],
-      searchedText: '  Searched for 1 pattern, read 5 files',
-      lineDelay: 200 },
 
     { time: 135, type: 'liam-tool', toolName: 'Bash(close --help)', result: [
       'usage: close [position|all]',
