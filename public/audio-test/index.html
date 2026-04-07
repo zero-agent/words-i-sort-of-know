@@ -92,8 +92,8 @@ function playNote(audioCtx, destination, noteFreq, startTime, iteration, slideTo
   const rampUp = 2.2;   // slow ramp up
   const rampDown = 1.3;  // steeper ramp down
 
-  // High notes (above ~200Hz) play at 50% volume so lows dominate
-  const vol = noteFreq > 200 ? 0.5 : 1.0;
+  // High notes quieter, low notes boosted
+  const vol = noteFreq > 200 ? 0.5 : 1.6;
 
   // Main oscillator — triangle wave
   const osc = audioCtx.createOscillator();
@@ -215,14 +215,14 @@ function playMelodyNote(audioCtx, destination, noteFreq, startTime, dur, iterati
 
   const env = audioCtx.createGain();
   env.gain.setValueAtTime(0, startTime);
-  env.gain.linearRampToValueAtTime(0.16, startTime + attack);
-  env.gain.exponentialRampToValueAtTime(0.04, startTime + attack + decay);
+  env.gain.linearRampToValueAtTime(0.096, startTime + attack);
+  env.gain.exponentialRampToValueAtTime(0.024, startTime + attack + decay);
   env.gain.exponentialRampToValueAtTime(0.001, startTime + attack + decay + release);
 
   const env2 = audioCtx.createGain();
   env2.gain.setValueAtTime(0, startTime);
-  env2.gain.linearRampToValueAtTime(0.07, startTime + attack);
-  env2.gain.exponentialRampToValueAtTime(0.02, startTime + attack + decay);
+  env2.gain.linearRampToValueAtTime(0.042, startTime + attack);
+  env2.gain.exponentialRampToValueAtTime(0.012, startTime + attack + decay);
   env2.gain.exponentialRampToValueAtTime(0.001, startTime + attack + decay + release);
 
   osc.connect(env); env.connect(destination);
