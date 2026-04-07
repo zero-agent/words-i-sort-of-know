@@ -714,15 +714,25 @@ const vlAudio = (() => {
     if (ctx.state === 'suspended') {
       await ctx.resume();
     }
-    // If context is closed (some browsers do this on long background), re-init
     if (ctx.state === 'closed') {
       initialized = false;
       await init();
     }
   }
 
+  // Force resume — close old context and re-init fresh (for repeated tab returns)
+  async function forceResume() {
+    if (ctx) {
+      try {
+        if (ctx.state !== 'closed') await ctx.close();
+      } catch(e) {}
+    }
+    initialized = false;
+    await init();
+  }
+
   return {
-    init, play, melody, playNote, playMelody, startWaves, stopWaves, setDroneVol, mute, unmute, resume, freq, DEG,
+    init, play, melody, playNote, playMelody, startWaves, stopWaves, setDroneVol, mute, unmute, resume, forceResume, freq, DEG,
     sfxText, sfxTool, sfxError, sfxLog, sfxAlert, sfxBanner, sfxSearch, sfxConfirm, sfxBirthday,
     sfxKeyclick, sfxKeyclickLoud, sfxShimmerStart, sfxShimmerStop,
     pulseStart, pulseSetChords, pulseClear

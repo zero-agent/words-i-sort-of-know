@@ -235,13 +235,11 @@
 
     resumeBtn.addEventListener('click', () => {
       resumeOverlay.style.display = 'none';
-      // Resume must happen synchronously in the click handler for mobile browsers
-      vlAudio.resume().then(() => {
+      // Force re-init audio if context died, then play
+      vlAudio.forceResume().then(() => {
         engine.play();
         updatePlayState();
       });
-      // Also try a direct new context touch as fallback
-      try { new AudioContext().resume(); } catch(e) {}
     });
   </script>
 </body>
