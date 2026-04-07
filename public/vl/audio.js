@@ -704,8 +704,8 @@ const vlAudio = (() => {
 
   function setDroneVol(v) { droneVol = v; }
 
-  function resume() {
-    if (ctx && ctx.state === 'suspended') ctx.resume();
+  async function resume() {
+    if (ctx && ctx.state === 'suspended') await ctx.resume();
   }
 
   return {

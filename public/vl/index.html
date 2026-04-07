@@ -229,9 +229,9 @@
       }
     });
 
-    resumeBtn.addEventListener('click', () => {
+    resumeBtn.addEventListener('click', async () => {
       resumeOverlay.style.display = 'none';
-      vlAudio.resume();
+      await vlAudio.resume();
       engine.play();
       updatePlayState();
     });
