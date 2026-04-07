@@ -410,6 +410,152 @@ const vlAudio = (() => {
     if (shimmerStop) shimmerStop();
   }
 
+  // ═══════════════════════════════════════
+  // Pulse engine — rhythmic score for Regression sections
+  // 110 BPM staccato strings with configurable chord voicings
+  // ═══════════════════════════════════════
+
+  let pulseInterval = null;
+  let pulsebeat = 0;
+  let pulseChords = null;   // array of { high: [freq, freq], bass: freq, every: N }
+  let pulseChordIdx = 0;
+  let pulseMasterGain = null;
+
+  // Violin-ish staccato: triangle + slight saw, fast attack, moderate decay
+  function playPulseNote(noteFreq, loud) {
+    if (!initialized) return;
+    const t = ctx.currentTime;
+    const vol = loud ? 1.0 : 0.55;
+
+    // Main voice — triangle (warm string-like)
+    const o1 = ctx.createOscillator();
+    o1.type = 'triangle';
+    o1.frequency.value = noteFreq;
+
+    // Slight saw layer for rosin/bite
+    const o2 = ctx.createOscillator();
+    o2.type = 'sawtooth';
+    o2.frequency.value = noteFreq * 1.001;
+
+    // Fast attack, moderate decay — staccato bow stroke
+    const env = ctx.createGain();
+    env.gain.setValueAtTime(0, t);
+    env.gain.linearRampToValueAtTime(0.045 * vol, t + 0.015);
+    env.gain.exponentialRampToValueAtTime(0.008 * vol, t + 0.18);
+    env.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+
+    const env2 = ctx.createGain();
+    env2.gain.setValueAtTime(0, t);
+    env2.gain.linearRampToValueAtTime(0.012 * vol, t + 0.015);
+    env2.gain.exponentialRampToValueAtTime(0.002 * vol, t + 0.15);
+    env2.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+
+    o1.connect(env); o2.connect(env2);
+    env.connect(pulseMasterGain); env2.connect(pulseMasterGain);
+    o1.start(t); o2.start(t);
+    o1.stop(t + 0.6); o2.stop(t + 0.6);
+  }
+
+  function playPulseBass(noteFreq) {
+    if (!initialized) return;
+    const t = ctx.currentTime;
+
+    const o = ctx.createOscillator();
+    o.type = 'triangle';
+    o.frequency.value = noteFreq;
+
+    const sub = ctx.createOscillator();
+    sub.type = 'sine';
+    sub.frequency.value = noteFreq * 0.5;
+
+    const env = ctx.createGain();
+    env.gain.setValueAtTime(0, t);
+    env.gain.linearRampToValueAtTime(0.07, t + 0.03);
+    env.gain.exponentialRampToValueAtTime(0.015, t + 0.4);
+    env.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
+
+    const subEnv = ctx.createGain();
+    subEnv.gain.setValueAtTime(0, t);
+    subEnv.gain.linearRampToValueAtTime(0.05, t + 0.03);
+    subEnv.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
+    subEnv.gain.exponentialRampToValueAtTime(0.001, t + 1.5);
+
+    o.connect(env); sub.connect(subEnv);
+    env.connect(pulseMasterGain); subEnv.connect(pulseMasterGain);
+    o.start(t); sub.start(t);
+    o.stop(t + 1.6); sub.stop(t + 1.6);
+  }
+
+  // Start the pulse with a chord progression
+  // chords: array of { high: [semitones, semitones], highOctave, bass: semitones, bassOctave }
+  // Each chord plays for 12 beats then advances
+  function pulseStart(chords) {
+    if (pulseInterval) pulseClear();
+    if (!initialized) return;
+
+    pulseChords = chords;
+    pulseChordIdx = 0;
+    pulsebeat = 0;
+
+    // Dedicated gain for the pulse so we can fade it
+    pulseMasterGain = ctx.createGain();
+    pulseMasterGain.gain.setValueAtTime(0, ctx.currentTime);
+    pulseMasterGain.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 2.0); // fade in
+    pulseMasterGain.connect(sourceNode);
+
+    const bpm = 110;
+    const interval = 60000 / bpm; // ms per beat
+
+    function tick() {
+      const chord = pulseChords[pulseChordIdx];
+      if (!chord) return;
+
+      const loud = (pulsebeat % 3) === 0; // 1 loud, 2 soft pattern in 3s
+
+      // Play high notes (harmony)
+      const hOct = chord.highOctave != null ? chord.highOctave : 0;
+      for (const semi of chord.high) {
+        playPulseNote(freq(semi, hOct), loud);
+      }
+
+      // Bass every 12 beats
+      if (pulsebeat % 12 === 0 && chord.bass != null) {
+        const bOct = chord.bassOctave != null ? chord.bassOctave : -1;
+        playPulseBass(freq(chord.bass, bOct));
+      }
+
+      pulsebeat++;
+      // Advance chord every 12 beats
+      if (pulsebeat % 12 === 0 && pulseChordIdx < pulseChords.length - 1) {
+        pulseChordIdx++;
+      }
+    }
+
+    tick(); // first beat immediately
+    pulseInterval = setInterval(tick, interval);
+  }
+
+  // Change the chord progression mid-pulse
+  function pulseSetChords(chords) {
+    pulseChords = chords;
+    pulseChordIdx = 0;
+    pulsebeat = 0;
+  }
+
+  function pulseClear() {
+    if (pulseInterval) { clearInterval(pulseInterval); pulseInterval = null; }
+    if (pulseMasterGain) {
+      pulseMasterGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.5);
+      setTimeout(() => {
+        try { pulseMasterGain.disconnect(); } catch(e) {}
+        pulseMasterGain = null;
+      }, 2000);
+    }
+    pulseChords = null;
+    pulsebeat = 0;
+    pulseChordIdx = 0;
+  }
+
   function resume() {
     if (ctx && ctx.state === 'suspended') ctx.resume();
   }
@@ -417,6 +563,7 @@ const vlAudio = (() => {
   return {
     init, play, melody, playNote, playMelody, startWaves, stopWaves, resume, freq, DEG,
     sfxTool, sfxLog, sfxAlert, sfxBanner, sfxSearch, sfxConfirm,
-    sfxKeyclick, sfxShimmerStart, sfxShimmerStop
+    sfxKeyclick, sfxShimmerStart, sfxShimmerStop,
+    pulseStart, pulseSetChords, pulseClear
   };
 })();

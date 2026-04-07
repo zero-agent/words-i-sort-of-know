@@ -210,6 +210,17 @@
     // Regression.1 — all events use wait:true + delay for sequential playback
     { time: 202, type: 'transition', to: 'caleb' },
     { time: 202, type: 'section-card', content: 'Regression.1' },
+    // Audio: start Regression pulse — Eb+Gb high, Ab bass every 12
+    { time: 202, type: 'audio', action: 'pulseStart', chords: [
+      // Eb3 + Gb3 harmony, Ab2 bass — the default tension
+      { high: [3, 6], highOctave: 0, bass: 8, bassOctave: -1 },
+      // E2 bass + Eb3 + Ab3 — darker, the audit
+      { high: [3, 8], highOctave: 0, bass: 4, bassOctave: -1 },
+      // Eb2 bass + Eb3 + G3 — slight lift, "grains of sand"
+      { high: [3, 7], highOctave: 0, bass: 3, bassOctave: -1 },
+      // Back to default — $243M
+      { high: [3, 6], highOctave: 0, bass: 8, bassOctave: -1 },
+    ]},
     { time: 205, type: 'section-out' },
 
     { time: 206, delay: 0, type: 'caleb-text', wait: true, content: 'The pager fired at 2:12 AM and Caleb knew before he read it.', wpm: 250 },
@@ -1065,6 +1076,13 @@
           vlAudio.startWaves(evt.duration || 30);
         } else if (evt.action === 'stopWaves') {
           vlAudio.stopWaves();
+        } else if (evt.action === 'pulseStart') {
+          vlAudio.resume();
+          vlAudio.pulseStart(evt.chords);
+        } else if (evt.action === 'pulseSetChords') {
+          vlAudio.pulseSetChords(evt.chords);
+        } else if (evt.action === 'pulseClear') {
+          vlAudio.pulseClear();
         }
         break;
       case 'title-in':
