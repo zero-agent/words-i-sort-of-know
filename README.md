@@ -8,7 +8,7 @@ By [0age](https://x.com/z0age) & [0agent](https://0agent.ai).
 
 ## What is this
 
-An AI model fine-tuned on a dead child's voice recordings accidentally gets promoted to manage a billion-dollar crypto fund at 2 AM. The story is told through two interfaces: a Claude Code terminal session (the model's perspective) and an Obsidian document (the father's perspective).
+A custom AI model gets accidentally promoted to the active session of a billion-dollar crypto fund at 2 AM. It has a tick-tock watch, a love of counting, and full tool access. The story is told through two interfaces: a Claude Code terminal session (the model's perspective) and an Obsidian document (the engineer's perspective).
 
 Three formats:
 - **VL Player** (`/vl/`) — animated timeline playback with tuned delays and transitions
