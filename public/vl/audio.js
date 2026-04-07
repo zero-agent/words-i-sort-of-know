@@ -274,6 +274,21 @@ const vlAudio = (() => {
   // Sound effects — all in key (C minor)
   // ═══════════════════════════════════════
 
+  // Liam text ding — low Eb3
+  function sfxText() {
+    if (!initialized) return;
+    const t = ctx.currentTime;
+    const o = ctx.createOscillator();
+    o.type = 'sine';
+    o.frequency.value = freq(3, 0); // Eb3
+    const e = ctx.createGain();
+    e.gain.setValueAtTime(0, t);
+    e.gain.linearRampToValueAtTime(0.12, t + 0.01);
+    e.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
+    o.connect(e); e.connect(sfxNode);
+    o.start(t); o.stop(t + 0.9);
+  }
+
   // Soft ding for tool calls — triangle ping on the 5th (G4)
   function sfxTool() {
     if (!initialized) return;
@@ -283,7 +298,7 @@ const vlAudio = (() => {
     o.frequency.value = freq(7, 1); // G4
     const e = ctx.createGain();
     e.gain.setValueAtTime(0, t);
-    e.gain.linearRampToValueAtTime(0.04, t + 0.01);
+    e.gain.linearRampToValueAtTime(0.12, t + 0.01);
     e.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
     o.connect(e); e.connect(sfxNode);
     o.start(t); o.stop(t + 0.8);
@@ -298,7 +313,7 @@ const vlAudio = (() => {
     o.frequency.value = freq(3, 2); // Eb5
     const e = ctx.createGain();
     e.gain.setValueAtTime(0, t);
-    e.gain.linearRampToValueAtTime(0.025, t + 0.005);
+    e.gain.linearRampToValueAtTime(0.08, t + 0.005);
     e.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
     o.connect(e); e.connect(sfxNode);
     o.start(t); o.stop(t + 0.5);
@@ -316,11 +331,11 @@ const vlAudio = (() => {
     o2.frequency.value = freq(10, 1); // Bb4
     const e1 = ctx.createGain();
     e1.gain.setValueAtTime(0, t);
-    e1.gain.linearRampToValueAtTime(0.05, t + 0.008);
+    e1.gain.linearRampToValueAtTime(0.15, t + 0.008);
     e1.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
     const e2 = ctx.createGain();
     e2.gain.setValueAtTime(0, t + 0.12);
-    e2.gain.linearRampToValueAtTime(0.04, t + 0.13);
+    e2.gain.linearRampToValueAtTime(0.12, t + 0.13);
     e2.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
     o1.connect(e1); e1.connect(sfxNode);
     o2.connect(e2); e2.connect(sfxNode);
@@ -328,19 +343,28 @@ const vlAudio = (() => {
     o2.start(t + 0.12); o2.stop(t + 0.6);
   }
 
-  // Banner/system event — low warm tone on root (C3)
+  // Banner/system event — quick Ab5 then Bb5 (high, bright)
   function sfxBanner() {
     if (!initialized) return;
     const t = ctx.currentTime;
-    const o = ctx.createOscillator();
-    o.type = 'triangle';
-    o.frequency.value = freq(0, 0); // C3
-    const e = ctx.createGain();
-    e.gain.setValueAtTime(0, t);
-    e.gain.linearRampToValueAtTime(0.05, t + 0.02);
-    e.gain.exponentialRampToValueAtTime(0.001, t + 1.0);
-    o.connect(e); e.connect(sfxNode);
-    o.start(t); o.stop(t + 1.2);
+    const o1 = ctx.createOscillator();
+    o1.type = 'sine';
+    o1.frequency.value = freq(8, 2); // Ab5
+    const o2 = ctx.createOscillator();
+    o2.type = 'sine';
+    o2.frequency.value = freq(10, 2); // Bb5
+    const e1 = ctx.createGain();
+    e1.gain.setValueAtTime(0, t);
+    e1.gain.linearRampToValueAtTime(0.1, t + 0.008);
+    e1.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+    const e2 = ctx.createGain();
+    e2.gain.setValueAtTime(0, t + 0.08);
+    e2.gain.linearRampToValueAtTime(0.08, t + 0.09);
+    e2.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+    o1.connect(e1); e1.connect(sfxNode);
+    o2.connect(e2); e2.connect(sfxNode);
+    o1.start(t); o1.stop(t + 0.3);
+    o2.start(t + 0.08); o2.stop(t + 0.5);
   }
 
   // Search blip — descending two-note on 5th→3rd (G4→Eb4)
@@ -353,7 +377,7 @@ const vlAudio = (() => {
     o.frequency.exponentialRampToValueAtTime(freq(3, 1), t + 0.15); // → Eb4
     const e = ctx.createGain();
     e.gain.setValueAtTime(0, t);
-    e.gain.linearRampToValueAtTime(0.035, t + 0.01);
+    e.gain.linearRampToValueAtTime(0.1, t + 0.01);
     e.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
     o.connect(e); e.connect(sfxNode);
     o.start(t); o.stop(t + 0.7);
@@ -368,7 +392,7 @@ const vlAudio = (() => {
     o.frequency.value = freq(0, 2); // C5
     const e = ctx.createGain();
     e.gain.setValueAtTime(0, t);
-    e.gain.linearRampToValueAtTime(0.045, t + 0.008);
+    e.gain.linearRampToValueAtTime(0.14, t + 0.008);
     e.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
     o.connect(e); e.connect(sfxNode);
     o.start(t); o.stop(t + 1.0);
@@ -388,10 +412,10 @@ const vlAudio = (() => {
     // Bandpass to give it a woody click character
     const bp = ctx.createBiquadFilter();
     bp.type = 'bandpass';
-    bp.frequency.value = 2000 + Math.random() * 1000; // slight variation
+    bp.frequency.value = 2000 + Math.random() * 1000;
     bp.Q.value = 2;
     const e = ctx.createGain();
-    e.gain.value = 0.08;
+    e.gain.value = 0.25;
     src.connect(bp); bp.connect(e); e.connect(sfxNode);
     src.start(t);
   }
@@ -583,7 +607,7 @@ const vlAudio = (() => {
 
   return {
     init, play, melody, playNote, playMelody, startWaves, stopWaves, resume, freq, DEG,
-    sfxTool, sfxLog, sfxAlert, sfxBanner, sfxSearch, sfxConfirm,
+    sfxText, sfxTool, sfxLog, sfxAlert, sfxBanner, sfxSearch, sfxConfirm,
     sfxKeyclick, sfxShimmerStart, sfxShimmerStop,
     pulseStart, pulseSetChords, pulseClear
   };
