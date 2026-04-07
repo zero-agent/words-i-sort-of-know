@@ -64,6 +64,26 @@ const sequence = [
   { name: 'low 6th + mid 3rd', semitones: 8, octave: -1, overlay: { semitones: 3, octave: 0 } }, // Ab2 + Eb3
   { name: 'mid 7th → root',   semitones: 10, octave: 0, slideTo: 12,                // Bb3 → C4
     harmonic: { semitones: 1, octave: 1, slideTo: 3 } },                             // harm: Db4 → Eb4
+
+  // ═══ Part B — first pass ═══
+  { name: 'low F + high Ab',  semitones: 5,  octave: -1, overlay: { semitones: 8, octave: 0 } },   // F2 + Ab3
+  { name: 'low G + high Bb',  semitones: 7,  octave: -1, overlay: { semitones: 10, octave: 0 } },  // G2 + Bb3
+  { name: 'low Ab + high C',  semitones: 8,  octave: -1, overlay: { semitones: 12, octave: 0 },    // Ab2 + C4
+    melody: [1, 2, 3], melodyOctave: 0, melodyDelay: 0.5 },                                        // mid C, Db, Eb
+
+  // ═══ Part B — second pass ═══
+  { name: 'low F + high Ab',  semitones: 5,  octave: -1, overlay: { semitones: 8, octave: 0 } },   // F2 + Ab3
+  { name: 'low G + high Bb',  semitones: 7,  octave: -1, overlay: { semitones: 10, octave: 0 } },  // G2 + Bb3
+  { name: 'low Bb + high Db', semitones: 10, octave: -1, overlay: { semitones: 1, octave: 1 } },   // Bb2 + Db4
+  { name: 'melody ♪',         semitones: 10, octave: -1,                                           // Bb2 drone holds
+    melody: [2, 1], melodyOctave: 0, melodyDelay: 0.0,                                             // mid Db, C
+    melodyTail: [{ deg: 4, octave: -1 }] },                                                        // then low F (custom)
+
+  // ═══ Part B — third pass (no melody, just silence) ═══
+  { name: 'low F + high Ab',  semitones: 5,  octave: -1, overlay: { semitones: 8, octave: 0 } },   // F2 + Ab3
+  { name: 'low G + high Bb',  semitones: 7,  octave: -1, overlay: { semitones: 10, octave: 0 } },  // G2 + Bb3
+  { name: 'low Ab + high C',  semitones: 8,  octave: -1, overlay: { semitones: 12, octave: 0 } },  // Ab2 + C4
+  { name: '(silence)',        rest: true },                                                         // hold for melody duration
 ];
 
 function freq(semitones, octave) {
@@ -317,19 +337,34 @@ async function startDrone() {
         playNote(ctx, sourceNode, overlayFreq, startTime, iter, null);
       }
 
+      // Rest — silence for one bar
+      if (note.rest) {
+        await new Promise(r => setTimeout(r, noteSpacing * 1000));
+      }
       // Play melody starting after delay
-      if (note.melody) {
-        const beatDur = noteSpacing / 6; // each beat = 1/6 of the long note spacing
-        const melayDelay = (note.melodyDelay || 0) * noteSpacing; // fraction of bar
+      else if (note.melody) {
+        const beatDur = noteSpacing / 6;
+        const melayDelay = (note.melodyDelay || 0) * noteSpacing;
         const melOct = note.melodyOctave != null ? note.melodyOctave : 0;
+        let totalBeats = 0;
         for (let m = 0; m < note.melody.length; m++) {
           const deg = note.melody[m];
           const mFreq = freq(DEG[deg], melOct);
           const mStart = startTime + melayDelay + m * beatDur;
           playMelodyNote(ctx, sourceNode, mFreq, mStart, beatDur * 0.9, iter);
+          totalBeats++;
         }
-        // Melody spans: delay + 9 beats + release tail. Wait for full duration
-        const totalMelodyTime = melayDelay + note.melody.length * beatDur + 2.0; // +2s for release tail
+        // melodyTail — extra notes with custom octaves
+        if (note.melodyTail) {
+          for (let t = 0; t < note.melodyTail.length; t++) {
+            const tail = note.melodyTail[t];
+            const tFreq = freq(DEG[tail.deg], tail.octave);
+            const tStart = startTime + melayDelay + (note.melody.length + t) * beatDur;
+            playMelodyNote(ctx, sourceNode, tFreq, tStart, beatDur * 0.9, iter);
+            totalBeats++;
+          }
+        }
+        const totalMelodyTime = melayDelay + totalBeats * beatDur + 2.0;
         await new Promise(r => setTimeout(r, Math.max(noteSpacing, totalMelodyTime) * 1000));
       } else {
         // Wait for note duration + gap
