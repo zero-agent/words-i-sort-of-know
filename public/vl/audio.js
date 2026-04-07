@@ -522,8 +522,8 @@ const vlAudio = (() => {
     flt.frequency.linearRampToValueAtTime(900, t + 12);  // slower ramp — 12s
     flt.Q.value = 3;
     const e = ctx.createGain();
-    e.gain.setValueAtTime(0.001, t);
-    e.gain.linearRampToValueAtTime(0.1, t + 12);  // 50% quieter, slower build
+    e.gain.setValueAtTime(0.0005, t);
+    e.gain.linearRampToValueAtTime(0.05, t + 12);  // half of previous
     o1.connect(flt); o2.connect(flt); o3.connect(flt);
     flt.connect(e); e.connect(dryNode);  // dry — no reverb, cuts off clean
     o1.start(t); o2.start(t); o3.start(t);

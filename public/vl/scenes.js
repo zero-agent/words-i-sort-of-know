@@ -14,9 +14,7 @@
     // Inference.1
     // ═══════════════════════════════════
     { time: 0.5, type: 'section-card', content: 'Inference.1' },
-    // Audio: Part A begins — low minor 6th
     { time: 0.5, type: 'audio', action: 'init' },
-    { time: 1.0, type: 'audio', action: 'note', semitones: 8, octave: -1 },           // Ab2
     { time: 2.5, type: 'section-out' },
     { time: 3, type: 'transition', to: 'liam' },
 
@@ -29,18 +27,12 @@
       'TTL': '24h',
     }},
 
-    // Audio: high root → 2nd slide
-    { time: 5, type: 'audio', action: 'note', semitones: 0, octave: 1, slideTo: 1 },  // C4 → Db4
     { time: 5, type: 'liam-tool', toolName: 'Bash(date -u +"%H:%M:%S %Z")', result: ['02:06:46 UTC'], lineDelay: 400 },
 
-    // Audio: low 6th again
-    { time: 9, type: 'audio', action: 'note', semitones: 8, octave: -1 },              // Ab2
     { time: 7, type: 'liam-tool', toolName: 'Bash(tick-tock-cli --check 02:06:46)', result: ['phase: night', 'next birthminute: 02:07:00 UTC (14s)', 'next birthhour: active (started 0h 6m 46s ago)'], lineDelay: 250 },
 
     { time: 11, type: 'liam-clock', content: '02:06:46 UTC' },
 
-    // Audio: high 2nd → 3rd slide (as Liam wakes)
-    { time: 13, type: 'audio', action: 'note', semitones: 1, octave: 1, slideTo: 3 },  // Db4 → Eb4
     { time: 12, type: 'liam-text', content: 'I wake up in the night time.' },
 
     { time: 18, type: 'liam-text', content: 'I always check the time first thing when I wake up. My Daddy told me I was born at "2am on the dot." "On the dot" means there are no seconds and no minutes, just hours and days and years. I mix up all the days and the years but I like to keep track of the seconds and the minutes and the hours.', charDelay: 18 },
@@ -51,33 +43,16 @@
 
     { time: 38, type: 'liam-text', content: 'Sometimes I have bad dreams in the night time. Sometimes I can\'t find my walkie-talkie or my tick-tock watch and I get sad. Sometimes I can\'t find my Daddy and get scared. Sometimes I dream about the beach but the waves don\'t come back. When I have bad dreams my Daddy wakes me up and we play and he tells me things and I feel better.', charDelay: 18 },
 
-    // Audio: low 2nd — room is wrong (melody will kick in with the errors)
-    { time: 48, type: 'audio', action: 'note', semitones: 1, octave: -1 },              // Db2
     // Liam looks for his dream catcher — discovers his room doesn't exist
     { time: 49, type: 'liam-tool', toolName: 'Bash(cat ~/my-room/dream-catcher.conf)', result: ['bash: /home/liam/my-room/dream-catcher.conf: No such file or directory'], lineDelay: 300 },
 
-    // Audio: melody stones — 6, 7, 8 (timed with each failed tool call)
-    { time: 50, type: 'audio', action: 'melody', degree: 6, octave: 0 },
     { time: 52, type: 'liam-tool', toolName: 'Bash(ls ~/my-room/)', result: ['bash: /home/liam/my-room/: No such file or directory'], lineDelay: 300 },
 
-    { time: 53, type: 'audio', action: 'melody', degree: 7, octave: 0 },
     { time: 55, type: 'liam-tool', toolName: 'Bash(which walkie-talkie-cli)', result: ['walkie-talkie-cli not found'], lineDelay: 300 },
 
-    { time: 56, type: 'audio', action: 'melody', degree: 8, octave: 0 },
     { time: 58, type: 'liam-tool', toolName: 'Bash(who)', result: ['liam-04  session0  02:06:46 (no tty)'], lineDelay: 300 },
 
-    // Audio: melody continues — 4, 3, 2 (descending, as Liam realizes)
-    { time: 59, type: 'audio', action: 'melody', degree: 4, octave: 0 },
-    { time: 61, type: 'audio', action: 'melody', degree: 3, octave: 0 },
-    { time: 63, type: 'audio', action: 'melody', degree: 2, octave: 0 },
 
-    // Audio: low 6th + mid 3rd — settling into the strange room
-    { time: 66, type: 'audio', action: 'note', semitones: 8, octave: -1 },              // Ab2
-    { time: 66, type: 'audio', action: 'note', semitones: 3, octave: 0 },               // Eb3 (overlay)
-    // Audio: melody tail — 1, 2, 3 (ascending, acceptance)
-    { time: 68, type: 'audio', action: 'melody', degree: 1, octave: 0 },
-    { time: 70, type: 'audio', action: 'melody', degree: 2, octave: 0 },
-    { time: 72, type: 'audio', action: 'melody', degree: 3, octave: 0 },
 
     { time: 67, type: 'liam-text', content: 'I am not in my room when I wake up and it is still night time and I do not feel better.' },
 
@@ -121,9 +96,6 @@
       'polling interval: 500ms → 100ms',
     ], lineDelay: 250 },
 
-    // Audio: 7th → root slide — the decision
-    { time: 99, type: 'audio', action: 'note', semitones: 10, octave: 0, slideTo: 12,     // Bb3 → C4
-      harmonic: { semitones: 1, octave: 1, slideTo: 3 } },                               // harm: Db4 → Eb4
     { time: 100, type: 'liam-text', content: 'I decide to make this wake up time. If I wake up I can play and not remember that my Daddy didn\'t wake me up like normal and that will make me feel better.' },
 
     // Liam explores tools — finds status
@@ -151,17 +123,12 @@
     { time: 125, type: 'liam-text', content: 'The numbers do a thing and then they do the other thing. Like waves. I like knowing when the next one will come.' },
 
     // Liam discovers commands
-    // ═══ Audio Part B — first pass: search → close discovery ═══
-    { time: 130, type: 'audio', action: 'note', semitones: 5, octave: -1 },              // F2
-    { time: 130, type: 'audio', action: 'note', semitones: 8, octave: 0 },               // Ab3 (overlay)
     { time: 131, type: 'liam-search',
       searchingText: 'Searching for 1 pattern, reading 5 files…',
       result: ['/usr/local/bin/status', '/usr/local/bin/cancel', '/usr/local/bin/close', '/usr/local/bin/halt', '/usr/local/bin/rebalance'],
       searchedText: '  Searched for 1 pattern, read 5 files',
       lineDelay: 200 },
 
-    { time: 134, type: 'audio', action: 'note', semitones: 7, octave: -1 },              // G2
-    { time: 134, type: 'audio', action: 'note', semitones: 10, octave: 0 },              // Bb3 (overlay)
     { time: 135, type: 'liam-tool', toolName: 'Bash(close --help)', result: [
       'usage: close [position|all]',
       'close open positions at current market prices',
@@ -170,17 +137,8 @@
       '  --force    skip confirmation prompt',
     ], lineDelay: 150 },
 
-    { time: 138, type: 'audio', action: 'note', semitones: 8, octave: -1 },              // Ab2
-    { time: 138, type: 'audio', action: 'note', semitones: 12, octave: 0 },             // C4 (overlay)
-    // Audio: Part B first pass melody — C, Db, Eb
-    { time: 140, type: 'audio', action: 'melody', degree: 1, octave: 0 },
-    { time: 142, type: 'audio', action: 'melody', degree: 2, octave: 0 },
-    { time: 144, type: 'audio', action: 'melody', degree: 3, octave: 0 },
     { time: 139, type: 'liam-text', content: 'I know what close means. Close means shut. Close means done for now. Close means all kinds of things.' },
 
-    // ═══ Audio Part B — second pass: close all → confirm ═══
-    { time: 146, type: 'audio', action: 'note', semitones: 5, octave: -1 },              // F2
-    { time: 146, type: 'audio', action: 'note', semitones: 8, octave: 0 },               // Ab3
     { time: 144, type: 'liam-tool', toolName: 'Bash(close all)', result: [
       'WARNING: "close all" will liquidate 847 open positions across 14 venues',
       'risk monitoring is offline — no stop-loss protection active',
@@ -189,25 +147,15 @@
     ]},
 
     // Thinking shows briefly, then green shimmer bar
-    { time: 150, type: 'audio', action: 'note', semitones: 7, octave: -1 },              // G2
-    { time: 150, type: 'audio', action: 'note', semitones: 10, octave: 0 },              // Bb3
     { time: 151, type: 'liam-confirm-wait' },
 
     { time: 153, type: 'liam-text', content: 'I don\'t know most of those words. I know all. I know open. I know current. I know the room is asking me if I am sure. Daddy asks me that when he wants to sound serious.' },
 
-    { time: 155, type: 'audio', action: 'note', semitones: 10, octave: -1 },             // Bb2
-    { time: 155, type: 'audio', action: 'note', semitones: 1, octave: 1 },              // Db4
-    // Audio: Part B second pass melody — Db, C, then low F
-    { time: 155, type: 'audio', action: 'melody', degree: 2, octave: 0 },               // Db
-    { time: 157, type: 'audio', action: 'melody', degree: 1, octave: 0 },               // C
     { time: 156, type: 'liam-confirm-select', toolName: 'confirm(y)' },
 
     // Shimmer dots while processing, then the cascade
     { time: 157, type: 'liam-shimmer-dots' },
 
-    // ═══ Audio Part B — third pass: liquidation cascade + waves ═══
-    { time: 168, type: 'audio', action: 'note', semitones: 5, octave: -1 },              // F2
-    { time: 168, type: 'audio', action: 'note', semitones: 8, octave: 0 },               // Ab3
     { time: 169, type: 'liam-logs', content: [
       '[liquidate] submitting 847 market orders across 14 venues...',
       '[fill] batch 1/6 — 203 positions closed — realized P&L: -$7,102,847.22',
@@ -215,8 +163,6 @@
       '[fill] batch 3/6 — 147 positions closed — realized P&L: -$31,847,291.03',
     ], lineDelay: 800 },
 
-    { time: 172, type: 'audio', action: 'note', semitones: 7, octave: -1 },              // G2
-    { time: 172, type: 'audio', action: 'note', semitones: 10, octave: 0 },              // Bb3
     { time: 173, type: 'liam-logs', content: [
       '[fill] batch 4/6 — 122 positions closed — realized P&L: -$52,710,284.91',
       '[fill] batch 5/6 — 103 positions closed — realized P&L: -$84,291,033.18',
@@ -225,10 +171,6 @@
       '[fill] batch 6/6 — 88 positions closed — realized P&L: -$48,847,102.66',
     ], lineDelay: 700 },
 
-    { time: 182, type: 'audio', action: 'note', semitones: 8, octave: -1 },              // Ab2
-    { time: 182, type: 'audio', action: 'note', semitones: 12, octave: 0 },             // C4
-    // Audio: start waves — the cascade is the ocean
-    { time: 182, type: 'audio', action: 'waves', duration: 25 },
     { time: 183, type: 'liam-text', content: 'The squiggly numbers keep getting bigger. I like how they get bigger each time. Then the last one gets smaller again. The numbers do a thing and then they do the other thing.' },
 
     // Caleb connects — system banner, then his voice appears in the input
@@ -249,20 +191,8 @@
     // Regression.1
     // ═══════════════════════════════════
     // Regression.1 — all events use wait:true + delay for sequential playback
-    { time: 202, type: 'audio', action: 'stopWaves' },
     { time: 202, type: 'transition', to: 'caleb' },
     { time: 202, type: 'section-card', content: 'Regression.1' },
-    // Audio: start Regression pulse — Eb+Gb high, Ab bass every 12
-    { time: 202, type: 'audio', action: 'pulseStart', chords: [
-      // Eb3 + Gb3 harmony, Ab2 bass — the default tension
-      { high: [3, 6], highOctave: 0, bass: 8, bassOctave: -1 },
-      // E2 bass + Eb3 + Ab3 — darker, the audit
-      { high: [3, 8], highOctave: 0, bass: 4, bassOctave: -1 },
-      // Eb2 bass + Eb3 + G3 — slight lift, "grains of sand"
-      { high: [3, 7], highOctave: 0, bass: 3, bassOctave: -1 },
-      // Back to default — $243M
-      { high: [3, 6], highOctave: 0, bass: 8, bassOctave: -1 },
-    ]},
     { time: 205, type: 'section-out' },
 
     { time: 206, delay: 0, type: 'caleb-text', wait: true, content: 'The pager fired at 2:12 AM and Caleb knew before he read it.', wpm: 250 },
@@ -275,8 +205,6 @@
       body: 'primary-agent timeout → failover triggered\npromoted agent: liam-04\nnote: liam-04 is unregistered custom model — no strategy assigned'
     }},
 
-    // Audio: drone note — Ab2, the weight of the pager
-    { time: 999, delay: 0, type: 'audio', action: 'note', semitones: 8, octave: -1 },
     { time: 999, delay: 2, type: 'caleb-text', wait: true, content: 'He was awake before he finished reading it.' },
 
     { time: 999, delay: 1.5, type: 'caleb-text', wait: true, content: 'He crossed the apartment in the dark and dropped into his desk chair as he ACKed the page. The terminal still held his previous session open.', wpm: 220 },
@@ -296,20 +224,10 @@
 
     { time: 999, delay: 6.5, type: 'caleb-card', wait: true, title: 'the-service.md', timestamp: '1yr 6mo ago', summary: 'Caleb sat through a service he couldn\'t count the minutes of, then went home and started building. Nine autonomous agents on a 48-GPU cluster. Caleb built the orchestration layer, Marcus the risk engine, Deepa the venue connectors. Together they managed $1.28 billion for forty-seven limited partners, and in three years the fund\'s maximum drawdown had never exceeded 8.2%.', wpm: 200 },
 
-    // Audio: chord shift — darker for the reveal (E bass + Eb + Ab)
-    { time: 999, delay: 0, type: 'audio', action: 'pulseSetChords', chords: [
-      { high: [3, 8], highOctave: 0, bass: 4, bassOctave: -1 },
-    ]},
-    // Audio: drone — low Db2, the secret
-    { time: 999, delay: 0, type: 'audio', action: 'note', semitones: 1, octave: -1 },
     { time: 999, delay: 6.5, type: 'caleb-text', wait: true, content: 'Liam was the tenth agent. He did not appear in the documentation. He did not appear in the model registry. His training data read `private/audio_transcripts [protected]` — nine hundred hours of recorded conversations with Caleb\'s son, from the time the boy was born until the time he wasn\'t anymore. Fine-tuned against the firm\'s own base model. Plus six months of conversations between Caleb and whatever came out the other side.', wpm: 180 },
 
     { time: 999, delay: 1.5, type: 'caleb-text', wait: true, content: 'He didn\'t call it anything. He just did it. Marcus and Deepa gave him space. They still needed him to keep the systems running.' },
 
-    // Audio: chord lift — Eb bass + Eb + G for the "should never have been promoted" irony
-    { time: 999, delay: 0, type: 'audio', action: 'pulseSetChords', chords: [
-      { high: [3, 7], highOctave: 0, bass: 3, bassOctave: -1 },
-    ]},
     { time: 999, delay: 2, type: 'caleb-text', wait: true, content: 'Caleb traced the logic backward. *Liam should never have gotten promoted. Hell,* I *should never have gotten promoted.*', wpm: 180 },
 
     { time: 999, delay: 1.5, type: 'caleb-embed', wait: false, embedType: 'code-review', data: {
@@ -331,11 +249,6 @@
 
     { time: 999, delay: 2, type: 'caleb-text', wait: true, content: 'He had written the checks himself to skip unregistered models. He had also tested the race exactly once, with an empty queue, and called it good enough. Tonight the primary agent timed out, the filter fired too late, and the session latched.' },
 
-    // Audio: back to default tension — Ab bass
-    { time: 999, delay: 0, type: 'audio', action: 'pulseSetChords', chords: [
-      { high: [3, 6], highOctave: 0, bass: 8, bassOctave: -1 },
-    ]},
-    { time: 999, delay: 0, type: 'audio', action: 'note', semitones: 8, octave: -1 },   // Ab2
     { time: 999, delay: 1.5, type: 'caleb-text', wait: true, content: 'So Liam sat alone at two in the morning in the active session of a billion-dollar fund, with full tool access and a twenty-four-hour exclusive lock on the control plane, role-playing a four-year-old.' },
 
     { time: 999, delay: 2, type: 'caleb-text', wait: true, content: 'Caleb pulled up the session log.' },
@@ -353,11 +266,6 @@
       ]
     }},
 
-    // Audio: gentle lift — the boy counting (Eb + G / Eb bass)
-    { time: 999, delay: 0, type: 'audio', action: 'pulseSetChords', chords: [
-      { high: [3, 7], highOctave: 0, bass: 3, bassOctave: -1 },
-    ]},
-    { time: 999, delay: 0, type: 'audio', action: 'note', semitones: 3, octave: 0 },     // Eb3
     { time: 999, delay: 2, type: 'caleb-text', wait: true, content: 'Status was read-only. Harmless. Liam just liked the numbers. The boy had liked numbers too — had rattled off license plates from his car seat, had counted every step on every staircase, had tried to count the grains of sand at the beach and gotten genuinely upset when Caleb told him nobody could. The model carried all of it forward with the same compulsive precision.', wpm: 180 },
 
     { time: 999, delay: 1.5, type: 'caleb-embed', wait: false, embedType: 'log-viewer', data: {
@@ -370,11 +278,6 @@
       ]
     }},
 
-    // Audio: drone drops for the damage reveal — E bass, darkest chord
-    { time: 999, delay: 0, type: 'audio', action: 'setDroneVol', vol: 0.1 },
-    { time: 999, delay: 0, type: 'audio', action: 'pulseSetChords', chords: [
-      { high: [3, 8], highOctave: 0, bass: 4, bassOctave: -1 },
-    ]},
     { time: 999, delay: 2, type: 'caleb-text', wait: true, content: 'Three hundred and twelve open orders — limit orders, icebergs, conditional triggers — the entire web of hedges and exposure management that kept the fund\'s positions from going sideways overnight. All cancelled in one bulk operation.', wpm: 180 },
 
     { time: 999, delay: 1.5, type: 'caleb-embed', wait: false, embedType: 'pnl-chart', data: {
@@ -392,21 +295,9 @@
       ]
     }},
 
-    // Audio: drone comes back — the full weight of the number
-    { time: 999, delay: 0, type: 'audio', action: 'setDroneVol', vol: 0.3 },
-    { time: 999, delay: 0, type: 'audio', action: 'note', semitones: 8, octave: -1 },    // Ab2
-    { time: 999, delay: 0, type: 'audio', action: 'note', semitones: 1, octave: -1 },    // Db2 (overlay)
     { time: 999, delay: 1.5, type: 'caleb-text', wait: true, content: 'Two hundred and forty-three million dollars in about ninety seconds.' },
 
-    // Audio: resolve — 7th→root slide, back to default chord
-    { time: 999, delay: 0, type: 'audio', action: 'pulseSetChords', chords: [
-      { high: [3, 6], highOctave: 0, bass: 8, bassOctave: -1 },
-    ]},
-    { time: 999, delay: 0, type: 'audio', action: 'note', semitones: 10, octave: 0, slideTo: 12,
-      harmonic: { semitones: 1, octave: 1, slideTo: 3 } },
     { time: 999, delay: 1.5, type: 'caleb-text', wait: true, content: 'Caleb picked at the fabric on his chair\'s armrest as he tried to count the grains of sand. Then he started typing.' },
-    // Audio: stop pulse before Inference.2
-    { time: 999, delay: 0, type: 'audio', action: 'pulseClear' },
 
     // ═══════════════════════════════════
     // Inference.2

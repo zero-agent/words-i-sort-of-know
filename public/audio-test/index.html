@@ -33,12 +33,13 @@
   </style>
 </head>
 <body>
-  <h1>drone motif test</h1>
+  <h1>audio tests</h1>
   <p class="meta">
     long note — 3.5s envelope with slow ramp up, steeper ramp down, heavy reverb<br>
     iteration 1: pure tones · iteration 2: layered harmonics
   </p>
-  <button id="play" onclick="startDrone()">play</button>
+  <button id="play" onclick="startDrone()">play drone motif</button>
+  <button id="playPulse" onclick="startRegressionPulse()">play regression pulse</button>
   <div class="note-display" id="noteDisplay"></div>
   <div class="iteration" id="iterDisplay"></div>
 
@@ -467,7 +468,133 @@ async function startDrone() {
 
   playing = false;
   btn.disabled = false;
-  btn.textContent = 'play again';
+  btn.textContent = 'play drone motif';
+}
+
+// ═══════════════════════════════════════
+// Regression pulse test
+// ═══════════════════════════════════════
+async function startRegressionPulse() {
+  const btn = document.getElementById('playPulse');
+  if (playing) return;
+  playing = true;
+  btn.disabled = true;
+  btn.textContent = 'playing...';
+
+  if (!ctx) {
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+
+  masterGain = ctx.createGain();
+  masterGain.gain.value = 0.7;
+  masterGain.connect(ctx.destination);
+
+  // Light LPF for pulse
+  const pulseLpf = ctx.createBiquadFilter();
+  pulseLpf.type = 'lowpass';
+  pulseLpf.frequency.value = 3000;
+  pulseLpf.Q.value = 0.5;
+  pulseLpf.connect(masterGain);
+
+  const noteDisplay = document.getElementById('noteDisplay');
+  const iterDisplay = document.getElementById('iterDisplay');
+
+  const bpm = 110;
+  const interval = 60000 / bpm;
+  let beat = 0;
+
+  // Chord progression: 12 beats each
+  const chords = [
+    { name: 'Eb+Gb / Ab bass', high: [3, 6], highOctave: 0, bass: 8, bassOctave: -1 },
+    { name: 'Eb+Ab / E bass',  high: [3, 8], highOctave: 0, bass: 4, bassOctave: -1 },
+    { name: 'Eb+G / Eb bass',  high: [3, 7], highOctave: 0, bass: 3, bassOctave: -1 },
+    { name: 'Eb+Gb / Ab bass', high: [3, 6], highOctave: 0, bass: 8, bassOctave: -1 },
+  ];
+  let chordIdx = 0;
+  const totalBeats = chords.length * 12;
+
+  function playPulseHit(noteFreq, loud) {
+    const t = ctx.currentTime;
+    const vol = loud ? 1.0 : 0.55;
+    const o1 = ctx.createOscillator();
+    o1.type = 'triangle';
+    o1.frequency.value = noteFreq;
+    const o2 = ctx.createOscillator();
+    o2.type = 'sawtooth';
+    o2.frequency.value = noteFreq * 1.001;
+    const e1 = ctx.createGain();
+    e1.gain.setValueAtTime(0, t);
+    e1.gain.linearRampToValueAtTime(0.045 * vol, t + 0.015);
+    e1.gain.exponentialRampToValueAtTime(0.008 * vol, t + 0.18);
+    e1.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+    const e2 = ctx.createGain();
+    e2.gain.setValueAtTime(0, t);
+    e2.gain.linearRampToValueAtTime(0.012 * vol, t + 0.015);
+    e2.gain.exponentialRampToValueAtTime(0.002 * vol, t + 0.15);
+    e2.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+    o1.connect(e1); o2.connect(e2);
+    e1.connect(pulseLpf); e2.connect(pulseLpf);
+    o1.start(t); o2.start(t);
+    o1.stop(t + 0.6); o2.stop(t + 0.6);
+  }
+
+  function playPulseBass(noteFreq) {
+    const t = ctx.currentTime;
+    const o = ctx.createOscillator();
+    o.type = 'triangle';
+    o.frequency.value = noteFreq;
+    const sub = ctx.createOscillator();
+    sub.type = 'sine';
+    sub.frequency.value = noteFreq * 0.5;
+    const e = ctx.createGain();
+    e.gain.setValueAtTime(0, t);
+    e.gain.linearRampToValueAtTime(0.07, t + 0.03);
+    e.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
+    const se = ctx.createGain();
+    se.gain.setValueAtTime(0, t);
+    se.gain.linearRampToValueAtTime(0.05, t + 0.03);
+    se.gain.exponentialRampToValueAtTime(0.001, t + 1.5);
+    o.connect(e); sub.connect(se);
+    e.connect(pulseLpf); se.connect(pulseLpf);
+    o.start(t); sub.start(t);
+    o.stop(t + 1.6); sub.stop(t + 1.6);
+  }
+
+  await new Promise(resolve => {
+    function tick() {
+      if (beat >= totalBeats) { resolve(); return; }
+      const chord = chords[chordIdx];
+      const loud = (beat % 3) === 0;
+
+      noteDisplay.textContent = chord.name;
+      noteDisplay.classList.add('active');
+      iterDisplay.textContent = `beat ${beat + 1}/${totalBeats} · chord ${chordIdx + 1}/${chords.length}`;
+
+      const hOct = chord.highOctave != null ? chord.highOctave : 0;
+      for (const semi of chord.high) {
+        playPulseHit(freq(semi, hOct), loud);
+      }
+      if (beat % 12 === 0 && chord.bass != null) {
+        const bOct = chord.bassOctave != null ? chord.bassOctave : -1;
+        playPulseBass(freq(chord.bass, bOct));
+      }
+
+      beat++;
+      if (beat % 12 === 0 && chordIdx < chords.length - 1) chordIdx++;
+
+      setTimeout(tick, interval);
+    }
+    tick();
+  });
+
+  noteDisplay.textContent = '';
+  noteDisplay.classList.remove('active');
+  iterDisplay.textContent = 'done';
+  await new Promise(r => setTimeout(r, 2000));
+
+  playing = false;
+  btn.disabled = false;
+  btn.textContent = 'play regression pulse';
 }
 </script>
 </body>
