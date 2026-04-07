@@ -49,6 +49,16 @@
     </div>
   </div>
 
+  <!-- Resume overlay (shown when returning from background) -->
+  <div id="resume-overlay" style="display:none; position:fixed; inset:0; z-index:100;
+    background:rgba(0,0,0,0.85); display:none; align-items:center; justify-content:center;">
+    <button id="resume-btn" style="font-family:'JetBrains Mono',monospace; font-size:1.1rem;
+      font-weight:300; color:#8aad7a; background:none; border:1px solid rgba(138,173,122,0.4);
+      padding:1em 2.5em; border-radius:6px; cursor:pointer; letter-spacing:0.08em;">
+      resume playback
+    </button>
+  </div>
+
   <!-- Transport controls -->
   <div id="controls">
     <button id="play-btn" aria-label="Play/Pause">
@@ -196,6 +206,34 @@
         engine.seek(Math.max(0, engine.currentTime - 2));
         updatePlayState();
       }
+    });
+
+    // ═══ Pause on tab hide, show resume overlay on return ═══
+    const resumeOverlay = document.getElementById('resume-overlay');
+    const resumeBtn = document.getElementById('resume-btn');
+    let wasPlayingBeforeHide = false;
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        // Tab went to background — pause everything
+        wasPlayingBeforeHide = engine.isPlaying;
+        if (engine.isPlaying) {
+          engine.pause();
+          updatePlayState();
+        }
+      } else {
+        // Tab came back — show resume overlay if it was playing
+        if (wasPlayingBeforeHide && started) {
+          resumeOverlay.style.display = 'flex';
+        }
+      }
+    });
+
+    resumeBtn.addEventListener('click', () => {
+      resumeOverlay.style.display = 'none';
+      vlAudio.resume();
+      engine.play();
+      updatePlayState();
     });
   </script>
 </body>

@@ -35,7 +35,7 @@ const vlAudio = (() => {
     ctx = new (window.AudioContext || window.webkitAudioContext)();
 
     masterGain = ctx.createGain();
-    masterGain.gain.value = 0.7;
+    masterGain.gain.value = 1.4;  // boosted for mobile
 
     lpf = ctx.createBiquadFilter();
     lpf.type = 'lowpass';
