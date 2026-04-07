@@ -6,6 +6,7 @@ const vlAudio = (() => {
   let initialized = false;
   let stopWavesFn = null;
   let droneVol = 0.3;  // default drone volume
+  let muted = false;   // mute all SFX during skips
 
   const ROOT = 130.81; // C3
   const DEG = { 1: 0, 2: 1, 3: 3, 4: 5, 5: 7, 6: 8, 7: 10, 8: 12 };
@@ -283,10 +284,13 @@ const vlAudio = (() => {
   // ═══════════════════════════════════════
 
   function sfxReady() {
-    if (!initialized) return false;
+    if (!initialized || muted) return false;
     if (ctx.state === 'suspended') ctx.resume();
     return true;
   }
+
+  function mute() { muted = true; }
+  function unmute() { muted = false; }
 
   // Birthday fanfare — da dada daaaah! Eb4 Eb4 Eb4 Ab4
   function sfxBirthday() {
@@ -705,7 +709,7 @@ const vlAudio = (() => {
   }
 
   return {
-    init, play, melody, playNote, playMelody, startWaves, stopWaves, setDroneVol, resume, freq, DEG,
+    init, play, melody, playNote, playMelody, startWaves, stopWaves, setDroneVol, mute, unmute, resume, freq, DEG,
     sfxText, sfxTool, sfxError, sfxLog, sfxAlert, sfxBanner, sfxSearch, sfxConfirm, sfxBirthday,
     sfxKeyclick, sfxKeyclickLoud, sfxShimmerStart, sfxShimmerStop,
     pulseStart, pulseSetChords, pulseClear

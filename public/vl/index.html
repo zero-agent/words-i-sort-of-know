@@ -138,6 +138,7 @@
 
         started = true;
         startScreen.classList.add('hidden');
+        vlAudio.mute();  // silence SFX during skip
         liamUI.clear();
         calebUI.clear();
 
@@ -172,6 +173,8 @@
           const time = sectionTimes[section];
           if (time !== undefined) engine.seek(time);
         }
+        // Unmute after a brief delay so the skip's instant events don't sound
+        setTimeout(() => vlAudio.unmute(), 100);
         engine.play();
         updatePlayState();
       });
