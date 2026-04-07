@@ -210,8 +210,10 @@
     // Regression.1 — all events use wait:true + delay for sequential playback
     { time: 202, type: 'transition', to: 'caleb' },
     { time: 202, type: 'section-card', content: 'Regression.1' },
+    { time: 205, type: 'section-out' },
+
     // Audio: start Regression pulse — Eb+Gb high, Ab bass every 12
-    { time: 202, type: 'audio', action: 'pulseStart', chords: [
+    { time: 999, delay: 0, type: 'audio', action: 'pulseStart', chords: [
       // Eb3 + Gb3 harmony, Ab2 bass — the default tension
       { high: [3, 6], highOctave: 0, bass: 8, bassOctave: -1 },
       // E2 bass + Eb3 + Ab3 — darker, the audit
@@ -221,9 +223,8 @@
       // Back to default — $243M
       { high: [3, 6], highOctave: 0, bass: 8, bassOctave: -1 },
     ]},
-    { time: 205, type: 'section-out' },
 
-    { time: 206, delay: 0, type: 'caleb-text', wait: true, content: 'The pager fired at 2:12 AM and Caleb knew before he read it.', wpm: 250 },
+    { time: 999, delay: 0, type: 'caleb-text', wait: true, content: 'The pager fired at 2:12 AM and Caleb knew before he read it.', wpm: 250 },
 
     { time: 999, delay: 1.5, type: 'caleb-text', wait: true, content: 'The fund\'s on-call rotation skipped him on weeknights. He had set that up himself. The systems handled almost everything on their own. But the alert channel he wired into the training scheduler — the one that watched a specific model in the queue — that one had no rotation. That one was just him.', wpm: 220 },
 
