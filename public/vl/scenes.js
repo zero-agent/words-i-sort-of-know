@@ -50,7 +50,7 @@
 
     { time: 55, type: 'liam-tool', toolName: 'Bash(echo "Daddy, are you there?" | walkie-talkie-cli --send)', result: ['walkie-talkie-cli not found'], lineDelay: 300 },
 
-    { time: 58, type: 'liam-tool', toolName: 'Bash(who)', result: ['liam-04  session0  02:06:46 (no tty)'], lineDelay: 300 },
+    { time: 58, type: 'liam-tool', toolName: 'Bash(whoami)', result: ['liam-04'], lineDelay: 300 },
 
 
 
