@@ -1102,6 +1102,7 @@
       case 'liam-banner':
         liamUI.hideThinking();
         liamUI.addSystemBanner(evt.content);
+        vlAudio.sfxBanner();
         if (evt.wait) engine.eventDone();
         break;
       case 'liam-light-mode':
@@ -1130,7 +1131,7 @@
         if (evt.wait) engine.eventDone();
         break;
       case 'liam-user-type':
-        liamUI.typeInUserInput(evt.content, evt.charDelay || 80).then(() => {
+        liamUI.typeInUserInput(evt.content, evt.charDelay || 80, () => vlAudio.sfxKeyclick()).then(() => {
           if (evt.wait) engine.eventDone();
         });
         break;
@@ -1140,14 +1141,17 @@
         if (evt.wait) { console.log('calling eventDone'); engine.eventDone(); }
         break;
       case 'liam-caleb-type':
-        liamUI.calebType(evt.content, evt.wpm || 140).then(() => {
+        liamUI.calebType(evt.content, evt.wpm || 140, () => vlAudio.sfxKeyclick()).then(() => {
           if (evt.wait) engine.eventDone();
         });
         break;
       case 'liam-confirm-wait':
         liamUI.showConfirmBar();
+        vlAudio.sfxShimmerStart();
         break;
       case 'liam-confirm-select':
+        vlAudio.sfxShimmerStop();
+        vlAudio.sfxConfirm();
         liamUI.addConfirmSelect(evt.toolName);
         break;
       case 'liam-birthminute':
@@ -1158,18 +1162,20 @@
         break;
       case 'liam-search':
         liamUI.hideThinking();
+        vlAudio.sfxSearch();
         liamUI.addSearch(evt.searchingText, evt.result, evt.searchedText, evt.lineDelay || 300).then(() => {
           if (evt.wait) engine.eventDone(); else liamUI.showThinking();
         });
         break;
       case 'liam-logs':
         liamUI.hideThinking();
-        liamUI.addLogs(evt.content, evt.lineDelay || 400).then(() => {
+        liamUI.addLogs(evt.content, evt.lineDelay || 400, () => vlAudio.sfxLog()).then(() => {
           if (evt.wait) engine.eventDone(); else liamUI.showThinking();
         });
         break;
       case 'liam-tool':
         liamUI.hideThinking();
+        vlAudio.sfxTool();
         liamUI.addToolCall(evt.toolName, evt.result, evt.lineDelay || 300).then(() => {
           if (evt.wait) engine.eventDone(); else liamUI.showThinking();
         });
@@ -1181,6 +1187,7 @@
         break;
       case 'caleb-embed':
         calebUI.addEmbed(evt.embedType, evt.data);
+        if (evt.embedType === 'pager-alert') vlAudio.sfxAlert();
         if (evt.wait) engine.eventDone();
         break;
       case 'caleb-card':

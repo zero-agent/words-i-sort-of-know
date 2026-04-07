@@ -249,9 +249,174 @@ const vlAudio = (() => {
     playMelody(f, iteration || 1);
   }
 
+  // ═══════════════════════════════════════
+  // Sound effects — all in key (C minor)
+  // ═══════════════════════════════════════
+
+  // Soft ding for tool calls — triangle ping on the 5th (G4)
+  function sfxTool() {
+    if (!initialized) return;
+    const t = ctx.currentTime;
+    const o = ctx.createOscillator();
+    o.type = 'sine';
+    o.frequency.value = freq(7, 1); // G4
+    const e = ctx.createGain();
+    e.gain.setValueAtTime(0, t);
+    e.gain.linearRampToValueAtTime(0.04, t + 0.01);
+    e.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+    o.connect(e); e.connect(sourceNode);
+    o.start(t); o.stop(t + 0.8);
+  }
+
+  // Soft blip for log lines — higher, shorter, on the 3rd (Eb5)
+  function sfxLog() {
+    if (!initialized) return;
+    const t = ctx.currentTime;
+    const o = ctx.createOscillator();
+    o.type = 'sine';
+    o.frequency.value = freq(3, 2); // Eb5
+    const e = ctx.createGain();
+    e.gain.setValueAtTime(0, t);
+    e.gain.linearRampToValueAtTime(0.025, t + 0.005);
+    e.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+    o.connect(e); e.connect(sourceNode);
+    o.start(t); o.stop(t + 0.5);
+  }
+
+  // Alert/pager ping — two-tone on the 6th (Ab4) then 7th (Bb4), sharper
+  function sfxAlert() {
+    if (!initialized) return;
+    const t = ctx.currentTime;
+    const o1 = ctx.createOscillator();
+    o1.type = 'triangle';
+    o1.frequency.value = freq(8, 1); // Ab4
+    const o2 = ctx.createOscillator();
+    o2.type = 'triangle';
+    o2.frequency.value = freq(10, 1); // Bb4
+    const e1 = ctx.createGain();
+    e1.gain.setValueAtTime(0, t);
+    e1.gain.linearRampToValueAtTime(0.05, t + 0.008);
+    e1.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+    const e2 = ctx.createGain();
+    e2.gain.setValueAtTime(0, t + 0.12);
+    e2.gain.linearRampToValueAtTime(0.04, t + 0.13);
+    e2.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+    o1.connect(e1); e1.connect(sourceNode);
+    o2.connect(e2); e2.connect(sourceNode);
+    o1.start(t); o1.stop(t + 0.4);
+    o2.start(t + 0.12); o2.stop(t + 0.6);
+  }
+
+  // Banner/system event — low warm tone on root (C3)
+  function sfxBanner() {
+    if (!initialized) return;
+    const t = ctx.currentTime;
+    const o = ctx.createOscillator();
+    o.type = 'triangle';
+    o.frequency.value = freq(0, 0); // C3
+    const e = ctx.createGain();
+    e.gain.setValueAtTime(0, t);
+    e.gain.linearRampToValueAtTime(0.05, t + 0.02);
+    e.gain.exponentialRampToValueAtTime(0.001, t + 1.0);
+    o.connect(e); e.connect(sourceNode);
+    o.start(t); o.stop(t + 1.2);
+  }
+
+  // Search blip — descending two-note on 5th→3rd (G4→Eb4)
+  function sfxSearch() {
+    if (!initialized) return;
+    const t = ctx.currentTime;
+    const o = ctx.createOscillator();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(freq(7, 1), t); // G4
+    o.frequency.exponentialRampToValueAtTime(freq(3, 1), t + 0.15); // → Eb4
+    const e = ctx.createGain();
+    e.gain.setValueAtTime(0, t);
+    e.gain.linearRampToValueAtTime(0.035, t + 0.01);
+    e.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+    o.connect(e); e.connect(sourceNode);
+    o.start(t); o.stop(t + 0.7);
+  }
+
+  // Confirm ding — bright, on the root (C5)
+  function sfxConfirm() {
+    if (!initialized) return;
+    const t = ctx.currentTime;
+    const o = ctx.createOscillator();
+    o.type = 'sine';
+    o.frequency.value = freq(0, 2); // C5
+    const e = ctx.createGain();
+    e.gain.setValueAtTime(0, t);
+    e.gain.linearRampToValueAtTime(0.045, t + 0.008);
+    e.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
+    o.connect(e); e.connect(sourceNode);
+    o.start(t); o.stop(t + 1.0);
+  }
+
+  // Typing click — very short noise burst
+  function sfxKeyclick() {
+    if (!initialized) return;
+    const t = ctx.currentTime;
+    const buf = ctx.createBuffer(1, ctx.sampleRate * 0.015, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 3);
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    // Bandpass to give it a woody click character
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = 2000 + Math.random() * 1000; // slight variation
+    bp.Q.value = 2;
+    const e = ctx.createGain();
+    e.gain.value = 0.08;
+    src.connect(bp); bp.connect(e); e.connect(sourceNode);
+    src.start(t);
+  }
+
+  // Shimmer/buzz for confirm wait — starts quiet, builds
+  let shimmerStop = null;
+  function sfxShimmerStart() {
+    if (!initialized) return;
+    const t = ctx.currentTime;
+    // Low buzz using detuned oscillators
+    const o1 = ctx.createOscillator();
+    o1.type = 'sawtooth';
+    o1.frequency.value = freq(0, 0); // C3
+    const o2 = ctx.createOscillator();
+    o2.type = 'sawtooth';
+    o2.frequency.value = freq(0, 0) * 1.008; // slight detune = buzz
+    // Filter to keep it dark
+    const flt = ctx.createBiquadFilter();
+    flt.type = 'lowpass';
+    flt.frequency.setValueAtTime(200, t);
+    flt.frequency.linearRampToValueAtTime(800, t + 8); // opens over 8s
+    flt.Q.value = 2;
+    const e = ctx.createGain();
+    e.gain.setValueAtTime(0.005, t);
+    e.gain.linearRampToValueAtTime(0.12, t + 8); // builds over 8s
+    o1.connect(flt); o2.connect(flt);
+    flt.connect(e); e.connect(sourceNode);
+    o1.start(t); o2.start(t);
+    shimmerStop = () => {
+      e.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
+      setTimeout(() => { try { o1.stop(); o2.stop(); } catch(e) {} }, 500);
+      shimmerStop = null;
+    };
+  }
+
+  function sfxShimmerStop() {
+    if (shimmerStop) shimmerStop();
+  }
+
   function resume() {
     if (ctx && ctx.state === 'suspended') ctx.resume();
   }
 
-  return { init, play, melody, playNote, playMelody, startWaves, stopWaves, resume, freq, DEG };
+  return {
+    init, play, melody, playNote, playMelody, startWaves, stopWaves, resume, freq, DEG,
+    sfxTool, sfxLog, sfxAlert, sfxBanner, sfxSearch, sfxConfirm,
+    sfxKeyclick, sfxShimmerStart, sfxShimmerStop
+  };
 })();

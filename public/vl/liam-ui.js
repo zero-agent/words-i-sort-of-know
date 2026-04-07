@@ -291,7 +291,7 @@ const liamUI = (() => {
   }
 
   // Stream events one at a time, each as its own ⏺ tool-call-style block
-  function addLogs(lines, lineDelay = 400) {
+  function addLogs(lines, lineDelay = 400, onLine) {
     hideThinking();
     hideShimmerDots();
     return new Promise(resolve => {
@@ -322,6 +322,7 @@ const liamUI = (() => {
 
           output.appendChild(block);
           scrollToBottom();
+          if (onLine) onLine();
           i++;
           setTimeout(nextLine, lineDelay + Math.random() * lineDelay * 0.5);
         } else {
@@ -465,7 +466,7 @@ const liamUI = (() => {
   }
 
   // Type into input bar with human-like delay, then send
-  function calebType(text, wpm = 140) {
+  function calebType(text, wpm = 140, onChar) {
     return new Promise(resolve => {
       // Use existing pinned input bar, just clear it
       if (currentUserSpan) currentUserSpan.textContent = '';
@@ -477,6 +478,7 @@ const liamUI = (() => {
         if (i < text.length) {
           const ch = text[i];
           currentUserSpan.textContent += ch;
+          if (onChar && ch !== ' ') onChar();
           i++;
           scrollToBottom();
           // Human typing: fast spaces, pauses at punctuation
@@ -498,7 +500,7 @@ const liamUI = (() => {
   }
 
   // Type text into the user input bar character by character
-  function typeInUserInput(text, charDelay = 80) {
+  function typeInUserInput(text, charDelay = 80, onChar) {
     return new Promise(resolve => {
       if (!currentUserInput) {
         addUserInput('');
@@ -509,6 +511,7 @@ const liamUI = (() => {
         if (gen !== clearGeneration) { resolve(); return; }
         if (i < text.length) {
           currentUserSpan.textContent += text[i];
+          if (onChar && text[i] !== ' ') onChar();
           i++;
           scrollToBottom();
           const jitter = charDelay * (0.6 + Math.random() * 0.8);
