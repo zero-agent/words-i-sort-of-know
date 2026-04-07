@@ -8,7 +8,16 @@ function publicIndexPlugin() {
     name: 'public-index-resolve',
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
-        // If URL ends with / and there's an index.html in public for it
+        // Redirect /foo to /foo/ if there's an index.html in public
+        if (!req.url.endsWith('/') && !req.url.includes('.')) {
+          const publicPath = resolve(__dirname, 'public' + req.url + '/index.html')
+          if (existsSync(publicPath)) {
+            res.writeHead(302, { Location: req.url + '/' })
+            res.end()
+            return
+          }
+        }
+        // Resolve /foo/ to /foo/index.html
         if (req.url.endsWith('/') && req.url !== '/') {
           const publicPath = resolve(__dirname, 'public' + req.url + 'index.html')
           if (existsSync(publicPath)) {
