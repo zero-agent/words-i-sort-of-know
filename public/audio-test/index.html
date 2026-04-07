@@ -92,6 +92,9 @@ function playNote(audioCtx, destination, noteFreq, startTime, iteration, slideTo
   const rampUp = 2.2;   // slow ramp up
   const rampDown = 1.3;  // steeper ramp down
 
+  // High notes (above ~200Hz) play at 50% volume so lows dominate
+  const vol = noteFreq > 200 ? 0.5 : 1.0;
+
   // Main oscillator — triangle wave
   const osc = audioCtx.createOscillator();
   osc.type = 'triangle';
@@ -116,20 +119,20 @@ function playNote(audioCtx, destination, noteFreq, startTime, iteration, slideTo
     sub.frequency.exponentialRampToValueAtTime(slideToFreq * 0.5, startTime + dur * 0.7);
   }
 
-  // Envelope
+  // Envelope — scaled by vol (high notes quieter)
   const env = audioCtx.createGain();
   env.gain.setValueAtTime(0, startTime);
-  env.gain.linearRampToValueAtTime(0.18, startTime + rampUp);
-  env.gain.exponentialRampToValueAtTime(0.001, startTime + dur + 1.5); // reverb tail
+  env.gain.linearRampToValueAtTime(0.18 * vol, startTime + rampUp);
+  env.gain.exponentialRampToValueAtTime(0.001, startTime + dur + 1.5);
 
   const env2 = audioCtx.createGain();
   env2.gain.setValueAtTime(0, startTime);
-  env2.gain.linearRampToValueAtTime(0.08, startTime + rampUp);
+  env2.gain.linearRampToValueAtTime(0.08 * vol, startTime + rampUp);
   env2.gain.exponentialRampToValueAtTime(0.001, startTime + dur + 1.5);
 
   const subEnv = audioCtx.createGain();
   subEnv.gain.setValueAtTime(0, startTime);
-  subEnv.gain.linearRampToValueAtTime(0.06, startTime + rampUp);
+  subEnv.gain.linearRampToValueAtTime(0.06 * vol, startTime + rampUp);
   subEnv.gain.exponentialRampToValueAtTime(0.001, startTime + dur + 1.5);
 
   osc.connect(env);
@@ -174,12 +177,12 @@ function playNote(audioCtx, destination, noteFreq, startTime, iteration, slideTo
 
     const tenthEnv = audioCtx.createGain();
     tenthEnv.gain.setValueAtTime(0, startTime);
-    tenthEnv.gain.linearRampToValueAtTime(0.06, startTime + rampUp + 0.4);
+    tenthEnv.gain.linearRampToValueAtTime(0.06 * vol, startTime + rampUp + 0.4);
     tenthEnv.gain.exponentialRampToValueAtTime(0.001, startTime + dur + 1.5);
 
     const tenthEnv2 = audioCtx.createGain();
     tenthEnv2.gain.setValueAtTime(0, startTime);
-    tenthEnv2.gain.linearRampToValueAtTime(0.035, startTime + rampUp + 0.6);
+    tenthEnv2.gain.linearRampToValueAtTime(0.035 * vol, startTime + rampUp + 0.6);
     tenthEnv2.gain.exponentialRampToValueAtTime(0.001, startTime + dur + 1.5);
 
     tenth.connect(tenthEnv);
@@ -325,8 +328,8 @@ async function startDrone() {
           const mStart = startTime + melayDelay + m * beatDur;
           playMelodyNote(ctx, sourceNode, mFreq, mStart, beatDur * 0.9, iter);
         }
-        // Melody spans: delay + 9 beats. Wait for the full melody duration
-        const totalMelodyTime = melayDelay + note.melody.length * beatDur;
+        // Melody spans: delay + 9 beats + release tail. Wait for full duration
+        const totalMelodyTime = melayDelay + note.melody.length * beatDur + 2.0; // +2s for release tail
         await new Promise(r => setTimeout(r, Math.max(noteSpacing, totalMelodyTime) * 1000));
       } else {
         // Wait for note duration + gap
