@@ -128,6 +128,11 @@
 
     { time: 125, type: 'liam-text', content: 'The numbers do a thing and then they do the other thing. Like waves. I like knowing when the next one will come.' },
 
+    { time: 132, type: 'liam-tool', toolName: 'Bash(close)', result: [
+      'error: missing required argument: [position|all]',
+      'usage: close [position|all] — use --help for options',
+    ], lineDelay: 300 },
+
     { time: 135, type: 'liam-tool', toolName: 'Bash(close --help)', result: [
       'usage: close [position|all]',
       'close open positions at current market prices',
