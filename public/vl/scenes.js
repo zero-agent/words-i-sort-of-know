@@ -140,7 +140,7 @@
       '  close position <id>     close a single position at market price',
       '  close linked <id>       close position and all correlated hedges',
       '  close venue <name>      close all positions on a specific venue',
-      '  close stale             close positions with no activity in 24h',
+      '  close stale [hours]      close positions with no activity (default: 24h)',
       '  close all               close every open position across all venues',
       '',
       'options:',
