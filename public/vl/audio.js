@@ -33,6 +33,8 @@ const vlAudio = (() => {
   async function init() {
     if (initialized) return;
     ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // Resume immediately — init is called from a user gesture (play button)
+    if (ctx.state === 'suspended') await ctx.resume();
 
     masterGain = ctx.createGain();
     masterGain.gain.value = 1.4;  // boosted for mobile
@@ -287,10 +289,8 @@ const vlAudio = (() => {
 
   function sfxReady() {
     if (!initialized || muted) return false;
-    if (ctx.state !== 'running') {
-      ctx.resume();  // kick it — next call will work
-      return false;  // skip this one
-    }
+    if (ctx.state === 'suspended') ctx.resume();
+    if (ctx.state === 'closed') return false;
     return true;
   }
 
