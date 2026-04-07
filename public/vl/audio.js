@@ -274,6 +274,48 @@ const vlAudio = (() => {
   // Sound effects — all in key (C minor)
   // ═══════════════════════════════════════
 
+  // Birthday fanfare — da dada daaaah! Eb4 Eb4 Eb4 Ab4
+  function sfxBirthday() {
+    if (!initialized) return;
+    const t = ctx.currentTime;
+    const notes = [
+      { f: freq(3, 1), start: 0,    dur: 0.15 },  // Eb4 (da)
+      { f: freq(3, 1), start: 0.18, dur: 0.15 },  // Eb4 (da)
+      { f: freq(3, 1), start: 0.36, dur: 0.12 },  // Eb4 (da)
+      { f: freq(8, 1), start: 0.50, dur: 0.8 },   // Ab4 (daaaah!)
+    ];
+    notes.forEach(n => {
+      const o = ctx.createOscillator();
+      o.type = 'triangle';
+      o.frequency.value = n.f;
+      const e = ctx.createGain();
+      e.gain.setValueAtTime(0, t + n.start);
+      e.gain.linearRampToValueAtTime(0.14, t + n.start + 0.01);
+      e.gain.exponentialRampToValueAtTime(0.001, t + n.start + n.dur + 0.3);
+      o.connect(e); e.connect(sfxNode);
+      o.start(t + n.start); o.stop(t + n.start + n.dur + 0.5);
+    });
+  }
+
+  // Error tool call — low Gb2 with harsh sawtooth
+  function sfxError() {
+    if (!initialized) return;
+    const t = ctx.currentTime;
+    const o = ctx.createOscillator();
+    o.type = 'sawtooth';
+    o.frequency.value = freq(6, -1); // Gb2
+    const o2 = ctx.createOscillator();
+    o2.type = 'sawtooth';
+    o2.frequency.value = freq(6, -1) * 1.01; // harsh detune
+    const e = ctx.createGain();
+    e.gain.setValueAtTime(0, t);
+    e.gain.linearRampToValueAtTime(0.1, t + 0.01);
+    e.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+    o.connect(e); o2.connect(e); e.connect(sfxNode);
+    o.start(t); o2.start(t);
+    o.stop(t + 0.7); o2.stop(t + 0.7);
+  }
+
   // Liam text ding — low Eb3
   function sfxText() {
     if (!initialized) return;
@@ -304,19 +346,28 @@ const vlAudio = (() => {
     o.start(t); o.stop(t + 0.8);
   }
 
-  // Soft blip for log lines — higher, shorter, on the 3rd (Eb5)
+  // Log line blip — Eb5, louder with a bright triangle layer
   function sfxLog() {
     if (!initialized) return;
     const t = ctx.currentTime;
     const o = ctx.createOscillator();
     o.type = 'sine';
     o.frequency.value = freq(3, 2); // Eb5
+    const o2 = ctx.createOscillator();
+    o2.type = 'triangle';
+    o2.frequency.value = freq(3, 2) * 2; // Eb6 — bright overtone
     const e = ctx.createGain();
     e.gain.setValueAtTime(0, t);
-    e.gain.linearRampToValueAtTime(0.08, t + 0.005);
+    e.gain.linearRampToValueAtTime(0.14, t + 0.005);
     e.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+    const e2 = ctx.createGain();
+    e2.gain.setValueAtTime(0, t);
+    e2.gain.linearRampToValueAtTime(0.05, t + 0.005);
+    e2.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
     o.connect(e); e.connect(sfxNode);
+    o2.connect(e2); e2.connect(sfxNode);
     o.start(t); o.stop(t + 0.5);
+    o2.start(t); o2.stop(t + 0.4);
   }
 
   // Alert/pager ping — two-tone on the 6th (Ab4) then 7th (Bb4), sharper
@@ -420,33 +471,36 @@ const vlAudio = (() => {
     src.start(t);
   }
 
-  // Shimmer/buzz for confirm wait — starts quiet, builds
+  // Shimmer/buzz for confirm wait — starts quiet, builds aggressively
   let shimmerStop = null;
   function sfxShimmerStart() {
     if (!initialized) return;
     const t = ctx.currentTime;
-    // Low buzz using detuned oscillators
+    // Buzzing static — detuned saws + noise
     const o1 = ctx.createOscillator();
     o1.type = 'sawtooth';
     o1.frequency.value = freq(0, 0); // C3
     const o2 = ctx.createOscillator();
     o2.type = 'sawtooth';
-    o2.frequency.value = freq(0, 0) * 1.008; // slight detune = buzz
-    // Filter to keep it dark
+    o2.frequency.value = freq(0, 0) * 1.015; // wider detune = more buzz
+    const o3 = ctx.createOscillator();
+    o3.type = 'sawtooth';
+    o3.frequency.value = freq(3, 0); // Eb3 — adds dissonance
+    // Filter opens over time
     const flt = ctx.createBiquadFilter();
     flt.type = 'lowpass';
-    flt.frequency.setValueAtTime(200, t);
-    flt.frequency.linearRampToValueAtTime(800, t + 8); // opens over 8s
-    flt.Q.value = 2;
+    flt.frequency.setValueAtTime(150, t);
+    flt.frequency.linearRampToValueAtTime(1200, t + 6);
+    flt.Q.value = 3;
     const e = ctx.createGain();
-    e.gain.setValueAtTime(0.005, t);
-    e.gain.linearRampToValueAtTime(0.12, t + 8); // builds over 8s
-    o1.connect(flt); o2.connect(flt);
+    e.gain.setValueAtTime(0.01, t);
+    e.gain.linearRampToValueAtTime(0.25, t + 6);
+    o1.connect(flt); o2.connect(flt); o3.connect(flt);
     flt.connect(e); e.connect(sfxNode);
-    o1.start(t); o2.start(t);
+    o1.start(t); o2.start(t); o3.start(t);
     shimmerStop = () => {
-      e.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
-      setTimeout(() => { try { o1.stop(); o2.stop(); } catch(e) {} }, 500);
+      e.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.2);
+      setTimeout(() => { try { o1.stop(); o2.stop(); o3.stop(); } catch(e) {} }, 400);
       shimmerStop = null;
     };
   }
@@ -607,7 +661,7 @@ const vlAudio = (() => {
 
   return {
     init, play, melody, playNote, playMelody, startWaves, stopWaves, resume, freq, DEG,
-    sfxText, sfxTool, sfxLog, sfxAlert, sfxBanner, sfxSearch, sfxConfirm,
+    sfxText, sfxTool, sfxError, sfxLog, sfxAlert, sfxBanner, sfxSearch, sfxConfirm, sfxBirthday,
     sfxKeyclick, sfxShimmerStart, sfxShimmerStop,
     pulseStart, pulseSetChords, pulseClear
   };

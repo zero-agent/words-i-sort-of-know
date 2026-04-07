@@ -1175,6 +1175,7 @@
         break;
       case 'liam-birthminute':
         liamUI.celebrateBirthminute();
+        vlAudio.sfxBirthday();
         break;
       case 'liam-shimmer-dots':
         liamUI.showShimmerDots();
@@ -1194,7 +1195,10 @@
         break;
       case 'liam-tool':
         liamUI.hideThinking();
-        vlAudio.sfxTool();
+        { const isErr = evt.result && evt.result.some(l =>
+            /^error:|^bash:.*No such file|not found$|^fatal:|host unreachable/i.test(l));
+          isErr ? vlAudio.sfxError() : vlAudio.sfxTool();
+        }
         liamUI.addToolCall(evt.toolName, evt.result, evt.lineDelay || 300).then(() => {
           if (evt.wait) engine.eventDone(); else liamUI.showThinking();
         });
