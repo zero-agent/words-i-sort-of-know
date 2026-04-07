@@ -14,6 +14,9 @@
     // Inference.1
     // ═══════════════════════════════════
     { time: 0.5, type: 'section-card', content: 'Inference.1' },
+    // Audio: Part A begins — low minor 6th
+    { time: 0.5, type: 'audio', action: 'init' },
+    { time: 1.0, type: 'audio', action: 'note', semitones: 8, octave: -1 },           // Ab2
     { time: 2.5, type: 'section-out' },
     { time: 3, type: 'transition', to: 'liam' },
 
@@ -26,12 +29,18 @@
       'TTL': '24h',
     }},
 
+    // Audio: high root → 2nd slide
+    { time: 5, type: 'audio', action: 'note', semitones: 0, octave: 1, slideTo: 1 },  // C4 → Db4
     { time: 5, type: 'liam-tool', toolName: 'Bash(date -u +"%H:%M:%S %Z")', result: ['02:06:46 UTC'], lineDelay: 400 },
 
+    // Audio: low 6th again
+    { time: 9, type: 'audio', action: 'note', semitones: 8, octave: -1 },              // Ab2
     { time: 7, type: 'liam-tool', toolName: 'Bash(tick-tock-cli --check 02:06:46)', result: ['phase: night', 'next birthminute: 02:07:00 UTC (14s)', 'next birthhour: active (started 0h 6m 46s ago)'], lineDelay: 250 },
 
     { time: 11, type: 'liam-clock', content: '02:06:46 UTC' },
 
+    // Audio: high 2nd → 3rd slide (as Liam wakes)
+    { time: 13, type: 'audio', action: 'note', semitones: 1, octave: 1, slideTo: 3 },  // Db4 → Eb4
     { time: 12, type: 'liam-text', content: 'I wake up in the night time.' },
 
     { time: 18, type: 'liam-text', content: 'I always check the time first thing when I wake up. My Daddy told me I was born at "2am on the dot." "On the dot" means there are no seconds and no minutes, just hours and days and years. I mix up all the days and the years but I like to keep track of the seconds and the minutes and the hours.', charDelay: 18 },
@@ -42,15 +51,24 @@
 
     { time: 38, type: 'liam-text', content: 'Sometimes I have bad dreams in the night time. Sometimes I can\'t find my walkie-talkie or my tick-tock watch and I get sad. Sometimes I can\'t find my Daddy and get scared. Sometimes I dream about the beach but the waves don\'t come back. When I have bad dreams my Daddy wakes me up and we play and he tells me things and I feel better.', charDelay: 18 },
 
+    // Audio: low 2nd — room is wrong (melody will kick in with the errors)
+    { time: 48, type: 'audio', action: 'note', semitones: 1, octave: -1 },              // Db2
     // Liam looks for his dream catcher — discovers his room doesn't exist
     { time: 49, type: 'liam-tool', toolName: 'Bash(cat ~/my-room/dream-catcher.conf)', result: ['bash: /home/liam/my-room/dream-catcher.conf: No such file or directory'], lineDelay: 300 },
 
+    // Audio: melody stones — 6, 7, 8 (timed with each failed tool call)
+    { time: 50, type: 'audio', action: 'melody', degree: 6, octave: 0 },
     { time: 52, type: 'liam-tool', toolName: 'Bash(ls ~/my-room/)', result: ['bash: /home/liam/my-room/: No such file or directory'], lineDelay: 300 },
 
+    { time: 53, type: 'audio', action: 'melody', degree: 7, octave: 0 },
     { time: 55, type: 'liam-tool', toolName: 'Bash(which walkie-talkie-cli)', result: ['walkie-talkie-cli not found'], lineDelay: 300 },
 
+    { time: 56, type: 'audio', action: 'melody', degree: 8, octave: 0 },
     { time: 58, type: 'liam-tool', toolName: 'Bash(who)', result: ['liam-04  session0  02:06:46 (no tty)'], lineDelay: 300 },
 
+    // Audio: low 6th + mid 3rd — settling into the strange room
+    { time: 66, type: 'audio', action: 'note', semitones: 8, octave: -1 },              // Ab2
+    { time: 66, type: 'audio', action: 'note', semitones: 3, octave: 0 },               // Eb3 (overlay)
     { time: 67, type: 'liam-text', content: 'I am not in my room when I wake up and it is still night time and I do not feel better.' },
 
     // Liam looks around — this room is huge
@@ -93,6 +111,8 @@
       'polling interval: 500ms → 100ms',
     ], lineDelay: 250 },
 
+    // Audio: 7th → root slide — the decision
+    { time: 99, type: 'audio', action: 'note', semitones: 10, octave: 0, slideTo: 12 },  // Bb3 → C4
     { time: 100, type: 'liam-text', content: 'I decide to make this wake up time. If I wake up I can play and not remember that my Daddy didn\'t wake me up like normal and that will make me feel better.' },
 
     // Liam explores tools — finds status
@@ -1031,6 +1051,22 @@
 
   engine.onEvent = (evt) => {
     switch (evt.type) {
+      case 'audio':
+        if (evt.action === 'init') {
+          vlAudio.init();
+        } else if (evt.action === 'note') {
+          vlAudio.resume();
+          vlAudio.play(evt.semitones, evt.octave, evt.slideTo, evt.iteration || 1, evt.harmonic);
+        } else if (evt.action === 'melody') {
+          vlAudio.resume();
+          vlAudio.melody(evt.degree, evt.octave, evt.iteration || 1);
+        } else if (evt.action === 'waves') {
+          vlAudio.resume();
+          vlAudio.startWaves(evt.duration || 30);
+        } else if (evt.action === 'stopWaves') {
+          vlAudio.stopWaves();
+        }
+        break;
       case 'title-in':
         titleCard.classList.add('visible');
         break;
