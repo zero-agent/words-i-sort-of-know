@@ -1198,6 +1198,7 @@
         break;
       case 'liam-send':
         console.log('liam-send fired, wait:', evt.wait);
+        vlAudio.sfxKeyclickLoud();
         liamUI.sendUserInput();
         if (evt.wait) { console.log('calling eventDone'); engine.eventDone(); }
         break;
@@ -1254,6 +1255,7 @@
         });
         break;
       case 'caleb-embed':
+        vlAudio.sfxKeyclickLoud();
         calebUI.addEmbed(evt.embedType, evt.data);
         if (evt.embedType === 'pager-alert') vlAudio.sfxAlert();
         if (evt.wait) engine.eventDone();

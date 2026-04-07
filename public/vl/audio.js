@@ -96,7 +96,8 @@ const vlAudio = (() => {
     if (!initialized) return;
     const dur = 3.5;
     const rampUp = 2.2;
-    const vol = noteFreq > 200 ? 0.5 : 1.6;
+    const droneLevel = 0.3;  // overall drone volume
+    const vol = (noteFreq > 200 ? 0.5 : 1.6) * droneLevel;
     const startTime = ctx.currentTime + 0.05;
 
     const osc = ctx.createOscillator();
@@ -477,6 +478,27 @@ const vlAudio = (() => {
     src.start(t);
   }
 
+  // Loud keyclick — enter key, paste action
+  function sfxKeyclickLoud() {
+    if (!initialized) return;
+    const t = ctx.currentTime;
+    const buf = ctx.createBuffer(1, ctx.sampleRate * 0.02, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 2.5);
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = 1800 + Math.random() * 600;
+    bp.Q.value = 1.5;
+    const e = ctx.createGain();
+    e.gain.value = 0.18;  // top of the normal range
+    src.connect(bp); bp.connect(e); e.connect(dryNode);
+    src.start(t);
+  }
+
   // Shimmer/buzz — starts quiet, builds aggressively (dry bus, no reverb)
   let shimmerStop = null;
   function sfxShimmerStart() {
@@ -670,7 +692,7 @@ const vlAudio = (() => {
   return {
     init, play, melody, playNote, playMelody, startWaves, stopWaves, resume, freq, DEG,
     sfxText, sfxTool, sfxError, sfxLog, sfxAlert, sfxBanner, sfxSearch, sfxConfirm, sfxBirthday,
-    sfxKeyclick, sfxShimmerStart, sfxShimmerStop,
+    sfxKeyclick, sfxKeyclickLoud, sfxShimmerStart, sfxShimmerStop,
     pulseStart, pulseSetChords, pulseClear
   };
 })();
