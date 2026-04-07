@@ -5,6 +5,7 @@ const vlAudio = (() => {
   let ctx, sourceNode, sfxNode, dryNode, masterGain, convolver, lpf;
   let initialized = false;
   let stopWavesFn = null;
+  let droneVol = 0.3;  // default drone volume
 
   const ROOT = 130.81; // C3
   const DEG = { 1: 0, 2: 1, 3: 3, 4: 5, 5: 7, 6: 8, 7: 10, 8: 12 };
@@ -96,7 +97,7 @@ const vlAudio = (() => {
     if (!initialized) return;
     const dur = 3.5;
     const rampUp = 2.2;
-    const droneLevel = 0.3;  // overall drone volume
+    const droneLevel = droneVol;  // set via setDroneVol()
     const vol = (noteFreq > 200 ? 0.5 : 1.6) * droneLevel;
     const startTime = ctx.currentTime + 0.05;
 
@@ -685,12 +686,14 @@ const vlAudio = (() => {
     pulseChordIdx = 0;
   }
 
+  function setDroneVol(v) { droneVol = v; }
+
   function resume() {
     if (ctx && ctx.state === 'suspended') ctx.resume();
   }
 
   return {
-    init, play, melody, playNote, playMelody, startWaves, stopWaves, resume, freq, DEG,
+    init, play, melody, playNote, playMelody, startWaves, stopWaves, setDroneVol, resume, freq, DEG,
     sfxText, sfxTool, sfxError, sfxLog, sfxAlert, sfxBanner, sfxSearch, sfxConfirm, sfxBirthday,
     sfxKeyclick, sfxKeyclickLoud, sfxShimmerStart, sfxShimmerStop,
     pulseStart, pulseSetChords, pulseClear

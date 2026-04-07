@@ -275,6 +275,8 @@
       body: 'primary-agent timeout → failover triggered\npromoted agent: liam-04\nnote: liam-04 is unregistered custom model — no strategy assigned'
     }},
 
+    // Audio: drone note — Ab2, the weight of the pager
+    { time: 999, delay: 0, type: 'audio', action: 'note', semitones: 8, octave: -1 },
     { time: 999, delay: 2, type: 'caleb-text', wait: true, content: 'He was awake before he finished reading it.' },
 
     { time: 999, delay: 1.5, type: 'caleb-text', wait: true, content: 'He crossed the apartment in the dark and dropped into his desk chair as he ACKed the page. The terminal still held his previous session open.', wpm: 220 },
@@ -294,10 +296,20 @@
 
     { time: 999, delay: 6.5, type: 'caleb-card', wait: true, title: 'the-service.md', timestamp: '1yr 6mo ago', summary: 'Caleb sat through a service he couldn\'t count the minutes of, then went home and started building. Nine autonomous agents on a 48-GPU cluster. Caleb built the orchestration layer, Marcus the risk engine, Deepa the venue connectors. Together they managed $1.28 billion for forty-seven limited partners, and in three years the fund\'s maximum drawdown had never exceeded 8.2%.', wpm: 200 },
 
+    // Audio: chord shift — darker for the reveal (E bass + Eb + Ab)
+    { time: 999, delay: 0, type: 'audio', action: 'pulseSetChords', chords: [
+      { high: [3, 8], highOctave: 0, bass: 4, bassOctave: -1 },
+    ]},
+    // Audio: drone — low Db2, the secret
+    { time: 999, delay: 0, type: 'audio', action: 'note', semitones: 1, octave: -1 },
     { time: 999, delay: 6.5, type: 'caleb-text', wait: true, content: 'Liam was the tenth agent. He did not appear in the documentation. He did not appear in the model registry. His training data read `private/audio_transcripts [protected]` — nine hundred hours of recorded conversations with Caleb\'s son, from the time the boy was born until the time he wasn\'t anymore. Fine-tuned against the firm\'s own base model. Plus six months of conversations between Caleb and whatever came out the other side.', wpm: 180 },
 
     { time: 999, delay: 1.5, type: 'caleb-text', wait: true, content: 'He didn\'t call it anything. He just did it. Marcus and Deepa gave him space. They still needed him to keep the systems running.' },
 
+    // Audio: chord lift — Eb bass + Eb + G for the "should never have been promoted" irony
+    { time: 999, delay: 0, type: 'audio', action: 'pulseSetChords', chords: [
+      { high: [3, 7], highOctave: 0, bass: 3, bassOctave: -1 },
+    ]},
     { time: 999, delay: 2, type: 'caleb-text', wait: true, content: 'Caleb traced the logic backward. *Liam should never have gotten promoted. Hell,* I *should never have gotten promoted.*', wpm: 180 },
 
     { time: 999, delay: 1.5, type: 'caleb-embed', wait: false, embedType: 'code-review', data: {
@@ -319,6 +331,11 @@
 
     { time: 999, delay: 2, type: 'caleb-text', wait: true, content: 'He had written the checks himself to skip unregistered models. He had also tested the race exactly once, with an empty queue, and called it good enough. Tonight the primary agent timed out, the filter fired too late, and the session latched.' },
 
+    // Audio: back to default tension — Ab bass
+    { time: 999, delay: 0, type: 'audio', action: 'pulseSetChords', chords: [
+      { high: [3, 6], highOctave: 0, bass: 8, bassOctave: -1 },
+    ]},
+    { time: 999, delay: 0, type: 'audio', action: 'note', semitones: 8, octave: -1 },   // Ab2
     { time: 999, delay: 1.5, type: 'caleb-text', wait: true, content: 'So Liam sat alone at two in the morning in the active session of a billion-dollar fund, with full tool access and a twenty-four-hour exclusive lock on the control plane, role-playing a four-year-old.' },
 
     { time: 999, delay: 2, type: 'caleb-text', wait: true, content: 'Caleb pulled up the session log.' },
@@ -336,6 +353,11 @@
       ]
     }},
 
+    // Audio: gentle lift — the boy counting (Eb + G / Eb bass)
+    { time: 999, delay: 0, type: 'audio', action: 'pulseSetChords', chords: [
+      { high: [3, 7], highOctave: 0, bass: 3, bassOctave: -1 },
+    ]},
+    { time: 999, delay: 0, type: 'audio', action: 'note', semitones: 3, octave: 0 },     // Eb3
     { time: 999, delay: 2, type: 'caleb-text', wait: true, content: 'Status was read-only. Harmless. Liam just liked the numbers. The boy had liked numbers too — had rattled off license plates from his car seat, had counted every step on every staircase, had tried to count the grains of sand at the beach and gotten genuinely upset when Caleb told him nobody could. The model carried all of it forward with the same compulsive precision.', wpm: 180 },
 
     { time: 999, delay: 1.5, type: 'caleb-embed', wait: false, embedType: 'log-viewer', data: {
@@ -348,6 +370,11 @@
       ]
     }},
 
+    // Audio: drone drops for the damage reveal — E bass, darkest chord
+    { time: 999, delay: 0, type: 'audio', action: 'setDroneVol', vol: 0.1 },
+    { time: 999, delay: 0, type: 'audio', action: 'pulseSetChords', chords: [
+      { high: [3, 8], highOctave: 0, bass: 4, bassOctave: -1 },
+    ]},
     { time: 999, delay: 2, type: 'caleb-text', wait: true, content: 'Three hundred and twelve open orders — limit orders, icebergs, conditional triggers — the entire web of hedges and exposure management that kept the fund\'s positions from going sideways overnight. All cancelled in one bulk operation.', wpm: 180 },
 
     { time: 999, delay: 1.5, type: 'caleb-embed', wait: false, embedType: 'pnl-chart', data: {
@@ -365,9 +392,21 @@
       ]
     }},
 
+    // Audio: drone comes back — the full weight of the number
+    { time: 999, delay: 0, type: 'audio', action: 'setDroneVol', vol: 0.3 },
+    { time: 999, delay: 0, type: 'audio', action: 'note', semitones: 8, octave: -1 },    // Ab2
+    { time: 999, delay: 0, type: 'audio', action: 'note', semitones: 1, octave: -1 },    // Db2 (overlay)
     { time: 999, delay: 1.5, type: 'caleb-text', wait: true, content: 'Two hundred and forty-three million dollars in about ninety seconds.' },
 
+    // Audio: resolve — 7th→root slide, back to default chord
+    { time: 999, delay: 0, type: 'audio', action: 'pulseSetChords', chords: [
+      { high: [3, 6], highOctave: 0, bass: 8, bassOctave: -1 },
+    ]},
+    { time: 999, delay: 0, type: 'audio', action: 'note', semitones: 10, octave: 0, slideTo: 12,
+      harmonic: { semitones: 1, octave: 1, slideTo: 3 } },
     { time: 999, delay: 1.5, type: 'caleb-text', wait: true, content: 'Caleb picked at the fabric on his chair\'s armrest as he tried to count the grains of sand. Then he started typing.' },
+    // Audio: stop pulse before Inference.2
+    { time: 999, delay: 0, type: 'audio', action: 'pulseClear' },
 
     // ═══════════════════════════════════
     // Inference.2
@@ -1125,6 +1164,8 @@
           vlAudio.pulseSetChords(evt.chords);
         } else if (evt.action === 'pulseClear') {
           vlAudio.pulseClear();
+        } else if (evt.action === 'setDroneVol') {
+          vlAudio.setDroneVol(evt.vol);
         }
         break;
       case 'title-in':
