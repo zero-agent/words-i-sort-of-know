@@ -223,7 +223,7 @@
 
     { time: 999, delay: 2, type: 'caleb-text', wait: true, content: 'He was awake before he finished reading it.' },
 
-    { time: 999, delay: 1.5, type: 'caleb-text', wait: true, content: 'He crossed the apartment in the dark and dropped into his desk chair as he ACKed the page. The terminal still held his previous session open.', wpm: 220 },
+    { time: 999, delay: 1.5, type: 'caleb-text', wait: true, content: 'He crossed the apartment in the dark and dropped into his desk chair as he ACKed the page. He still saw the history from his previous session on the screen.', wpm: 220 },
 
     { time: 999, delay: 1.5, type: 'caleb-embed', wait: false, embedType: 'log-viewer', data: {
       source: '/var/log/agents/liam-04/session.log',
@@ -313,7 +313,7 @@
 
     { time: 999, delay: 1.5, type: 'caleb-text', wait: true, content: 'Two hundred and forty-three million dollars in about ninety seconds.' },
 
-    { time: 999, delay: 1.5, type: 'caleb-text', wait: true, content: 'Caleb picked at the fabric on his chair\'s armrest as he tried to count the grains of sand. Then he started typing.' },
+    { time: 999, delay: 1.5, type: 'caleb-text', wait: true, content: 'Caleb picked at the fabric on his chair\'s armrest as he tried to count the grains of sand. Then he opened an active session and started typing.' },
 
     // ═══════════════════════════════════
     // Inference.2
@@ -1198,7 +1198,7 @@
         });
         break;
       case 'caleb-text':
-        calebUI.typeText(evt.content, evt.wpm || 200, () => vlAudio.sfxKeyclick()).then(() => {
+        calebUI.typeText(evt.content, evt.wpm || 200, () => vlAudio.sfxKeyclickSoft()).then(() => {
           if (evt.wait) engine.eventDone();
         });
         break;

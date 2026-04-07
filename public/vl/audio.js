@@ -500,6 +500,27 @@ const vlAudio = (() => {
     src.start(t);
   }
 
+  // Soft keyclick — for caleb narration typing (40% quieter)
+  function sfxKeyclickSoft() {
+    if (!sfxReady()) return;
+    const t = ctx.currentTime;
+    const buf = ctx.createBuffer(1, ctx.sampleRate * 0.015, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 3);
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = 2000 + Math.random() * 1000;
+    bp.Q.value = 2;
+    const e = ctx.createGain();
+    e.gain.value = 0.072 * (0.5 + Math.random() * 0.5); // 60% of normal keyclick
+    src.connect(bp); bp.connect(e); e.connect(dryNode);
+    src.start(t);
+  }
+
   // Loud keyclick — enter key, paste action
   function sfxKeyclickLoud() {
     if (!sfxReady()) return;
@@ -734,7 +755,7 @@ const vlAudio = (() => {
   return {
     init, play, melody, playNote, playMelody, startWaves, stopWaves, setDroneVol, mute, unmute, resume, forceResume, freq, DEG,
     sfxText, sfxTool, sfxError, sfxLog, sfxAlert, sfxBanner, sfxSearch, sfxConfirm, sfxBirthday,
-    sfxKeyclick, sfxKeyclickLoud, sfxShimmerStart, sfxShimmerStop,
+    sfxKeyclick, sfxKeyclickSoft, sfxKeyclickLoud, sfxShimmerStart, sfxShimmerStop,
     pulseStart, pulseSetChords, pulseClear
   };
 })();
