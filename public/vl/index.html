@@ -229,11 +229,15 @@
       }
     });
 
-    resumeBtn.addEventListener('click', async () => {
+    resumeBtn.addEventListener('click', () => {
       resumeOverlay.style.display = 'none';
-      await vlAudio.resume();
-      engine.play();
-      updatePlayState();
+      // Resume must happen synchronously in the click handler for mobile browsers
+      vlAudio.resume().then(() => {
+        engine.play();
+        updatePlayState();
+      });
+      // Also try a direct new context touch as fallback
+      try { new AudioContext().resume(); } catch(e) {}
     });
   </script>
 </body>

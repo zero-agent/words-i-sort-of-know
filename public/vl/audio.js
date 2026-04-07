@@ -65,24 +65,26 @@ const vlAudio = (() => {
     lpf.connect(dryGain);
     lpf.connect(convolver);
 
-    // SFX/pulse bus — light LPF (3kHz) for clarity, same reverb
+    // SFX/pulse bus — light LPF (3kHz), own short reverb
     const sfxLpf = ctx.createBiquadFilter();
     sfxLpf.type = 'lowpass';
     sfxLpf.frequency.value = 3000;
     sfxLpf.Q.value = 0.5;
 
+    const sfxReverb = await createReverb(ctx, 1.5, 4.0);  // short, fast decay
+    const sfxReverbGain = ctx.createGain();
+    sfxReverbGain.gain.value = 0.15;
+
     const sfxDry = ctx.createGain();
     sfxDry.gain.value = 0.65;
-
-    const sfxWet = ctx.createGain();
-    sfxWet.gain.value = 0.15;  // much less reverb on SFX
 
     sfxNode = ctx.createGain();
     sfxNode.gain.value = 1;
     sfxNode.connect(sfxLpf);
     sfxLpf.connect(sfxDry);
-    sfxLpf.connect(sfxWet);
-    sfxWet.connect(convolver);
+    sfxLpf.connect(sfxReverb);
+    sfxReverb.connect(sfxReverbGain);
+    sfxReverbGain.connect(mixNode);
 
     sfxDry.connect(mixNode);
 
@@ -285,7 +287,10 @@ const vlAudio = (() => {
 
   function sfxReady() {
     if (!initialized || muted) return false;
-    if (ctx.state === 'suspended') ctx.resume();
+    if (ctx.state !== 'running') {
+      ctx.resume();  // kick it — next call will work
+      return false;  // skip this one
+    }
     return true;
   }
 
@@ -705,7 +710,15 @@ const vlAudio = (() => {
   function setDroneVol(v) { droneVol = v; }
 
   async function resume() {
-    if (ctx && ctx.state === 'suspended') await ctx.resume();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') {
+      await ctx.resume();
+    }
+    // If context is closed (some browsers do this on long background), re-init
+    if (ctx.state === 'closed') {
+      initialized = false;
+      await init();
+    }
   }
 
   return {
