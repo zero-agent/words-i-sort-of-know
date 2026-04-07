@@ -118,9 +118,11 @@
     const startBtn = document.getElementById('start-btn');
 
     let started = false;
-    function beginPlayback() {
+    async function beginPlayback() {
       if (started) return;
       started = true;
+      // Init audio NOW — in the user gesture, before any events fire
+      await vlAudio.init();
       startScreen.classList.add('hidden');
       engine.play();
       updatePlayState();
@@ -142,11 +144,13 @@
     const sectionTimes = { inference1: 0, regression1: 196 };
 
     document.querySelectorAll('.dir-item').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', async (e) => {
         e.stopPropagation();
         const section = btn.dataset.section;
 
         started = true;
+        // Init audio in user gesture before anything else
+        await vlAudio.init();
         startScreen.classList.add('hidden');
         vlAudio.mute();  // silence SFX during skip
         liamUI.clear();
