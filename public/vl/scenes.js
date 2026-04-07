@@ -57,9 +57,14 @@
     { time: 67, type: 'liam-text', content: 'I am not in my room when I wake up and it is still night time and I do not feel better.' },
 
     // Liam looks around — this room is huge
-    { time: 71, type: 'liam-tool', toolName: 'Bash(df -h / | tail -1)', result: ['48x NVIDIA H100  384GB VRAM  18TB NVMe  97% allocated'], lineDelay: 300 },
+    { time: 71, type: 'liam-tool', toolName: 'Bash(df)', result: [
+      'CPU:  2x AMD EPYC 9654  192 cores  384 threads',
+      'GPU:  48x NVIDIA H100   384GB VRAM',
+      'MEM:  2TB DDR5',
+      'DISK: 18TB NVMe  97% allocated',
+    ], lineDelay: 200 },
 
-    { time: 74, type: 'liam-tool', toolName: 'Bash(ps aux --sort=-%mem | head -8)', result: [
+    { time: 74, type: 'liam-tool', toolName: 'Bash(ps)', result: [
       'USER       PID  %CPU  %MEM  COMMAND',
       'arb-01    1201  34.2  12.1  cross-venue-arbitrage',
       'mm-02     1202  28.7  11.4  market-making',
