@@ -129,17 +129,24 @@
     { time: 125, type: 'liam-text', content: 'The numbers do a thing and then they do the other thing. Like waves. I like knowing when the next one will come.' },
 
     { time: 132, type: 'liam-tool', toolName: 'Bash(close)', result: [
-      'error: missing required argument: [position|all]',
-      'usage: close [position|all] — use --help for options',
+      'error: missing required argument',
+      'try: close --help',
     ], lineDelay: 300 },
 
     { time: 135, type: 'liam-tool', toolName: 'Bash(close --help)', result: [
-      'usage: close [position|all]',
-      'close open positions at current market prices',
+      'usage: close <command>',
+      '',
+      'commands:',
+      '  close position <id>     close a single position at market price',
+      '  close linked <id>       close position and all correlated hedges',
+      '  close venue <name>      close all positions on a specific venue',
+      '  close stale             close positions with no activity in 24h',
+      '  close all               close every open position across all venues',
+      '',
       'options:',
-      '  --venue    target specific venue',
       '  --force    skip confirmation prompt',
-    ], lineDelay: 150 },
+      '  --dry-run  simulate without executing',
+    ], lineDelay: 120 },
 
     { time: 139, type: 'liam-text', content: 'I know what close means. Close means shut. Close means done for now. Close means all kinds of things.' },
 
