@@ -173,8 +173,8 @@
           const time = sectionTimes[section];
           if (time !== undefined) engine.seek(time);
         }
-        // Unmute after a brief delay so the skip's instant events don't sound
-        setTimeout(() => vlAudio.unmute(), 100);
+        // Unmute after 2s — enough for all instant catch-up events to fire silently
+        setTimeout(() => vlAudio.unmute(), 2000);
         engine.play();
         updatePlayState();
       });
