@@ -305,7 +305,7 @@ const vlAudio = (() => {
     });
   }
 
-  // Error tool call — low Gb2 with harsh sawtooth
+  // Error tool call — low Gb2 with dampened plucky character
   function sfxError() {
     if (!initialized) return;
     const t = ctx.currentTime;
@@ -315,13 +315,19 @@ const vlAudio = (() => {
     const o2 = ctx.createOscillator();
     o2.type = 'sawtooth';
     o2.frequency.value = freq(6, -1) * 1.01; // harsh detune
+    // LPF that closes quickly — plucky dampening
+    const flt = ctx.createBiquadFilter();
+    flt.type = 'lowpass';
+    flt.frequency.setValueAtTime(1200, t);
+    flt.frequency.exponentialRampToValueAtTime(200, t + 0.15); // closes fast
+    flt.Q.value = 2;
     const e = ctx.createGain();
     e.gain.setValueAtTime(0, t);
-    e.gain.linearRampToValueAtTime(0.1, t + 0.01);
-    e.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
-    o.connect(e); o2.connect(e); e.connect(sfxNode);
+    e.gain.linearRampToValueAtTime(0.1, t + 0.008);
+    e.gain.exponentialRampToValueAtTime(0.001, t + 0.3); // faster decay
+    o.connect(flt); o2.connect(flt); flt.connect(e); e.connect(sfxNode);
     o.start(t); o2.start(t);
-    o.stop(t + 0.7); o2.stop(t + 0.7);
+    o.stop(t + 0.5); o2.stop(t + 0.5);
   }
 
   // Liam text ding — low Eb3
