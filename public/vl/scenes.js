@@ -48,7 +48,7 @@
 
     { time: 52, type: 'liam-tool', toolName: 'Bash(ls ~/my-room/)', result: ['bash: /home/liam/my-room/: No such file or directory'], lineDelay: 300 },
 
-    { time: 55, type: 'liam-tool', toolName: 'Bash(echo "Daddy, are you here?" | walkie-talkie-cli --send)', result: ['walkie-talkie-cli not found'], lineDelay: 300 },
+    { time: 55, type: 'liam-tool', toolName: 'Bash(echo "Daddy, are you there?" | walkie-talkie-cli --send)', result: ['walkie-talkie-cli not found'], lineDelay: 300 },
 
     { time: 58, type: 'liam-tool', toolName: 'Bash(who)', result: ['liam-04  session0  02:06:46 (no tty)'], lineDelay: 300 },
 
