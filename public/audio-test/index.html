@@ -79,11 +79,11 @@ const sequence = [
     melody: [2, 1], melodyOctave: 0, melodyDelay: 0.0,                                             // mid Db, C
     melodyTail: [{ deg: 4, octave: -1 }] },                                                        // then low F (custom)
 
-  // ═══ Part B — third pass (no melody, just silence) ═══
-  { name: 'low F + high Ab',  semitones: 5,  octave: -1, overlay: { semitones: 8, octave: 0 } },   // F2 + Ab3
-  { name: 'low G + high Bb',  semitones: 7,  octave: -1, overlay: { semitones: 10, octave: 0 } },  // G2 + Bb3
-  { name: 'low Ab + high C',  semitones: 8,  octave: -1, overlay: { semitones: 12, octave: 0 } },  // Ab2 + C4
-  { name: '(silence)',        rest: true },                                                         // hold for melody duration
+  // ═══ Part B — third pass (waves instead of melody) ═══
+  { name: 'low F + high Ab',  semitones: 5,  octave: -1, overlay: { semitones: 8, octave: 0 }, waves: true },
+  { name: 'low G + high Bb',  semitones: 7,  octave: -1, overlay: { semitones: 10, octave: 0 }, waves: true },
+  { name: 'low Ab + high C',  semitones: 8,  octave: -1, overlay: { semitones: 12, octave: 0 }, waves: true },
+  { name: '(waves)',          waves: true, wavesOnly: true },
 ];
 
 function freq(semitones, octave) {
@@ -263,6 +263,69 @@ function playMelodyNote(audioCtx, destination, noteFreq, startTime, dur, iterati
   }
 }
 
+// Wave/static generator — white noise through a filter that swells with the tide
+// Returns a stop function
+function startWaves(audioCtx, destination, noteDur) {
+  // White noise source
+  const bufferSize = audioCtx.sampleRate * (noteDur + 4);
+  const noiseBuffer = audioCtx.createBuffer(2, bufferSize, audioCtx.sampleRate);
+  for (let ch = 0; ch < 2; ch++) {
+    const data = noiseBuffer.getChannelData(ch);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1);
+    }
+  }
+  const noise = audioCtx.createBufferSource();
+  noise.buffer = noiseBuffer;
+
+  // Tide filter — LPF that opens on the crest, closes on the trough
+  const tideFilter = audioCtx.createBiquadFilter();
+  tideFilter.type = 'lowpass';
+  tideFilter.Q.value = 1.0;
+
+  // Amplitude envelope — swells with the filter
+  const tideGain = audioCtx.createGain();
+
+  // Wave cycle: ~3.5s matches the drone note duration
+  // The wave crests at the midpoint of each note (when the drone is loudest)
+  const now = audioCtx.currentTime;
+  const wavePeriod = noteDur;
+  const numCycles = Math.ceil((noteDur + 3) / wavePeriod) + 1;
+
+  for (let c = 0; c < numCycles; c++) {
+    const cycleStart = now + c * wavePeriod;
+    const crest = cycleStart + wavePeriod * 0.55; // crest slightly past midpoint
+    const trough = cycleStart + wavePeriod;
+
+    // Filter: 80Hz (closed/receding) → 1200Hz (open/crashing) → 80Hz
+    tideFilter.frequency.setValueAtTime(80, cycleStart);
+    tideFilter.frequency.exponentialRampToValueAtTime(1400, crest);
+    tideFilter.frequency.exponentialRampToValueAtTime(80, trough);
+
+    // Amplitude: quiet → loud crash → quiet
+    tideGain.gain.setValueAtTime(0.01, cycleStart);
+    tideGain.gain.linearRampToValueAtTime(0.22, crest);
+    tideGain.gain.exponentialRampToValueAtTime(0.01, trough);
+  }
+
+  // Overall fade in over first cycle
+  const masterFade = audioCtx.createGain();
+  masterFade.gain.setValueAtTime(0, now);
+  masterFade.gain.linearRampToValueAtTime(1.0, now + wavePeriod);
+
+  noise.connect(tideFilter);
+  tideFilter.connect(tideGain);
+  tideGain.connect(masterFade);
+  masterFade.connect(destination);
+  noise.start(now);
+
+  return () => {
+    // Fade out
+    masterFade.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 2.0);
+    setTimeout(() => { try { noise.stop(); } catch(e) {} }, 3000);
+  };
+}
+
 async function startDrone() {
   const btn = document.getElementById('play');
   if (playing) return;
@@ -314,6 +377,7 @@ async function startDrone() {
   const noteSpacing = 4.0; // seconds between note starts (3.5s note + 0.5s gap)
 
   // Play both iterations
+  let stopWaves = null;
   for (let iter = 1; iter <= 2; iter++) {
     iterDisplay.textContent = `iteration ${iter}${iter === 2 ? ' — with harmonics' : ' — pure tones'}`;
 
@@ -323,6 +387,20 @@ async function startDrone() {
 
       noteDisplay.textContent = note.name;
       noteDisplay.classList.add('active');
+
+      // Start waves if flagged (first time only)
+      if (note.waves && !stopWaves) {
+        // Total duration: remaining notes in sequence × noteSpacing + extra
+        const remaining = sequence.length - i;
+        stopWaves = startWaves(ctx, sourceNode, noteSpacing * remaining);
+      }
+
+      // Waves-only event — just wait, no drone
+      if (note.wavesOnly) {
+        await new Promise(r => setTimeout(r, noteSpacing * 1000));
+        noteDisplay.classList.remove('active');
+        continue;
+      }
 
       // Play the base drone note (if it has semitones)
       if (note.semitones != null) {
@@ -374,7 +452,8 @@ async function startDrone() {
       noteDisplay.classList.remove('active');
     }
 
-    // Brief pause between iterations
+    // Stop waves and pause between iterations
+    if (stopWaves) { stopWaves(); stopWaves = null; }
     if (iter === 1) {
       noteDisplay.textContent = '';
       await new Promise(r => setTimeout(r, 2000));
