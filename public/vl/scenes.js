@@ -387,28 +387,29 @@
       searchedText: '  Searched for 1 pattern, read 3 files',
       lineDelay: 200 },
 
+    // Liam reads buy usage — Caleb sees this and starts typing immediately
     { time: 999, delay: 1.5, wait: true, type: 'liam-tool', toolName: 'Bash(buy)', result: [
       'usage: buy <pair> <quantity>',
       '',
       'pairs: ETH-PERP, BTC-PERP, SOL-PERP, ...',
       'example: buy ETH-PERP 100',
     ], lineDelay: 200 },
-
-    { time: 999, delay: 1, wait: true, type: 'liam-caleb-type', content: 'Liam. Don\'t touch the tools right now.' },
+    // Caleb reacts while buy results are still streaming
+    { time: 999, delay: 1.0, eager: true, type: 'liam-caleb-type', content: 'Liam. Don\'t touch the tools right now.', wpm: 200 },
 
     { time: 999, delay: 1.7, wait: true, type: 'liam-text', content: 'But I want to help, Daddy.' },
 
+    // Liam does it anyway — Caleb immediately starts typing STOP
     { time: 999, delay: 0.5, wait: true, type: 'liam-tool', toolName: 'Bash(buy ETH-PERP 1000)', result: [
       '[order] submitting market buy: ETH-PERP x1000 on hyperliquid',
     ], lineDelay: 300 },
-    // Logs fire while the buy result is still rendering
-    { time: 999, delay: 1.5, eager: true, type: 'liam-logs', content: [
+    { time: 999, delay: 0.3, eager: true, type: 'liam-caleb-type', content: 'STOP.', wpm: 300 },
+
+    { time: 999, delay: 0.5, wait: true, type: 'liam-logs', content: [
       '[fill] ETH-PERP x1000 — avg price: $4,291.44 — slippage: 12.8% — cost: $4,291,440.00',
       '[treasury] WARNING: purchase exceeds available balance',
       '[margin] emergency margin loan initiated: $3,102,847.00',
     ], lineDelay: 400 },
-
-    { time: 999, delay: 1, wait: true, type: 'liam-caleb-type', content: 'STOP.' },
 
     { time: 999, delay: 1.7, wait: true, type: 'liam-text', content: 'Stop is hard, Daddy.' , query: true },
 
