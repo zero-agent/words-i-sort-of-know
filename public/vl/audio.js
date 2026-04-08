@@ -32,9 +32,11 @@ const vlAudio = (() => {
 
   async function init() {
     if (initialized) return;
+    try {
+    // Create context synchronously in the user gesture — do NOT await anything first
     ctx = new (window.AudioContext || window.webkitAudioContext)();
-    // Resume immediately — init is called from a user gesture (play button)
-    if (ctx.state === 'suspended') await ctx.resume();
+    // Some browsers need resume called synchronously in the gesture too
+    ctx.resume();
 
     masterGain = ctx.createGain();
     masterGain.gain.value = 1.4;  // boosted for mobile
@@ -96,6 +98,7 @@ const vlAudio = (() => {
     dryNode.connect(masterGain);
 
     initialized = true;
+    } catch(e) { console.error('Audio init failed:', e); }
   }
 
   function playNote(noteFreq, slideToFreq, harmonicOverride, iteration) {
