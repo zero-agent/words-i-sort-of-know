@@ -156,12 +156,14 @@ const engine = (() => {
         }
         if (onEvent) onEvent(evt);
         if (waiting && !evt.eager) {
-          // Schedule any upcoming eager events via setTimeout
+          // Schedule only the NEXT eager event via setTimeout
           for (const next of events) {
             if (!next.fired && next.eager && next.delay !== undefined) {
               next.fired = true;
               setTimeout(() => { if (onEvent) onEvent(next); }, next.delay * 1000);
+              break;  // only one at a time
             }
+            if (!next.fired && !next.eager) break;  // stop at next normal event
           }
           break;
         }
