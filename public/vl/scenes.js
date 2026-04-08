@@ -394,11 +394,13 @@
       'example: buy ETH-PERP 100',
     ], lineDelay: 200 },
 
-    { time: 999, delay: 1.5, wait: true, type: 'liam-tool', toolName: 'Bash(buy ETH-PERP 1000)', result: [
+    { time: 999, delay: 1, wait: true, type: 'liam-caleb-type', content: 'Liam. Don\'t touch the tools right now.' },
+
+    { time: 999, delay: 1.7, wait: true, type: 'liam-text', content: 'But I want to help, Daddy.' },
+
+    { time: 999, delay: 1, wait: true, type: 'liam-tool', toolName: 'Bash(buy ETH-PERP 1000)', result: [
       '[order] submitting market buy: ETH-PERP x1000 on hyperliquid',
     ], lineDelay: 300 },
-
-    { time: 999, delay: 1, wait: true, type: 'liam-caleb-type', content: 'Liam. Don\'t touch the tools yet.' },
 
     { time: 999, delay: 0.5, wait: true, type: 'liam-logs', content: [
       '[fill] ETH-PERP x1000 — avg price: $4,291.44 — slippage: 12.8% — cost: $4,291,440.00',
