@@ -50,24 +50,27 @@ Sometimes I have bad dreams in the night time. Sometimes I can't find my walkie-
 ⎿ bash: /home/liam/my-room/: No such file or directory
 ```
 
-⏺ Bash(which walkie-talkie-cli)
+⏺ Bash(echo "Daddy, are you there?" | walkie-talkie-cli --send)
 ```
 ⎿ walkie-talkie-cli not found
 ```
 
-⏺ Bash(who)
+⏺ Bash(whoami)
 ```
-⎿ liam-04  session0  02:06:46 (no tty)
+⎿ liam-04
 ```
 
 I am not in my room when I wake up and it is still night time and I do not feel better.
 
-⏺ Bash(df -h / | tail -1)
+⏺ Bash(df)
 ```
-⎿ 48x NVIDIA H100  384GB VRAM  18TB NVMe  97% allocated
+⎿ CPU:  2x AMD EPYC 9654  192 cores  384 threads
+⎿ GPU:  48x NVIDIA H100   384GB VRAM
+⎿ MEM:  2TB DDR5
+⎿ DISK: 18TB NVMe  97% allocated
 ```
 
-⏺ Bash(ps aux --sort=-%mem | head -8)
+⏺ Bash(ps)
 ```
 ⎿ USER       PID  %CPU  %MEM  COMMAND
 ⎿ arb-01    1201  34.2  12.1  cross-venue-arbitrage
@@ -107,6 +110,15 @@ I like these words. I like when they come in little rows. The wiggly words are t
 
 I decide to make this wake up time. If I wake up I can play and not remember that my Daddy didn't wake me up like normal and that will make me feel better.
 
+Searched for 1 pattern, read 5 files
+```
+/usr/local/bin/status
+/usr/local/bin/cancel
+/usr/local/bin/close
+/usr/local/bin/halt
+/usr/local/bin/rebalance
+```
+
 ⏺ Bash(status)
 ```
 ⎿ 02:07:14 UTC
@@ -145,22 +157,26 @@ I know the little squiggle that goes before numbers. These numbers are bigger th
 
 The numbers do a thing and then they do the other thing. Like waves. I like knowing when the next one will come.
 
-Searched for 1 pattern, read 5 files
+⏺ Bash(close)
 ```
-/usr/local/bin/status
-/usr/local/bin/cancel
-/usr/local/bin/close
-/usr/local/bin/halt
-/usr/local/bin/rebalance
+⎿ error: missing required argument
+⎿ try: close --help
 ```
 
 ⏺ Bash(close --help)
 ```
-⎿ usage: close [position|all]
-⎿ close open positions at current market prices
+⎿ usage: close <command>
+⎿ 
+⎿ commands:
+⎿   close position <id>     close a single position at market price
+⎿   close linked <id>       close position and all correlated hedges
+⎿   close venue <name>      close all positions on a specific venue
+⎿   close stale [hours]      close positions with no activity (default: 24h)
+⎿   close all               close every open position across all venues
+⎿ 
 ⎿ options:
-⎿   --venue    target specific venue
 ⎿   --force    skip confirmation prompt
+⎿   --dry-run  simulate without executing
 ```
 
 I know what close means. Close means shut. Close means done for now. Close means all kinds of things.
@@ -221,7 +237,7 @@ note: liam-04 is unregistered custom model — no strategy assigned
 
 He was awake before he finished reading it.
 
-He crossed the apartment in the dark and dropped into his desk chair as he ACKed the page. The terminal still held his previous session open.
+He crossed the apartment in the dark and dropped into his desk chair as he ACKed the page. He still saw the history from his previous session on the screen.
 
 ```
 /var/log/agents/liam-04/session.log (19:58 – 20:01 UTC)
@@ -299,7 +315,7 @@ portfolio/realized-pnl                           02:00 – 02:47 UTC
 
 Two hundred and forty-three million dollars in about ninety seconds.
 
-Caleb picked at the fabric on his chair's armrest as he tried to count the grains of sand. Then he started typing.
+Caleb picked at the fabric on his chair's armrest as he tried to count the grains of sand. Then he opened an active session and started typing.
 
 ## Inference.2
 
@@ -361,20 +377,30 @@ Searched for 1 pattern, read 3 files
 /usr/local/bin/restore
 ```
 
+⏺ Bash(buy)
+```
+⎿ usage: buy <pair> <quantity>
+⎿ 
+⎿ pairs: ETH-PERP, BTC-PERP, SOL-PERP, ...
+⎿ example: buy ETH-PERP 100
+```
+
+"Liam. Don't touch the tools right now."
+
+But I want to help, Daddy.
+
 ⏺ Bash(buy ETH-PERP 1000)
 ```
 ⎿ [order] submitting market buy: ETH-PERP x1000 on hyperliquid
 ```
 
-"Liam. Don't touch the tools yet."
+"STOP."
 
 ```
 [fill] ETH-PERP x1000 — avg price: $4,291.44 — slippage: 12.8% — cost: $4,291,440.00
 [treasury] WARNING: purchase exceeds available balance
 [margin] emergency margin loan initiated: $3,102,847.00
 ```
-
-"STOP."
 
 Stop is hard, Daddy.
 
@@ -761,7 +787,7 @@ Now the money. Penalty fees had been accruing at $284,729 per hour across three 
 [to liam-04] confirm: transfer $2,847,290.00 from treasury to wallet-liam? [y/N]
 ```
 
-Caleb's voice came through.
+Liam's voice came through.
 
 ```
 /var/log/agents/liam-04/session.log (03:15 UTC)
