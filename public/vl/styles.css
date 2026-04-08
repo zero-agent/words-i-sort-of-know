@@ -475,8 +475,8 @@ body {
 /* User input — Claude Code style with top/bottom rules */
 .liam-user-input {
   color: #fff;
-  margin: 16px 0;
-  padding: 10px 0;
+  margin: 6px 0;
+  padding: 8px 0;
   border-top: 1px solid #333;
   border-bottom: 1px solid #333;
 }
