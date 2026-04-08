@@ -244,13 +244,13 @@ function renderRuler() {
     const isBar = tick % bl === 0;
     ctx.strokeStyle = isBar ? '#888' : '#555';
     ctx.lineWidth = isBar ? 1.5 : 0.5;
-    ctx.beginPath(); ctx.moveTo(x, isBar ? 0 : h * 0.5); ctx.lineTo(x, h); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x, isBar ? 0 : h * 0.6); ctx.lineTo(x, h); ctx.stroke();
     
     if (isBar) {
       const barNum = Math.floor(tick / bl) + 1;
       ctx.fillStyle = '#aaa';
-      ctx.font = '11px sans-serif';
-      ctx.fillText(String(barNum), x + 4, 14);
+      ctx.font = '13px sans-serif';
+      ctx.fillText(String(barNum), x + 5, 20);
     }
   }
   
@@ -825,6 +825,42 @@ function setupBendEvents() {
   }, { passive: false });
 }
 
+// ─── Ruler scrubbing ─────────────────────────────────────────────────
+function setupRulerInteractions() {
+  const el = rulerCanvas;
+  let scrubbing = false;
+
+  function scrubToX(e) {
+    const rect = el.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const tick = Math.max(0, xToTick(x));
+    // If playing, restart from new position
+    if (isPlaying) {
+      stopPlayback();
+      playStartTick = tick;
+      startPlayback();
+    } else {
+      playStartTick = tick;
+    }
+    renderAll();
+  }
+
+  el.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    el.setPointerCapture(e.pointerId);
+    scrubbing = true;
+    scrubToX(e);
+  });
+
+  el.addEventListener('pointermove', (e) => {
+    if (!scrubbing) return;
+    scrubToX(e);
+  });
+
+  el.addEventListener('pointerup', () => { scrubbing = false; });
+  el.addEventListener('pointercancel', () => { scrubbing = false; });
+}
+
 // ─── Preview ─────────────────────────────────────────────────────────
 function previewNote(note) {
   ensureAudio();
@@ -1106,6 +1142,7 @@ async function init() {
   syncUIFromProject();
   setupGridEvents();
   setupBendEvents();
+  setupRulerInteractions();
   setupKeyboard();
   
   resizeCanvases();

@@ -24,7 +24,7 @@ button:active { background:#555; }
 #piano-gutter { width:56px; flex-shrink:0; background:#1e1e22; border-right:1px solid #333; overflow:hidden; display:flex; flex-direction:column; }
 #piano-keys-canvas { width:56px; flex:1; }
 #grid-area { flex:1; display:flex; flex-direction:column; overflow:hidden; position:relative; }
-#ruler-canvas { height:28px; flex-shrink:0; width:100%; }
+#ruler-canvas { height:48px; flex-shrink:0; width:100%; cursor:pointer; touch-action:none; }
 #grid-canvas { flex:1; width:100%; cursor:crosshair; }
 
 /* Bend lane */
