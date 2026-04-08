@@ -1151,7 +1151,9 @@
         if (evt.wait) { console.log('calling eventDone'); engine.eventDone(); }
         break;
       case 'liam-caleb-type':
+        liamUI.hideThinking();  // Caleb interrupts — stop thinking immediately
         liamUI.calebType(evt.content, evt.wpm || 140, () => vlAudio.sfxKeyclick(), () => vlAudio.sfxKeyclickLoud()).then(() => {
+          liamUI.showThinking();  // Liam starts thinking about the response
           if (evt.wait) engine.eventDone();
         });
         break;
