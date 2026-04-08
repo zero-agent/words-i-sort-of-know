@@ -467,14 +467,16 @@ function playheadTick() {
 }
 
 // ─── Audio Engine ────────────────────────────────────────────────────
-function ensureAudio() {
+async function ensureAudio() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     masterGain = audioCtx.createGain();
     masterGain.gain.value = 0.15;
     masterGain.connect(audioCtx.destination);
   }
-  if (audioCtx.state === 'suspended') audioCtx.resume();
+  if (audioCtx.state === 'suspended') {
+    await audioCtx.resume();
+  }
 }
 
 function scheduleNote(note, when, dur) {
@@ -527,8 +529,8 @@ function scheduleNote(note, when, dur) {
   activeVoices.push({ osc, gain, endTime: when + dur + 0.05 });
 }
 
-function startPlayback() {
-  ensureAudio();
+async function startPlayback() {
+  await ensureAudio();
   isPlaying = true;
   playStartAudioTime = audioCtx.currentTime;
   scheduledUpTo = playStartTick;
@@ -862,8 +864,8 @@ function setupRulerInteractions() {
 }
 
 // ─── Preview ─────────────────────────────────────────────────────────
-function previewNote(note) {
-  ensureAudio();
+async function previewNote(note) {
+  await ensureAudio();
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   osc.type = voiceType === 'plucky' ? 'triangle' : voiceType;
@@ -1009,9 +1011,9 @@ function setupKeyboard() {
   });
 }
 
-function togglePlay() {
+async function togglePlay() {
   if (isPlaying) stopPlayback();
-  else startPlayback();
+  else await startPlayback();
 }
 
 function deleteSelected() {
