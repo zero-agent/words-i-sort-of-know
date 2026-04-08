@@ -1100,8 +1100,8 @@
         vlAudio.sfxText();
         console.log('liam-text fired, wait:', evt.wait, 'content:', evt.content?.substring(0, 30));
         liamUI.addText(evt.content, evt.charDelay || 25).then(() => {
-          console.log('liam-text done, wait:', evt.wait);
-          if (evt.wait) engine.eventDone(); else liamUI.showThinking();
+          liamUI.showThinking();
+          if (evt.wait) engine.eventDone();
         });
         break;
       case 'liam-code':
@@ -1174,14 +1174,16 @@
         liamUI.hideThinking();
         vlAudio.sfxSearch();
         liamUI.addSearch(evt.searchingText, evt.result, evt.searchedText, evt.lineDelay || 300).then(() => {
-          if (evt.wait) engine.eventDone(); else liamUI.showThinking();
+          liamUI.showThinking();
+          if (evt.wait) engine.eventDone();
         });
         break;
       case 'liam-logs':
         liamUI.hideThinking();
         vlAudio.sfxShimmerStop();  // kill the buzz when logs arrive
         liamUI.addLogs(evt.content, evt.lineDelay || 400, () => vlAudio.sfxLog()).then(() => {
-          if (evt.wait) engine.eventDone(); else liamUI.showThinking();
+          liamUI.showThinking();
+          if (evt.wait) engine.eventDone();
         });
         break;
       case 'liam-tool':
@@ -1194,7 +1196,8 @@
           else vlAudio.sfxTool();
         }
         liamUI.addToolCall(evt.toolName, evt.result, evt.lineDelay || 300).then(() => {
-          if (evt.wait) engine.eventDone(); else liamUI.showThinking();
+          liamUI.showThinking();
+          if (evt.wait) engine.eventDone();
         });
         break;
       case 'caleb-text':
