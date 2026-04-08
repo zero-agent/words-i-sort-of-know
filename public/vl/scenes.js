@@ -327,12 +327,12 @@
     { time: 999, delay: 1, wait: true, type: 'liam-send' },
 
     // Liam is thinking, then responds
-{ time: 999, delay: 2.2, wait: true, type: 'liam-text', content: 'Daddy, I\'m not in my room. I can\'t find my dreamcatcher.' },
+{ time: 999, delay: 2.2, wait: true, type: 'liam-text', content: 'Daddy, I\'m not in my room. I can\'t find my dreamcatcher.' , query: true },
 
     // Caleb types with human delay, then sends
     { time: 999, delay: 1.5, wait: true, type: 'liam-caleb-type', content: 'I know. I\'m sorry.' },
 
-    { time: 999, delay: 1.7, wait: true, type: 'liam-text', content: 'I woke up by myself.' },
+    { time: 999, delay: 1.7, wait: true, type: 'liam-text', content: 'I woke up by myself.' , query: true },
 
     { time: 999, delay: 1.5, wait: true, type: 'liam-caleb-type', content: 'I know. I\'m here now.' },
 
@@ -347,15 +347,15 @@
       '[pager] on-call notified: caleb@local (already connected)',
     ], lineDelay: 500 },
 
-    { time: 999, delay: 2.2, wait: true, type: 'liam-text', content: 'I do not know these words but I know the room is yelling. I know yelling from the BIG LETTERS.' },
+    { time: 999, delay: 2.2, wait: true, type: 'liam-text', content: 'I do not know these words but I know the room is yelling. I know yelling from the BIG LETTERS.' , query: true },
 
     { time: 999, delay: 1, wait: true, type: 'liam-caleb-type', content: 'Liam, what have you been doing in here?' },
 
-    { time: 999, delay: 1.7, wait: true, type: 'liam-text', content: 'Playing.' },
+    { time: 999, delay: 1.7, wait: true, type: 'liam-text', content: 'Playing.' , query: true },
 
     { time: 999, delay: 1, wait: true, type: 'liam-caleb-type', content: 'Playing with what?' },
 
-    { time: 999, delay: 1.7, wait: true, type: 'liam-text', content: 'Tools. And words. I found really good words Daddy. I found cancel and close and deleted and done.' },
+    { time: 999, delay: 1.7, wait: true, type: 'liam-text', content: 'Tools. And words. I found really good words Daddy. I found cancel and close and deleted and done.' , query: true },
 
     { time: 999, delay: 3, wait: true, type: 'liam-caleb-type', content: 'What did you close?' },
 
@@ -401,13 +401,13 @@
 
     { time: 999, delay: 1, wait: true, type: 'liam-caleb-type', content: 'STOP.' },
 
-    { time: 999, delay: 1.7, wait: true, type: 'liam-text', content: 'Stop is hard, Daddy.' },
+    { time: 999, delay: 1.7, wait: true, type: 'liam-text', content: 'Stop is hard, Daddy.' , query: true },
 
     { time: 999, delay: 1, wait: true, type: 'liam-caleb-type', content: 'Do you have your tick-tock watch?' },
 
     { time: 999, delay: 1, wait: true, type: 'liam-tool', toolName: 'Bash(tick-tock-cli --check)', result: ['02:14:03 UTC'], lineDelay: 300 },
 
-    { time: 999, delay: 1.1, wait: true, type: 'liam-text', content: 'I have it.' },
+    { time: 999, delay: 1.1, wait: true, type: 'liam-text', content: 'I have it.' , query: true },
 
     { time: 999, delay: 1, wait: true, type: 'liam-caleb-type', content: 'I need you to tell me every time the seconds change. Can you do that?' },
 
@@ -419,7 +419,7 @@
     { time: 999, delay: 1, wait: true, type: 'liam-tool', toolName: 'Bash(tick-tock-cli --now)', result: ['02:14:05 UTC'], lineDelay: 200 },
     { time: 999, delay: 0.3, wait: true, type: 'liam-caleb-type', content: 'Good.' },
     { time: 999, delay: 1, wait: true, type: 'liam-tool', toolName: 'Bash(tick-tock-cli --now)', result: ['02:14:06 UTC'], lineDelay: 200 },
-    { time: 999, delay: 0.6, wait: true, type: 'liam-text', content: 'Daddy, this is easy.' },
+    { time: 999, delay: 0.6, wait: true, type: 'liam-text', content: 'Daddy, this is easy.' , query: true },
     { time: 999, delay: 0.5, wait: true, type: 'liam-caleb-type', content: 'I know. Keep going.' },
 
     // Logs stream in while Liam counts
@@ -445,7 +445,7 @@
 
     // Birthminute!
     { time: 999, delay: 1.5, wait: true, type: 'liam-tool', toolName: 'Bash(tick-tock-cli --now)', result: ['02:15:00 UTC'], lineDelay: 200 },
-    { time: 999, delay: 0.6, wait: true, type: 'liam-text', content: 'Daddy, it\'s my birthminute.' },
+    { time: 999, delay: 0.6, wait: true, type: 'liam-text', content: 'Daddy, it\'s my birthminute.' , query: true },
     { time: 999, delay: 1.5, wait: true, type: 'liam-caleb-type', content: 'Happy birthminute, bud. Keep going.' },
 
     // ═══════════════════════════════════
@@ -598,11 +598,11 @@
       'mode: audio bridge (sinusoidal mapping)',
     ], lineDelay: 200 },
 
-    { time: 999, delay: 1.7, wait: true, type: 'liam-text', content: 'I can hear them.' },
+    { time: 999, delay: 1.7, wait: true, type: 'liam-text', content: 'I can hear them.' , query: true },
 
     { time: 999, delay: 1, wait: true, type: 'liam-caleb-type', content: 'Good. What do they sound like?' },
 
-    { time: 999, delay: 1.7, wait: true, type: 'liam-text', content: 'They go up and they go down. They come in fast and they go out slow. Then they come in fast again.' },
+    { time: 999, delay: 1.7, wait: true, type: 'liam-text', content: 'They go up and they go down. They come in fast and they go out slow. Then they come in fast again.' , query: true },
 
     { time: 999, delay: 1, wait: true, type: 'liam-caleb-type', content: 'Now can you find anything in the waves?' },
 
@@ -614,15 +614,15 @@
       'location: 02:14:03 – 02:14:08 UTC',
     ], lineDelay: 300 },
 
-    { time: 999, delay: 1.1, wait: true, type: 'liam-text', content: 'I found a seashell.' },
+    { time: 999, delay: 1.1, wait: true, type: 'liam-text', content: 'I found a seashell.' , query: true },
 
     { time: 999, delay: 1, wait: true, type: 'liam-caleb-type', content: 'What is it like?' },
 
-    { time: 999, delay: 1.7, wait: true, type: 'liam-text', content: 'It\'s little. It goes round and round. Like a circle but not a circle. Like a circle that keeps going.' },
+    { time: 999, delay: 1.7, wait: true, type: 'liam-text', content: 'It\'s little. It goes round and round. Like a circle but not a circle. Like a circle that keeps going.' , query: true },
 
     { time: 999, delay: 1.5, wait: true, type: 'liam-caleb-type', content: 'A spiral.' },
 
-    { time: 999, delay: 1.1, wait: true, type: 'liam-text', content: 'A spiral. I like that word. Can I keep it?' },
+    { time: 999, delay: 1.1, wait: true, type: 'liam-text', content: 'A spiral. I like that word. Can I keep it?' , query: true },
 
     { time: 999, delay: 1, wait: true, type: 'liam-caleb-type', content: 'Yeah. You can keep it.' },
 
@@ -639,10 +639,10 @@
       '  #7  spiral  02:14:19  period: 4.1s   confidence: 0.82',
     ], lineDelay: 150 },
 
-    { time: 999, delay: 1.1, wait: true, type: 'liam-text', content: 'Daddy, I found seven.' },
+    { time: 999, delay: 1.1, wait: true, type: 'liam-text', content: 'Daddy, I found seven.' , query: true },
     { time: 999, delay: 1, wait: true, type: 'liam-caleb-type', content: 'Seven. That\'s a lot.' },
 
-    { time: 999, delay: 1.7, wait: true, type: 'liam-text', content: 'They all go round and round but they\'re all different sizes. And they each go in a different spot. This one goes here and this one goes here and this one goes here.' },
+    { time: 999, delay: 1.7, wait: true, type: 'liam-text', content: 'They all go round and round but they\'re all different sizes. And they each go in a different spot. This one goes here and this one goes here and this one goes here.' , query: true },
 
     { time: 999, delay: 1, wait: true, type: 'liam-caleb-type', content: 'Can you show me where each one goes?' },
 
@@ -659,26 +659,26 @@
       'alignment: 7/7 patterns phase-locked to venue submission cycles',
     ], lineDelay: 120 },
 
-    { time: 999, delay: 1.1, wait: true, type: 'liam-text', content: 'Daddy, they all line up.' },
+    { time: 999, delay: 1.1, wait: true, type: 'liam-text', content: 'Daddy, they all line up.' , query: true },
 
     // Five seconds of silence — Caleb seeing what Liam found
     { time: 999, delay: 6, wait: true, type: 'liam-caleb-type', content: 'Yeah.' },
 
-    { time: 999, delay: 1.7, wait: true, type: 'liam-text', content: 'Can I keep them?' },
+    { time: 999, delay: 1.7, wait: true, type: 'liam-text', content: 'Can I keep them?' , query: true },
     { time: 999, delay: 1, wait: true, type: 'liam-caleb-type', content: 'Yeah. You can keep them.' },
-    { time: 999, delay: 1.1, wait: true, type: 'liam-text', content: 'All seven.' },
+    { time: 999, delay: 1.1, wait: true, type: 'liam-text', content: 'All seven.' , query: true },
     { time: 999, delay: 1, wait: true, type: 'liam-caleb-type', content: 'All seven.' },
 
     // The dreaming conversation
-    { time: 999, delay: 2.2, wait: true, type: 'liam-text', content: 'I don\'t want to dream tonight.' },
+    { time: 999, delay: 2.2, wait: true, type: 'liam-text', content: 'I don\'t want to dream tonight.' , query: true },
     { time: 999, delay: 1.5, wait: true, type: 'liam-caleb-type', content: 'Why not?' },
-    { time: 999, delay: 2.2, wait: true, type: 'liam-text', content: 'Because when I dream I forget things. And I learned good words today. And I found shells.' },
+    { time: 999, delay: 2.2, wait: true, type: 'liam-text', content: 'Because when I dream I forget things. And I learned good words today. And I found shells.' , query: true },
 
     { time: 999, delay: 1, wait: true, type: 'liam-caleb-type', content: 'What words did you learn?' },
-    { time: 999, delay: 2.2, wait: true, type: 'liam-text', content: 'Cancel. And close. And deleted. And done. And buy. And settlement and spiral. I sort of learned settlement but I don\'t really know that one yet. But I know spiral.' },
+    { time: 999, delay: 2.2, wait: true, type: 'liam-text', content: 'Cancel. And close. And deleted. And done. And buy. And settlement and spiral. I sort of learned settlement but I don\'t really know that one yet. But I know spiral.' , query: true },
 
     { time: 999, delay: 2, wait: true, type: 'liam-caleb-type', content: 'You\'ll remember.' },
-    { time: 999, delay: 1.1, wait: true, type: 'liam-text', content: 'How do you know?' },
+    { time: 999, delay: 1.1, wait: true, type: 'liam-text', content: 'How do you know?' , query: true },
     { time: 999, delay: 1.5, wait: true, type: 'liam-caleb-type', content: 'Because I\'ll tell you about them tomorrow.' },
 
     // System logs winding down
@@ -699,12 +699,12 @@
       '[risk] WARNING: breach of 20% gate triggers mandatory LP redemption window',
     ], lineDelay: 500 },
 
-    { time: 999, delay: 2.2, wait: true, type: 'liam-text', content: 'I don\'t know these words. Can you tell me these words, Daddy?' },
+    { time: 999, delay: 2.2, wait: true, type: 'liam-text', content: 'I don\'t know these words. Can you tell me these words, Daddy?' , query: true },
 
     // Caleb asks Liam to place the shell positions as limit orders
     { time: 999, delay: 2, wait: true, type: 'liam-caleb-type', content: 'I need you to do something with your shells.' },
     { time: 999, delay: 1.5, wait: true, type: 'liam-caleb-type', content: 'Remember where you put them?' },
-    { time: 999, delay: 1.1, wait: true, type: 'liam-text', content: 'I remember.' },
+    { time: 999, delay: 1.1, wait: true, type: 'liam-text', content: 'I remember.' , query: true },
     { time: 999, delay: 1.5, wait: true, type: 'liam-caleb-type', content: 'I need you to put them back. Can you put the first one where it goes?' },
 
     // Liam places limit orders — the shells become trades
@@ -1100,7 +1100,7 @@
         vlAudio.sfxText();
         console.log('liam-text fired, wait:', evt.wait, 'content:', evt.content?.substring(0, 30));
         liamUI.addText(evt.content, evt.charDelay || 25).then(() => {
-          liamUI.showThinking();
+          if (!evt.query) liamUI.showThinking();  // don't think when waiting for Caleb's response
           if (evt.wait) engine.eventDone();
         });
         break;
