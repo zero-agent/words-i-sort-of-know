@@ -317,7 +317,7 @@ const vlAudio = (() => {
       const e = ctx.createGain();
       e.gain.setValueAtTime(0, t + n.start);
       e.gain.linearRampToValueAtTime(0.14, t + n.start + 0.01);
-      e.gain.exponentialRampToValueAtTime(0.001, t + n.start + n.dur + 0.3);
+      e.gain.exponentialRampToValueAtTime(0.0001, t + n.start + n.dur + 0.3);
       o.connect(e); e.connect(sfxNode);
       o.start(t + n.start); o.stop(t + n.start + n.dur + 0.5);
     });
@@ -342,7 +342,7 @@ const vlAudio = (() => {
     const e = ctx.createGain();
     e.gain.setValueAtTime(0, t);
     e.gain.linearRampToValueAtTime(0.1, t + 0.008);
-    e.gain.exponentialRampToValueAtTime(0.001, t + 0.3); // faster decay
+    e.gain.exponentialRampToValueAtTime(0.0001, t + 0.3); // faster decay
     o.connect(flt); o2.connect(flt); flt.connect(e); e.connect(sfxNode);
     o.start(t); o2.start(t);
     o.stop(t + 0.5); o2.stop(t + 0.5);
@@ -358,7 +358,7 @@ const vlAudio = (() => {
     const e = ctx.createGain();
     e.gain.setValueAtTime(0, t);
     e.gain.linearRampToValueAtTime(0.2, t + 0.01);  // another 30% louder
-    e.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
+    e.gain.exponentialRampToValueAtTime(0.0001, t + 0.7);
     o.connect(e); e.connect(sfxNode);
     o.start(t); o.stop(t + 0.9);
   }
@@ -373,7 +373,7 @@ const vlAudio = (() => {
     const e = ctx.createGain();
     e.gain.setValueAtTime(0, t);
     e.gain.linearRampToValueAtTime(0.12, t + 0.01);
-    e.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+    e.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
     o.connect(e); e.connect(sfxNode);
     o.start(t); o.stop(t + 0.8);
   }
@@ -391,11 +391,11 @@ const vlAudio = (() => {
     const e = ctx.createGain();
     e.gain.setValueAtTime(0, t);
     e.gain.linearRampToValueAtTime(0.14, t + 0.005);
-    e.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+    e.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
     const e2 = ctx.createGain();
     e2.gain.setValueAtTime(0, t);
     e2.gain.linearRampToValueAtTime(0.05, t + 0.005);
-    e2.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+    e2.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
     o.connect(e); e.connect(sfxNode);
     o2.connect(e2); e2.connect(sfxNode);
     o.start(t); o.stop(t + 0.5);
@@ -415,11 +415,11 @@ const vlAudio = (() => {
     const e1 = ctx.createGain();
     e1.gain.setValueAtTime(0, t);
     e1.gain.linearRampToValueAtTime(0.15, t + 0.008);
-    e1.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+    e1.gain.exponentialRampToValueAtTime(0.0001, t + 0.25);
     const e2 = ctx.createGain();
     e2.gain.setValueAtTime(0, t + 0.12);
     e2.gain.linearRampToValueAtTime(0.12, t + 0.13);
-    e2.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+    e2.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
     o1.connect(e1); e1.connect(sfxNode);
     o2.connect(e2); e2.connect(sfxNode);
     o1.start(t); o1.stop(t + 0.4);
@@ -439,11 +439,11 @@ const vlAudio = (() => {
     const e1 = ctx.createGain();
     e1.gain.setValueAtTime(0, t);
     e1.gain.linearRampToValueAtTime(0.1, t + 0.008);
-    e1.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+    e1.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
     const e2 = ctx.createGain();
     e2.gain.setValueAtTime(0, t + 0.08);
     e2.gain.linearRampToValueAtTime(0.08, t + 0.09);
-    e2.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+    e2.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
     o1.connect(e1); e1.connect(sfxNode);
     o2.connect(e2); e2.connect(sfxNode);
     o1.start(t); o1.stop(t + 0.3);
@@ -461,7 +461,7 @@ const vlAudio = (() => {
     const e = ctx.createGain();
     e.gain.setValueAtTime(0, t);
     e.gain.linearRampToValueAtTime(0.1, t + 0.01);
-    e.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+    e.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
     o.connect(e); e.connect(sfxNode);
     o.start(t); o.stop(t + 0.7);
   }
@@ -476,7 +476,7 @@ const vlAudio = (() => {
     const e = ctx.createGain();
     e.gain.setValueAtTime(0, t);
     e.gain.linearRampToValueAtTime(0.14, t + 0.008);
-    e.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
+    e.gain.exponentialRampToValueAtTime(0.0001, t + 0.8);
     o.connect(e); e.connect(sfxNode);
     o.start(t); o.stop(t + 1.0);
   }
@@ -617,13 +617,13 @@ const vlAudio = (() => {
     env.gain.setValueAtTime(0, t);
     env.gain.linearRampToValueAtTime(0.045 * vol, t + 0.015);
     env.gain.exponentialRampToValueAtTime(0.008 * vol, t + 0.18);
-    env.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+    env.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
 
     const env2 = ctx.createGain();
     env2.gain.setValueAtTime(0, t);
     env2.gain.linearRampToValueAtTime(0.012 * vol, t + 0.015);
     env2.gain.exponentialRampToValueAtTime(0.002 * vol, t + 0.15);
-    env2.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+    env2.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
 
     o1.connect(env); o2.connect(env2);
     env.connect(pulseMasterGain); env2.connect(pulseMasterGain);
@@ -647,13 +647,13 @@ const vlAudio = (() => {
     env.gain.setValueAtTime(0, t);
     env.gain.linearRampToValueAtTime(0.07, t + 0.03);
     env.gain.exponentialRampToValueAtTime(0.015, t + 0.4);
-    env.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
+    env.gain.exponentialRampToValueAtTime(0.0001, t + 1.2);
 
     const subEnv = ctx.createGain();
     subEnv.gain.setValueAtTime(0, t);
     subEnv.gain.linearRampToValueAtTime(0.05, t + 0.03);
     subEnv.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
-    subEnv.gain.exponentialRampToValueAtTime(0.001, t + 1.5);
+    subEnv.gain.exponentialRampToValueAtTime(0.0001, t + 1.5);
 
     o.connect(env); sub.connect(subEnv);
     env.connect(pulseMasterGain); subEnv.connect(pulseMasterGain);
