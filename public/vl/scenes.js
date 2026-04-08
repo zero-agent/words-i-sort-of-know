@@ -387,6 +387,13 @@
       searchedText: '  Searched for 1 pattern, read 3 files',
       lineDelay: 200 },
 
+    { time: 999, delay: 1.5, wait: true, type: 'liam-tool', toolName: 'Bash(buy)', result: [
+      'usage: buy <pair> <quantity>',
+      '',
+      'pairs: ETH-PERP, BTC-PERP, SOL-PERP, ...',
+      'example: buy ETH-PERP 100',
+    ], lineDelay: 200 },
+
     { time: 999, delay: 1.5, wait: true, type: 'liam-tool', toolName: 'Bash(buy ETH-PERP 1000)', result: [
       '[order] submitting market buy: ETH-PERP x1000 on hyperliquid',
     ], lineDelay: 300 },
