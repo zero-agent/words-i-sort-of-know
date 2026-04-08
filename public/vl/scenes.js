@@ -1209,6 +1209,7 @@
         if (evt.wait) engine.eventDone();
         break;
       case 'caleb-card':
+        vlAudio.sfxKeyclickLoud();
         calebUI.addCard(evt.title, evt.timestamp, evt.summary, evt.wpm || 200).then(() => {
           if (evt.wait) engine.eventDone();
         });
