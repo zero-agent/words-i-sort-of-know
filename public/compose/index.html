@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Pitch Timeline — Compose</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <!-- Top Bar -->
+  <div id="topbar">
+    <input id="project-title" type="text" value="Untitled" spellcheck="false">
+    <div class="toolbar-group">
+      <button id="btn-rewind" title="Rewind">⏮</button>
+      <button id="btn-play" title="Play/Stop (Space)">▶</button>
+    </div>
+    <div class="toolbar-group">
+      <label>BPM<input id="inp-tempo" type="number" min="20" max="300" value="120"></label>
+      <label>Time<select id="sel-timesig">
+        <option value="4/4" selected>4/4</option>
+        <option value="3/4">3/4</option>
+        <option value="6/8">6/8</option>
+        <option value="5/4">5/4</option>
+        <option value="7/8">7/8</option>
+      </select></label>
+      <label>Snap<select id="sel-snap">
+        <option value="1">1/1</option>
+        <option value="2">1/2</option>
+        <option value="4">1/4</option>
+        <option value="8">1/8</option>
+        <option value="16" selected>1/16</option>
+        <option value="32">1/32</option>
+      </select></label>
+      <label>Voice<select id="sel-voice">
+        <option value="triangle" selected>Triangle</option>
+        <option value="sine">Sine</option>
+        <option value="sawtooth">Sawtooth</option>
+        <option value="plucky">Plucky</option>
+      </select></label>
+    </div>
+    <div class="toolbar-group">
+      <button id="btn-zoom-out" title="Zoom Out (-)">−</button>
+      <button id="btn-zoom-reset" title="Reset Zoom (0)">⊙</button>
+      <button id="btn-zoom-in" title="Zoom In (+)">+</button>
+    </div>
+    <div class="toolbar-group">
+      <button id="btn-undo" title="Undo (Ctrl+Z)">↩</button>
+      <button id="btn-redo" title="Redo (Ctrl+Shift+Z)">↪</button>
+      <button id="btn-delete" title="Delete Selected (Del)">🗑</button>
+    </div>
+    <div class="toolbar-group">
+      <button id="btn-export">Export ▾</button>
+    </div>
+  </div>
+
+  <!-- Export dropdown -->
+  <div id="export-menu" class="hidden">
+    <button id="exp-json-dl">Download JSON</button>
+    <button id="exp-md-dl">Download Markdown</button>
+    <button id="exp-json-copy">Copy JSON</button>
+    <button id="exp-md-copy">Copy Markdown</button>
+  </div>
+
+  <!-- Editor -->
+  <div id="editor">
+    <div id="piano-gutter">
+      <canvas id="piano-keys-canvas"></canvas>
+    </div>
+    <div id="grid-area">
+      <canvas id="ruler-canvas"></canvas>
+      <canvas id="grid-canvas"></canvas>
+    </div>
+  </div>
+
+  <!-- Bend Lane -->
+  <div id="bend-area">
+    <div id="bend-label">
+      <span>+1200</span><span>0</span><span>-1200</span>
+    </div>
+    <canvas id="bend-canvas"></canvas>
+  </div>
+
+  <!-- Status -->
+  <div id="statusbar">
+    <span id="status-pos">1:1:000</span>
+    <span id="status-sel"></span>
+    <span id="status-save">saved</span>
+  </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
