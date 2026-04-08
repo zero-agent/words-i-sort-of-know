@@ -93,7 +93,7 @@ const engine = (() => {
       }
     }
 
-    // Resume the clock
+    // Rebase frame time and restart tick loop
     lastFrameTime = performance.now();
     rafId = requestAnimationFrame(tick);
   }
@@ -129,11 +129,12 @@ const engine = (() => {
   }
 
   function tick(now) {
-    if (!isPlaying || waiting) return;
+    if (!isPlaying) return;
 
     const delta = (now - lastFrameTime) / 1000;
     lastFrameTime = now;
-    currentTime += delta;
+    // Only advance time when not waiting (waiting events freeze the clock)
+    if (!waiting) currentTime += delta;
 
     if (currentTime >= totalDuration) {
       currentTime = totalDuration;
@@ -145,18 +146,24 @@ const engine = (() => {
     // Fire events
     for (const evt of events) {
       if (!evt.fired && evt.time <= currentTime) {
+        if (waiting && !evt.eager) continue;
         evt.fired = true;
         if (evt.type === 'transition' && onTransition) {
           onTransition(evt.from, evt.to);
         }
-        if (evt.wait) {
+        if (evt.wait && !evt.eager) {
           waiting = true;
         }
         if (onEvent) onEvent(evt);
-        // If still waiting after handler ran (handler might have called eventDone synchronously)
-        if (waiting) {
-          if (onTick) onTick(currentTime);
-          return; // stop processing more events until eventDone()
+        if (waiting && !evt.eager) {
+          // Schedule any upcoming eager events via setTimeout
+          for (const next of events) {
+            if (!next.fired && next.eager && next.delay !== undefined) {
+              next.fired = true;
+              setTimeout(() => { if (onEvent) onEvent(next); }, next.delay * 1000);
+            }
+          }
+          break;
         }
       }
     }

@@ -398,11 +398,11 @@
 
     { time: 999, delay: 1.7, wait: true, type: 'liam-text', content: 'But I want to help, Daddy.' },
 
-    { time: 999, delay: 1, wait: true, type: 'liam-tool', toolName: 'Bash(buy ETH-PERP 1000)', result: [
+    { time: 999, delay: 0.5, wait: true, type: 'liam-tool', toolName: 'Bash(buy ETH-PERP 1000)', result: [
       '[order] submitting market buy: ETH-PERP x1000 on hyperliquid',
     ], lineDelay: 300 },
-
-    { time: 999, delay: 0.5, wait: true, type: 'liam-logs', content: [
+    // Logs fire while the buy result is still rendering
+    { time: 999, delay: 1.5, eager: true, type: 'liam-logs', content: [
       '[fill] ETH-PERP x1000 — avg price: $4,291.44 — slippage: 12.8% — cost: $4,291,440.00',
       '[treasury] WARNING: purchase exceeds available balance',
       '[margin] emergency margin loan initiated: $3,102,847.00',
