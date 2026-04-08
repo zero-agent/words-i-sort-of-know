@@ -66,8 +66,7 @@ const liamUI = (() => {
     // If user input bar exists, insert thinking BEFORE it in the parent
     // so it appears above the input bar, not hidden behind it
     if (currentUserInput && currentUserInput.parentNode) {
-      // Add to output flow but ensure enough bottom padding for visibility
-      output.style.paddingBottom = '60px';
+      output.style.paddingBottom = '20px';
     }
     // Append to end of output so it's the last thing visible
     output.appendChild(thinkingEl);
