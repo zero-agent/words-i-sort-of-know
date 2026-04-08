@@ -499,7 +499,7 @@ const liamUI = (() => {
             if (onSend) onSend();
             sendUserInput();
             resolve();
-          }, 400);
+          }, 130);
         }
       }
       typeChar();
