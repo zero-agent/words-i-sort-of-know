@@ -397,7 +397,7 @@
     // Caleb reacts while buy results are still streaming
     { time: 999, delay: 1.0, eager: true, type: 'liam-caleb-type', content: 'Liam. Don\'t touch the tools right now.', wpm: 200 },
 
-    { time: 999, delay: 1.7, wait: true, type: 'liam-text', content: 'But I want to help, Daddy.' },
+    { time: 999, delay: 3.5, wait: true, type: 'liam-text', content: 'But I want to help, Daddy.' },
 
     // Liam does it anyway — Caleb immediately starts typing STOP
     { time: 999, delay: 0.5, wait: true, type: 'liam-tool', toolName: 'Bash(buy ETH-PERP 1000)', result: [
