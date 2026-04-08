@@ -1155,7 +1155,8 @@
           vlAudio.sfxKeyclickLoud();
           liamUI.hideThinking();  // message sent — interrupt thinking
         }).then(() => {
-          liamUI.showThinking();  // Liam starts thinking about the response
+          // Brief pause before Liam starts thinking about the response
+          setTimeout(() => liamUI.showThinking(), 800);
           if (evt.wait) engine.eventDone();
         });
         break;
