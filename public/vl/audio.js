@@ -75,7 +75,7 @@ const vlAudio = (() => {
     sfxLpf.frequency.value = 3000;
     sfxLpf.Q.value = 0.5;
 
-    const sfxReverb = await createReverb(ctx, 1.5, 4.0);  // short, fast decay
+    const sfxReverb = await createReverb(ctx, 3.5, 2.5);  // moderate tail, smooth decay
     const sfxReverbGain = ctx.createGain();
     sfxReverbGain.gain.value = 0.15;
 
