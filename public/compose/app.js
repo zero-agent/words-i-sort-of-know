@@ -14,6 +14,8 @@ const MEASURE_COLOR = '#3a3a3e';
 const KEY_BLACK = '#222';
 const KEY_WHITE = '#888';
 const RESIZE_HANDLE_W = 8;
+const BEND_MAX_SEMITONES = 24;
+const BEND_MAX_CENTS = BEND_MAX_SEMITONES * 100; // 2400
 
 // ─── State ───────────────────────────────────────────────────────────
 let project = createNewProject();
@@ -41,11 +43,17 @@ let activeVoices = [];
 let rafId = null;
 
 // Drag state
-let dragMode = null; // 'move','resize','bend','pan',null
+let dragMode = null; // 'move','resize','resize-left','bend','pan','pending','region-create','region-move','bend-pending','bend-region-create',null
 let dragTarget = null;
 let dragStartX = 0, dragStartY = 0;
 let dragOrigTick = 0, dragOrigPitch = 0, dragOrigDur = 0;
 let dragOrigBendTick = 0, dragOrigBendCents = 0;
+let dragPreviewPitch = -1; // track pitch during move for audio feedback
+let pendingClickTick = 0, pendingClickPitch = 0; // for deferred insert
+
+// Region selection
+let region = null;  // { startTick, endTick, lowPitch, highPitch } or null
+let clipboard = null; // { notes: [...], bends: [...], offsetTick } or null
 
 // Canvas refs
 let gridCanvas, gridCtx, rulerCanvas, rulerCtx, pianoCanvas, pianoCtx, bendCanvas, bendCtx;
@@ -61,12 +69,45 @@ function barLengthTicks() {
   const ts = project.settings.timeSignature;
   return ts.numerator * (4 / ts.denominator) * PPQ;
 }
-function snapTicks() { return PPQ * 4 / project.settings.snapDivisor; }
-function snapTick(tick) { const s = snapTicks(); return Math.round(tick / s) * s; }
+function snapTicks() { return project.settings.snapDivisor > 0 ? PPQ * 4 / project.settings.snapDivisor : 1; }
+function snapTick(tick) { if (project.settings.snapDivisor === 0) return Math.round(tick); const s = snapTicks(); return Math.round(tick / s) * s; }
+function minDuration() { return Math.max(snapTicks(), PPQ / 4); } // At least a 16th note
 function totalTicks() { return barLengthTicks() * project.settings.totalBars; }
 
 // Pitch range: show MIDI 36 (C2) to 96 (C7) = 60 semitones
-const PITCH_MIN = 36, PITCH_MAX = 96, PITCH_RANGE = PITCH_MAX - PITCH_MIN;
+const PITCH_MIN = 24, PITCH_MAX = 96, PITCH_RANGE = PITCH_MAX - PITCH_MIN;
+
+// ─── Logarithmic bend mapping ────────────────────────────────────
+// Maps semitones ↔ normalised Y (0..1, where 0=centre, 1=max).
+// Uses log scaling so the first few semitones get the most space.
+// f(semitones) = log(1 + semitones) / log(1 + maxSemitones)
+
+function semitonesToNorm(st) {
+  // st in [0, BEND_MAX_SEMITONES] → [0, 1], logarithmic
+  return Math.log(1 + Math.abs(st)) / Math.log(1 + BEND_MAX_SEMITONES);
+}
+function normToSemitones(n) {
+  // n in [0, 1] → [0, BEND_MAX_SEMITONES], inverse log
+  return Math.pow(1 + BEND_MAX_SEMITONES, Math.abs(n)) - 1;
+}
+// cents ↔ pixel-Y within the bend lane (h = lane height)
+function centsToY(cents, h) {
+  const midY = h / 2;
+  const st = cents / 100;
+  const norm = semitonesToNorm(Math.abs(st));
+  return midY - Math.sign(st) * norm * midY;
+}
+function yToCents(y, h) {
+  const midY = h / 2;
+  const norm = Math.abs(midY - y) / midY;        // 0..1
+  const st = normToSemitones(norm);               // 0..24
+  const sign = y < midY ? 1 : -1;
+  return sign * st * 100;
+}
+// Snap cents to nearest semitone boundary (100-cent increments)
+function snapCents(cents) {
+  return Math.round(cents / 100) * 100;
+}
 
 function createNewProject(title) {
   return {
@@ -79,7 +120,7 @@ function createNewProject(title) {
       tempoBpm: 120,
       timeSignature: { numerator: 4, denominator: 4 },
       ppq: 480,
-      bendRangeCents: 1200,
+      bendRangeCents: BEND_MAX_CENTS,
       totalBars: 8,
       snapDivisor: 16
     },
@@ -130,6 +171,204 @@ async function loadLatest() {
       } else resolve(null);
     };
     req.onerror = () => resolve(null);
+  });
+}
+
+// ─── Modal system ────────────────────────────────────────────────────
+function showModal(title, bodyHTML, actions) {
+  const overlay = document.getElementById('modal-overlay');
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = bodyHTML;
+  const actionsEl = document.getElementById('modal-actions');
+  actionsEl.innerHTML = '';
+  for (const a of actions) {
+    const btn = document.createElement('button');
+    btn.textContent = a.label;
+    if (a.cls) btn.className = a.cls;
+    btn.addEventListener('click', () => { closeModal(); if (a.fn) a.fn(); });
+    actionsEl.appendChild(btn);
+  }
+  overlay.classList.remove('hidden');
+  // Focus first input if present
+  const inp = document.querySelector('#modal-body input');
+  if (inp) { inp.focus(); inp.select(); }
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.add('hidden');
+}
+
+// Close modal on overlay click (but not modal body click)
+document.addEventListener('click', (e) => {
+  if (e.target.id === 'modal-overlay') closeModal();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Escape' && !document.getElementById('modal-overlay').classList.contains('hidden')) {
+    closeModal();
+  }
+});
+
+// ─── Project management (Save / Load / New / Delete) ────────────────
+function getAllProjects() {
+  return new Promise((resolve) => {
+    const tx = db.transaction('projects', 'readonly');
+    const req = tx.objectStore('projects').getAll();
+    req.onsuccess = () => {
+      const all = req.result;
+      all.sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
+      resolve(all);
+    };
+    req.onerror = () => resolve([]);
+  });
+}
+
+function deleteProject(id) {
+  return new Promise((resolve) => {
+    const tx = db.transaction('projects', 'readwrite');
+    tx.objectStore('projects').delete(id);
+    tx.oncomplete = () => resolve();
+  });
+}
+
+function formatDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function showSaveModal() {
+  showModal('Save Project',
+    `<input type="text" id="modal-save-name" value="${project.title.replace(/"/g, '&quot;')}">`,
+    [
+      { label: 'Cancel' },
+      { label: 'Save', cls: 'modal-btn-primary', fn: () => {
+        const name = document.getElementById('modal-save-name').value.trim() || 'Untitled';
+        project.title = name;
+        document.getElementById('project-title').value = name;
+        autosave();
+      }}
+    ]
+  );
+  // Allow Enter to confirm
+  document.getElementById('modal-save-name').addEventListener('keydown', (e) => {
+    if (e.code === 'Enter') {
+      e.preventDefault();
+      const name = e.target.value.trim() || 'Untitled';
+      project.title = name;
+      document.getElementById('project-title').value = name;
+      autosave();
+      closeModal();
+    }
+  });
+}
+
+async function showLoadModal() {
+  const projects = await getAllProjects();
+  let body;
+  if (projects.length === 0) {
+    body = '<div class="project-list-empty">No saved projects</div>';
+  } else {
+    body = '<ul class="project-list">' + projects.map(p =>
+      `<li class="project-item${p.id === project.id ? ' active' : ''}" data-id="${p.id}">` +
+        `<span class="project-item-name">${(p.title || p.project?.title || 'Untitled').replace(/</g, '&lt;')}</span>` +
+        `<span class="project-item-date">${formatDate(p.updatedAt)}</span>` +
+        `<button class="project-item-del" data-del-id="${p.id}" title="Delete">✕</button>` +
+      `</li>`
+    ).join('') + '</ul>';
+  }
+  showModal('Load Project', body, [{ label: 'Cancel' }]);
+
+  // Click to load
+  document.querySelectorAll('.project-item').forEach(el => {
+    el.addEventListener('click', async (e) => {
+      if (e.target.classList.contains('project-item-del')) return;
+      const id = el.dataset.id;
+      const tx = db.transaction('projects', 'readonly');
+      const req = tx.objectStore('projects').get(id);
+      req.onsuccess = () => {
+        if (req.result && req.result.project) {
+          project = req.result.project;
+          if (!project.settings.snapDivisor) project.settings.snapDivisor = 16;
+          if (project.settings.bendRangeCents < BEND_MAX_CENTS) project.settings.bendRangeCents = BEND_MAX_CENTS;
+          selectedNoteId = null; selectedBendId = null;
+          playStartTick = 0;
+          undoStack = []; redoStack = [];
+          syncUIFromProject();
+          renderAll();
+          closeModal();
+        }
+      };
+    });
+  });
+
+  // Delete buttons inside list
+  document.querySelectorAll('.project-item-del').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.delId;
+      const name = btn.closest('.project-item').querySelector('.project-item-name').textContent;
+      showDeleteModal(id, name, true);
+    });
+  });
+}
+
+function showDeleteModal(id, name, reopenLoad) {
+  const targetId = id || project.id;
+  const targetName = name || project.title;
+  showModal('Delete Project',
+    `<p style="color:#ccc;font-size:13px;">Delete <strong style="color:#f88;">${targetName.replace(/</g, '&lt;')}</strong>? This cannot be undone.</p>`,
+    [
+      { label: 'Cancel', fn: reopenLoad ? showLoadModal : null },
+      { label: 'Delete', cls: 'modal-btn-danger', fn: async () => {
+        await deleteProject(targetId);
+        // If we deleted the current project, start fresh
+        if (targetId === project.id) {
+          project = createNewProject();
+          selectedNoteId = null; selectedBendId = null;
+          playStartTick = 0;
+          undoStack = []; redoStack = [];
+          syncUIFromProject();
+          autosave();
+          renderAll();
+        }
+        if (reopenLoad) showLoadModal();
+      }}
+    ]
+  );
+}
+
+function showNewModal() {
+  showModal('New Project',
+    `<p style="color:#ccc;font-size:13px;margin-bottom:8px;">Create a new blank project? Unsaved changes to <strong>${project.title.replace(/</g, '&lt;')}</strong> will be kept in storage.</p>` +
+    `<input type="text" id="modal-new-name" value="Untitled" placeholder="Project name">`,
+    [
+      { label: 'Cancel' },
+      { label: 'Create', cls: 'modal-btn-primary', fn: () => {
+        const name = document.getElementById('modal-new-name').value.trim() || 'Untitled';
+        project = createNewProject(name);
+        selectedNoteId = null; selectedBendId = null;
+        playStartTick = 0;
+        undoStack = []; redoStack = [];
+        syncUIFromProject();
+        autosave();
+        renderAll();
+      }}
+    ]
+  );
+  document.getElementById('modal-new-name').addEventListener('keydown', (e) => {
+    if (e.code === 'Enter') {
+      e.preventDefault();
+      const name = e.target.value.trim() || 'Untitled';
+      project = createNewProject(name);
+      selectedNoteId = null; selectedBendId = null;
+      playStartTick = 0;
+      undoStack = []; redoStack = [];
+      syncUIFromProject();
+      autosave();
+      renderAll();
+      closeModal();
+    }
   });
 }
 
@@ -186,7 +425,14 @@ function autoExtend() {
   let maxTick = 0;
   for (const n of project.notes) maxTick = Math.max(maxTick, n.startTick + n.durationTicks);
   for (const p of project.pitchBend) maxTick = Math.max(maxTick, p.tick);
-  const neededBars = Math.ceil(maxTick / bl) + 1;
+  // Also extend past the visible viewport and playhead
+  if (gridCanvas) {
+    const visW = gridCanvas.width / (devicePixelRatio || 1);
+    const visibleEndTick = xToTick(visW);
+    maxTick = Math.max(maxTick, visibleEndTick);
+  }
+  maxTick = Math.max(maxTick, playheadTick());
+  const neededBars = Math.ceil(maxTick / bl) + 4;
   if (neededBars > project.settings.totalBars) {
     project.settings.totalBars = neededBars;
   }
@@ -255,7 +501,7 @@ function renderRuler() {
   }
   
   // Playhead
-  if (isPlaying || playheadTick() > 0) {
+  {
     const px = tickToX(playheadTick());
     ctx.strokeStyle = PLAYHEAD_COLOR;
     ctx.lineWidth = 2;
@@ -319,8 +565,9 @@ function renderGrid() {
       ctx.strokeRect(x, y, w2, vZoom - 1);
     }
     
-    // Resize handle
+    // Resize handles (left + right edges)
     ctx.fillStyle = sel ? '#fff' : '#3a8ec2';
+    ctx.fillRect(x, y, RESIZE_HANDLE_W, vZoom - 1);
     ctx.fillRect(x + w2 - RESIZE_HANDLE_W, y, RESIZE_HANDLE_W, vZoom - 1);
     
     // Label
@@ -331,9 +578,24 @@ function renderGrid() {
     }
   }
   
+  // Region selection overlay
+  if (region) {
+    const rx = tickToX(region.startTick);
+    const rx2 = tickToX(region.endTick);
+    const ry = pitchToY(region.highPitch);
+    const ry2 = pitchToY(region.lowPitch) + vZoom;
+    ctx.fillStyle = 'rgba(79, 195, 247, 0.12)';
+    ctx.fillRect(rx, ry, rx2 - rx, ry2 - ry);
+    ctx.strokeStyle = 'rgba(79, 195, 247, 0.5)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 3]);
+    ctx.strokeRect(rx, ry, rx2 - rx, ry2 - ry);
+    ctx.setLineDash([]);
+  }
+
   // Playhead
   const phTick = playheadTick();
-  if (isPlaying || phTick > 0) {
+  {
     const px = tickToX(phTick);
     ctx.strokeStyle = PLAYHEAD_COLOR;
     ctx.lineWidth = 1.5;
@@ -352,16 +614,35 @@ function renderBend() {
   ctx.fillRect(0, 0, w, h);
   
   const midY = h / 2;
-  const range = project.settings.bendRangeCents;
   
-  // Center line
-  ctx.strokeStyle = '#333';
-  ctx.lineWidth = 1;
-  ctx.setLineDash([4, 4]);
-  ctx.beginPath(); ctx.moveTo(0, midY); ctx.lineTo(w, midY); ctx.stroke();
-  ctx.setLineDash([]);
+  // ── Horizontal semitone grid lines (logarithmic spacing) ──
+  for (let st = 0; st <= BEND_MAX_SEMITONES; st++) {
+    const yUp = centsToY(st * 100, h);
+    const yDn = centsToY(-st * 100, h);
+    if (st === 0) {
+      // Centre line — dashed, brighter
+      ctx.strokeStyle = '#444';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(0, midY); ctx.lineTo(w, midY); ctx.stroke();
+      ctx.setLineDash([]);
+    } else {
+      const isOctave = st % 12 === 0;
+      ctx.strokeStyle = isOctave ? '#3a3a3e' : '#242428';
+      ctx.lineWidth = isOctave ? 0.8 : 0.4;
+      ctx.beginPath(); ctx.moveTo(0, yUp); ctx.lineTo(w, yUp); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, yDn); ctx.lineTo(w, yDn); ctx.stroke();
+      // Label octave boundaries
+      if (isOctave) {
+        ctx.fillStyle = '#555';
+        ctx.font = '9px sans-serif';
+        ctx.fillText(`+${st}`, 2, yUp - 2);
+        ctx.fillText(`-${st}`, 2, yDn + 9);
+      }
+    }
+  }
   
-  // Vertical grid
+  // ── Vertical beat/bar grid ──
   const bl = barLengthTicks();
   for (let tick = 0; tick <= totalTicks(); tick += PPQ) {
     const x = tickToX(tick);
@@ -372,32 +653,28 @@ function renderBend() {
     ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
   }
   
-  // Bend line
+  // ── Bend line (logarithmic Y) ──
   const pts = project.pitchBend;
   if (pts.length > 0) {
     ctx.strokeStyle = BEND_COLOR;
     ctx.lineWidth = 2;
     ctx.beginPath();
-    // line from left to first point
-    const firstY = midY - (pts[0].cents / range) * midY;
+    const firstY = centsToY(pts[0].cents, h);
     ctx.moveTo(tickToX(0), pts[0].tick === 0 ? firstY : midY);
     if (pts[0].tick > 0) ctx.lineTo(tickToX(pts[0].tick), firstY);
     
     for (let i = 0; i < pts.length; i++) {
-      const px = tickToX(pts[i].tick);
-      const py = midY - (pts[i].cents / range) * midY;
-      ctx.lineTo(px, py);
+      ctx.lineTo(tickToX(pts[i].tick), centsToY(pts[i].cents, h));
     }
-    // extend to end
     const lastPt = pts[pts.length - 1];
-    ctx.lineTo(tickToX(totalTicks()), midY - (lastPt.cents / range) * midY);
+    ctx.lineTo(tickToX(totalTicks()), centsToY(lastPt.cents, h));
     ctx.stroke();
   }
   
-  // Bend points
+  // ── Bend anchor points ──
   for (const pt of pts) {
     const px = tickToX(pt.tick);
-    const py = midY - (pt.cents / range) * midY;
+    const py = centsToY(pt.cents, h);
     const sel = pt.id === selectedBendId;
     ctx.fillStyle = sel ? '#fff' : BEND_COLOR;
     ctx.beginPath();
@@ -408,12 +685,32 @@ function renderBend() {
       ctx.lineWidth = 2;
       ctx.stroke();
     }
+    // Semitone label near selected point
+    if (sel) {
+      const st = pt.cents / 100;
+      const label = (st >= 0 ? '+' : '') + st.toFixed(0) + 'st';
+      ctx.fillStyle = '#ccc';
+      ctx.font = '10px sans-serif';
+      ctx.fillText(label, px + 8, py - 4);
+    }
   }
   
-  // Playhead
-  const phTick = playheadTick();
-  if (isPlaying || phTick > 0) {
-    const px = tickToX(phTick);
+  // ── Region overlay ──
+  if (region) {
+    const rx = tickToX(region.startTick);
+    const rx2 = tickToX(region.endTick);
+    ctx.fillStyle = 'rgba(79, 195, 247, 0.12)';
+    ctx.fillRect(rx, 0, rx2 - rx, h);
+    ctx.strokeStyle = 'rgba(79, 195, 247, 0.5)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 3]);
+    ctx.strokeRect(rx, 0, rx2 - rx, h);
+    ctx.setLineDash([]);
+  }
+
+  // ── Playhead ──
+  {
+    const px = tickToX(playheadTick());
     ctx.strokeStyle = PLAYHEAD_COLOR;
     ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, h); ctx.stroke();
@@ -422,23 +719,133 @@ function renderBend() {
   ctx.restore();
 }
 
-function updateStatus() {
-  const tick = playheadTick();
+// ─── Tick ↔ bar:beat:tick formatting ─────────────────────────────
+function tickToBarBeat(tick) {
   const bl = barLengthTicks();
   const bar = Math.floor(tick / bl) + 1;
   const beatInBar = Math.floor((tick % bl) / PPQ) + 1;
   const tickInBeat = Math.floor(tick % PPQ);
-  document.getElementById('status-pos').textContent = `${bar}:${beatInBar}:${String(tickInBeat).padStart(3, '0')}`;
-  
-  let sel = '';
+  return `${bar}:${beatInBar}:${String(tickInBeat).padStart(3, '0')}`;
+}
+
+function barBeatToTick(str) {
+  const parts = str.split(':').map(Number);
+  if (parts.some(isNaN) || parts.length < 2) return null;
+  const bar = (parts[0] || 1) - 1;
+  const beat = (parts[1] || 1) - 1;
+  const sub = parts[2] || 0;
+  const bl = barLengthTicks();
+  return bar * bl + beat * PPQ + sub;
+}
+
+function updateStatus() {
+  const tick = playheadTick();
+  document.getElementById('status-pos').textContent = tickToBarBeat(tick);
+
+  const panel = document.getElementById('sel-panel');
+
   if (selectedNoteId) {
     const n = project.notes.find(n => n.id === selectedNoteId);
-    if (n) sel = `Note: ${pitchName(n.pitch)} t:${n.startTick} d:${n.durationTicks}`;
+    if (n) {
+      panel.classList.remove('hidden');
+      const startSec = tickToSec(n.startTick);
+      const durSec = tickToSec(n.durationTicks);
+      const endSec = startSec + durSec;
+
+      // Only update fields if they're not focused (user might be typing)
+      const pitchEl = document.getElementById('sel-pitch');
+      const velEl = document.getElementById('sel-vel');
+      const startEl = document.getElementById('sel-start');
+      const durEl = document.getElementById('sel-dur');
+
+      if (document.activeElement !== pitchEl) pitchEl.value = pitchName(n.pitch);
+      if (document.activeElement !== velEl) velEl.value = n.velocity;
+      if (document.activeElement !== startEl) startEl.value = tickToBarBeat(n.startTick);
+      if (document.activeElement !== durEl) durEl.value = tickToBarBeat(n.durationTicks);
+
+      document.getElementById('sel-start-sec').textContent = startSec.toFixed(3);
+      document.getElementById('sel-dur-sec').textContent = durSec.toFixed(3);
+      document.getElementById('sel-end-sec').textContent = endSec.toFixed(3);
+
+      document.getElementById('status-sel').textContent = `${pitchName(n.pitch)} | MIDI ${n.pitch}`;
+    } else {
+      panel.classList.add('hidden');
+      document.getElementById('status-sel').textContent = '';
+    }
   } else if (selectedBendId) {
+    panel.classList.add('hidden');
     const b = project.pitchBend.find(b => b.id === selectedBendId);
-    if (b) sel = `Bend: ${b.cents}¢ @ t:${b.tick}`;
+    if (b) {
+      const st = b.cents / 100;
+      document.getElementById('status-sel').textContent = `Bend: ${st >= 0 ? '+' : ''}${st.toFixed(0)}st @ ${tickToBarBeat(b.tick)} (${tickToSec(b.tick).toFixed(3)}s)`;
+    } else {
+      document.getElementById('status-sel').textContent = '';
+    }
+  } else {
+    panel.classList.add('hidden');
+    document.getElementById('status-sel').textContent = '';
   }
-  document.getElementById('status-sel').textContent = sel;
+}
+
+// ─── Selection panel editing ─────────────────────────────────────
+function parsePitchName(str) {
+  // e.g. "C#5", "D3", "Eb4" → MIDI number or null
+  const m = str.trim().match(/^([A-Ga-g])([#b]?)(-?\d)$/);
+  if (!m) return null;
+  const letter = m[1].toUpperCase();
+  const acc = m[2];
+  const oct = parseInt(m[3]);
+  const base = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 }[letter];
+  if (base === undefined) return null;
+  let midi = (oct + 1) * 12 + base;
+  if (acc === '#') midi++;
+  else if (acc === 'b') midi--;
+  return clamp(midi, PITCH_MIN, PITCH_MAX);
+}
+
+function setupSelectionPanel() {
+  const pitchEl = document.getElementById('sel-pitch');
+  const velEl = document.getElementById('sel-vel');
+  const startEl = document.getElementById('sel-start');
+  const durEl = document.getElementById('sel-dur');
+  const delBtn = document.getElementById('sel-delete');
+
+  function getSelNote() {
+    return selectedNoteId ? project.notes.find(n => n.id === selectedNoteId) : null;
+  }
+
+  pitchEl.addEventListener('change', () => {
+    const n = getSelNote();
+    if (!n) return;
+    const midi = parsePitchName(pitchEl.value);
+    if (midi !== null) { pushUndo(); n.pitch = midi; autosave(); renderAll(); }
+    else pitchEl.value = pitchName(n.pitch);
+  });
+
+  velEl.addEventListener('change', () => {
+    const n = getSelNote();
+    if (!n) return;
+    const v = parseFloat(velEl.value);
+    if (!isNaN(v)) { pushUndo(); n.velocity = clamp(v, 0.05, 1); autosave(); renderAll(); }
+  });
+
+  startEl.addEventListener('change', () => {
+    const n = getSelNote();
+    if (!n) return;
+    const tick = barBeatToTick(startEl.value);
+    if (tick !== null && tick >= 0) { pushUndo(); n.startTick = tick; autoExtend(); autosave(); renderAll(); }
+    else startEl.value = tickToBarBeat(n.startTick);
+  });
+
+  durEl.addEventListener('change', () => {
+    const n = getSelNote();
+    if (!n) return;
+    const tick = barBeatToTick(durEl.value);
+    if (tick !== null && tick > 0) { pushUndo(); n.durationTicks = tick; autoExtend(); autosave(); renderAll(); }
+    else durEl.value = tickToBarBeat(n.durationTicks);
+  });
+
+  delBtn.addEventListener('click', deleteSelected);
 }
 
 // ─── Canvas sizing ───────────────────────────────────────────────────
@@ -458,7 +865,7 @@ function resizeCanvases() {
   renderAll();
 }
 
-// ─── Playhead ────────────────────────────────────────────────────────
+// ─── Playhead ────────────────────────────────────────────────────
 function playheadTick() {
   if (!isPlaying) return playStartTick;
   if (!audioCtx) return playStartTick;
@@ -466,12 +873,38 @@ function playheadTick() {
   return playStartTick + secToTick(elapsed);
 }
 
+// ─── Auto-scroll ─────────────────────────────────────────────────
+// Keeps a tick position visible by adjusting scrollX.
+// margin = fraction of visible width to use as a buffer zone on each side.
+function ensureTickVisible(tick, { margin = 0.15, center = false } = {}) {
+  const visW = gridCanvas.width / (devicePixelRatio || 1);
+  const px = tickToX(tick); // position relative to current scroll
+
+  if (center) {
+    // Jump so the tick is centred
+    const targetScrollX = (tick / PPQ) * hZoom - visW / 2;
+    scrollX = Math.max(0, targetScrollX);
+    return;
+  }
+
+  const lo = visW * margin;
+  const hi = visW * (1 - margin);
+
+  if (px > hi) {
+    // Playhead ran past the right edge — page forward so it's at the left margin
+    scrollX = (tick / PPQ) * hZoom - lo;
+  } else if (px < lo) {
+    // Dragged past the left edge
+    scrollX = Math.max(0, (tick / PPQ) * hZoom - lo);
+  }
+}
+
 // ─── Audio Engine ────────────────────────────────────────────────────
 async function ensureAudio() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     masterGain = audioCtx.createGain();
-    masterGain.gain.value = 0.15;
+    masterGain.gain.value = 0.7;
     masterGain.connect(audioCtx.destination);
   }
   if (audioCtx.state === 'suspended') {
@@ -498,14 +931,14 @@ function scheduleNote(note, when, dur) {
   gain.gain.setValueAtTime(0, when);
   if (vt === 'plucky') {
     // Fast attack, quick exponential decay
-    gain.gain.linearRampToValueAtTime(note.velocity * 0.15, when + 0.008);
+    gain.gain.linearRampToValueAtTime(note.velocity * 0.5, when + 0.008);
     gain.gain.exponentialRampToValueAtTime(0.001, when + Math.min(dur, 0.3));
   } else {
-    gain.gain.linearRampToValueAtTime(note.velocity * 0.15, when + 0.005);
+    gain.gain.linearRampToValueAtTime(note.velocity * 0.5, when + 0.005);
     // Hold, then release
     const releaseStart = when + dur - 0.04;
     if (releaseStart > when + 0.005) {
-      gain.gain.setValueAtTime(note.velocity * 0.15, releaseStart);
+      gain.gain.setValueAtTime(note.velocity * 0.5, releaseStart);
     }
     gain.gain.exponentialRampToValueAtTime(0.0001, when + dur);
   }
@@ -533,10 +966,13 @@ async function startPlayback() {
   await ensureAudio();
   isPlaying = true;
   playStartAudioTime = audioCtx.currentTime;
-  scheduledUpTo = playStartTick;
+  // Set scheduledUpTo just before playStartTick so notes at exactly that tick get caught
+  scheduledUpTo = playStartTick - 1;
   
   document.getElementById('btn-play').textContent = '⏹';
   
+  // Run scheduler immediately so the first notes are scheduled without waiting 25ms
+  schedulerTick();
   schedulerTimer = setInterval(schedulerTick, 25);
   rafLoop();
 }
@@ -595,8 +1031,82 @@ function schedulerTick() {
 
 function rafLoop() {
   if (!isPlaying) return;
+  ensureTickVisible(playheadTick());
   renderAll();
   rafId = requestAnimationFrame(rafLoop);
+}
+
+// ─── Region helpers ──────────────────────────────────────────────────
+function isInRegion(tick, pitch) {
+  if (!region) return false;
+  return tick >= region.startTick && tick <= region.endTick &&
+         pitch >= region.lowPitch && pitch <= region.highPitch;
+}
+
+function isNoteInOrigRegion(n, startTick, endTick, lowPitch, highPitch) {
+  return n.startTick >= startTick && n.startTick + n.durationTicks <= endTick &&
+         n.pitch >= lowPitch && n.pitch <= highPitch;
+}
+
+function notesInRegion() {
+  if (!region) return [];
+  return project.notes.filter(n =>
+    n.startTick >= region.startTick && n.startTick + n.durationTicks <= region.endTick &&
+    n.pitch >= region.lowPitch && n.pitch <= region.highPitch
+  );
+}
+
+function bendsInRegion() {
+  if (!region) return [];
+  return project.pitchBend.filter(b =>
+    b.tick >= region.startTick && b.tick <= region.endTick
+  );
+}
+
+function copyRegion() {
+  if (!region) return;
+  const notes = notesInRegion().map(n => ({ ...n, id: uuid(), startTick: n.startTick - region.startTick }));
+  const bends = bendsInRegion().map(b => ({ ...b, id: uuid(), tick: b.tick - region.startTick }));
+  clipboard = { notes, bends, duration: region.endTick - region.startTick };
+}
+
+function pasteAtPlayhead() {
+  if (!clipboard) return;
+  pushUndo();
+  const baseTick = snapTick(playheadTick());
+  for (const n of clipboard.notes) {
+    project.notes.push({ ...n, id: uuid(), startTick: n.startTick + baseTick });
+  }
+  for (const b of clipboard.bends) {
+    project.pitchBend.push({ ...b, id: uuid(), tick: b.tick + baseTick });
+  }
+  project.notes.sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch);
+  project.pitchBend.sort((a, b) => a.tick - b.tick);
+  // Select the pasted region
+  if (clipboard.notes.length > 0) {
+    const pitches = clipboard.notes.map(n => n.pitch);
+    region = {
+      startTick: baseTick,
+      endTick: baseTick + clipboard.duration,
+      lowPitch: Math.min(...pitches),
+      highPitch: Math.max(...pitches)
+    };
+  }
+  autoExtend();
+  autosave();
+  renderAll();
+}
+
+function deleteRegion() {
+  if (!region) return;
+  pushUndo();
+  const noteIds = new Set(notesInRegion().map(n => n.id));
+  const bendIds = new Set(bendsInRegion().map(b => b.id));
+  project.notes = project.notes.filter(n => !noteIds.has(n.id));
+  project.pitchBend = project.pitchBend.filter(b => !bendIds.has(b.id));
+  region = null;
+  autosave();
+  renderAll();
 }
 
 // ─── Grid Interaction ────────────────────────────────────────────────
@@ -612,11 +1122,16 @@ function noteAt(x, y) {
   return null;
 }
 
-function isOnResizeHandle(x, y, note) {
+function isOnResizeHandleRight(x, y, note) {
   const nx = tickToX(note.startTick);
   const nw = (note.durationTicks / PPQ) * hZoom;
   const rightEdge = nx + nw;
   return x >= rightEdge - RESIZE_HANDLE_W && x <= rightEdge + 2;
+}
+
+function isOnResizeHandleLeft(x, y, note) {
+  const nx = tickToX(note.startTick);
+  return x >= nx - 2 && x <= nx + RESIZE_HANDLE_W;
 }
 
 function setupGridEvents() {
@@ -632,8 +1147,8 @@ function setupGridEvents() {
     
     const hit = noteAt(x, y);
     
-    if (hit && isOnResizeHandle(x, y, hit)) {
-      // Resize
+    if (hit && isOnResizeHandleRight(x, y, hit)) {
+      // Resize from right edge
       pushUndo();
       selectedNoteId = hit.id;
       selectedBendId = null;
@@ -642,43 +1157,61 @@ function setupGridEvents() {
       dragStartX = x;
       dragOrigDur = hit.durationTicks;
       el.setPointerCapture(e.pointerId);
-    } else if (hit) {
-      // Move
+    } else if (hit && isOnResizeHandleLeft(x, y, hit)) {
+      // Resize from left edge
       pushUndo();
       selectedNoteId = hit.id;
       selectedBendId = null;
-      dragMode = 'move';
+      dragMode = 'resize-left';
       dragTarget = hit;
-      dragStartX = x; dragStartY = y;
+      dragStartX = x;
       dragOrigTick = hit.startTick;
-      dragOrigPitch = hit.pitch;
+      dragOrigDur = hit.durationTicks;
+      el.setPointerCapture(e.pointerId);
+    } else if (hit) {
+      pushUndo();
+      // Option/Alt+click: duplicate the note and drag the copy
+      let target = hit;
+      if (e.altKey) {
+        const dup = { ...hit, id: uuid() };
+        project.notes.push(dup);
+        project.notes.sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch);
+        target = dup;
+      }
+      // Move — preview the note's pitch
+      selectedNoteId = target.id;
+      selectedBendId = null;
+      dragMode = 'move';
+      dragTarget = target;
+      dragStartX = x; dragStartY = y;
+      dragOrigTick = target.startTick;
+      dragOrigPitch = target.pitch;
+      dragPreviewPitch = target.pitch;
+      previewNote(target);
       el.setPointerCapture(e.pointerId);
     } else if (e.shiftKey || e.button === 1) {
       // Pan
       dragMode = 'pan';
       dragStartX = e.clientX; dragStartY = e.clientY;
       el.setPointerCapture(e.pointerId);
+    } else if (region && isInRegion(tick, pitch)) {
+      // Click inside existing region — start region move
+      dragMode = 'region-move';
+      dragStartX = x; dragStartY = y;
+      dragOrigTick = region.startTick;
+      dragOrigPitch = region.highPitch;
+      pushUndo();
+      el.setPointerCapture(e.pointerId);
     } else {
-      // Insert note
-      const snapped = snapTick(tick);
-      if (pitch >= PITCH_MIN && pitch <= PITCH_MAX && snapped >= 0) {
-        pushUndo();
-        const n = {
-          id: uuid(),
-          pitch: clamp(pitch, PITCH_MIN, PITCH_MAX),
-          startTick: Math.max(0, snapped),
-          durationTicks: snapTicks(),
-          velocity: 0.8
-        };
-        project.notes.push(n);
-        project.notes.sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch);
-        selectedNoteId = n.id;
-        selectedBendId = null;
-        autoExtend();
-        autosave();
-        // Preview
-        previewNote(n);
-      }
+      // Empty area — defer: might be click (insert note) or drag (region select)
+      dragMode = 'pending';
+      dragStartX = x; dragStartY = y;
+      pendingClickTick = tick;
+      pendingClickPitch = pitch;
+      selectedNoteId = null;
+      selectedBendId = null;
+      region = null;
+      el.setPointerCapture(e.pointerId);
     }
     renderAll();
   });
@@ -696,10 +1229,55 @@ function setupGridEvents() {
       const pitchDelta = -Math.round(dy / vZoom);
       dragTarget.startTick = Math.max(0, snapTick(dragOrigTick + tickDelta));
       dragTarget.pitch = clamp(dragOrigPitch + pitchDelta, PITCH_MIN, PITCH_MAX);
+      // Re-trigger audio preview when pitch changes
+      if (dragTarget.pitch !== dragPreviewPitch) {
+        dragPreviewPitch = dragTarget.pitch;
+        previewNote(dragTarget);
+      }
+      ensureTickVisible(dragTarget.startTick + dragTarget.durationTicks);
     } else if (dragMode === 'resize' && dragTarget) {
       const dx = x - dragStartX;
       const tickDelta = (dx / hZoom) * PPQ;
-      dragTarget.durationTicks = Math.max(snapTicks(), snapTick(dragOrigDur + tickDelta));
+      dragTarget.durationTicks = Math.max(minDuration(), snapTick(dragOrigDur + tickDelta));
+      ensureTickVisible(dragTarget.startTick + dragTarget.durationTicks);
+    } else if (dragMode === 'resize-left' && dragTarget) {
+      const dx = x - dragStartX;
+      const tickDelta = (dx / hZoom) * PPQ;
+      const newStart = snapTick(dragOrigTick + tickDelta);
+      const endTick = dragOrigTick + dragOrigDur;
+      // Don't let start go past the end or below 0
+      const clampedStart = Math.max(0, Math.min(newStart, endTick - minDuration()));
+      dragTarget.durationTicks = endTick - clampedStart;
+      dragTarget.startTick = clampedStart;
+      ensureTickVisible(clampedStart);
+    } else if (dragMode === 'pending') {
+      const dx = Math.abs(x - dragStartX);
+      const dy = Math.abs(y - dragStartY);
+      if (dx > 4 || dy > 4) {
+        // Threshold crossed — switch to region creation
+        dragMode = 'region-create';
+      }
+    } else if (dragMode === 'region-create') {
+      const t1 = xToTick(dragStartX), t2 = xToTick(x);
+      const p1 = yToPitch(dragStartY), p2 = yToPitch(y);
+      region = {
+        startTick: snapTick(Math.min(t1, t2)),
+        endTick: snapTick(Math.max(t1, t2)),
+        lowPitch: Math.min(p1, p2),
+        highPitch: Math.max(p1, p2)
+      };
+    } else if (dragMode === 'region-move') {
+      const dx = x - dragStartX;
+      const dy = y - dragStartY;
+      const tickDelta = snapTick((dx / hZoom) * PPQ);
+      const pitchDelta = -Math.round(dy / vZoom);
+      // Move region bounds
+      const dur = region.endTick - region.startTick;
+      const pitchSpan = region.highPitch - region.lowPitch;
+      region.startTick = Math.max(0, dragOrigTick + tickDelta);
+      region.endTick = region.startTick + dur;
+      region.highPitch = clamp(dragOrigPitch + pitchDelta, PITCH_MIN + pitchSpan, PITCH_MAX);
+      region.lowPitch = region.highPitch - pitchSpan;
     } else if (dragMode === 'pan') {
       const dx = e.clientX - dragStartX;
       const dy = e.clientY - dragStartY;
@@ -710,27 +1288,88 @@ function setupGridEvents() {
     renderAll();
   });
   
-  const pointerUp = () => {
-    if (dragMode === 'move' || dragMode === 'resize') {
+  const pointerUp = (e) => {
+    if (dragMode === 'move' || dragMode === 'resize' || dragMode === 'resize-left') {
       autoExtend();
       autosave();
+    } else if (dragMode === 'pending') {
+      // No drag happened — insert a note
+      const pitch = pendingClickPitch;
+      const snapped = snapTick(pendingClickTick);
+      if (pitch >= PITCH_MIN && pitch <= PITCH_MAX && snapped >= 0) {
+        pushUndo();
+        const n = {
+          id: uuid(),
+          pitch: clamp(pitch, PITCH_MIN, PITCH_MAX),
+          startTick: Math.max(0, snapped),
+          durationTicks: minDuration(),
+          velocity: 0.8
+        };
+        project.notes.push(n);
+        project.notes.sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch);
+        selectedNoteId = n.id;
+        selectedBendId = null;
+        autoExtend();
+        autosave();
+        previewNote(n);
+      }
+      renderAll();
+    } else if (dragMode === 'region-move') {
+      // Apply tick/pitch delta to all notes & bends in original region
+      const tickDelta = region.startTick - dragOrigTick;
+      const pitchDelta = region.highPitch - dragOrigPitch;
+      for (const n of project.notes) {
+        if (isNoteInOrigRegion(n, dragOrigTick, dragOrigTick + (region.endTick - region.startTick), dragOrigPitch - (region.highPitch - region.lowPitch), dragOrigPitch)) {
+          n.startTick = Math.max(0, n.startTick + tickDelta);
+          n.pitch = clamp(n.pitch + pitchDelta, PITCH_MIN, PITCH_MAX);
+        }
+      }
+      const origEndTick = dragOrigTick + (region.endTick - region.startTick);
+      for (const b of project.pitchBend) {
+        if (b.tick >= dragOrigTick && b.tick <= origEndTick) {
+          b.tick = Math.max(0, b.tick + tickDelta);
+        }
+      }
+      project.pitchBend.sort((a, b) => a.tick - b.tick);
+      autoExtend();
+      autosave();
+      renderAll();
     }
-    dragMode = null; dragTarget = null;
+    dragMode = null; dragTarget = null; dragPreviewPitch = -1;
   };
   el.addEventListener('pointerup', pointerUp);
   el.addEventListener('pointercancel', pointerUp);
   
+  // Cursor feedback for resize handles & regions
+  el.addEventListener('pointermove', (e) => {
+    if (dragMode) return; // already handled above
+    const rect = el.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const hit = noteAt(x, y);
+    if (hit && (isOnResizeHandleLeft(x, y, hit) || isOnResizeHandleRight(x, y, hit))) {
+      el.style.cursor = 'ew-resize';
+    } else if (hit) {
+      el.style.cursor = 'grab';
+    } else if (region && isInRegion(xToTick(x), yToPitch(y))) {
+      el.style.cursor = 'move';
+    } else {
+      el.style.cursor = 'crosshair';
+    }
+  }, { passive: true });
+
   // Wheel: scroll + zoom
   el.addEventListener('wheel', (e) => {
     e.preventDefault();
     if (e.ctrlKey || e.metaKey) {
       // Zoom horizontal
       hZoom = clamp(hZoom * (e.deltaY < 0 ? 1.15 : 0.87), 20, 240);
-    } else if (e.shiftKey) {
-      scrollX = Math.max(0, scrollX + e.deltaY);
     } else {
-      scrollY = Math.max(0, scrollY + e.deltaY);
+      // Two-finger trackpad: deltaX = horizontal, deltaY = vertical
+      if (e.deltaX !== 0) scrollX = Math.max(0, scrollX + e.deltaX);
+      if (e.deltaY !== 0) scrollY = Math.max(0, scrollY + e.deltaY);
     }
+    autoExtend();
     renderAll();
   }, { passive: false });
 }
@@ -739,13 +1378,11 @@ function setupGridEvents() {
 function bendPointAt(x, y) {
   const c = bendCanvas;
   const h = c.height / devicePixelRatio;
-  const midY = h / 2;
-  const range = project.settings.bendRangeCents;
   
   for (let i = project.pitchBend.length - 1; i >= 0; i--) {
     const pt = project.pitchBend[i];
     const px = tickToX(pt.tick);
-    const py = midY - (pt.cents / range) * midY;
+    const py = centsToY(pt.cents, h);
     if (Math.abs(x - px) < 10 && Math.abs(y - py) < 10) return pt;
   }
   return null;
@@ -760,8 +1397,6 @@ function setupBendEvents() {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     const h = rect.height;
-    const midY = h / 2;
-    const range = project.settings.bendRangeCents;
     
     const hit = bendPointAt(x, y);
     
@@ -775,42 +1410,104 @@ function setupBendEvents() {
       dragOrigBendTick = hit.tick;
       dragOrigBendCents = hit.cents;
       el.setPointerCapture(e.pointerId);
-    } else {
-      // Insert
-      const tick = snapTick(xToTick(x));
-      const cents = clamp((midY - y) / midY * range, -range, range);
+    } else if (region && xToTick(x) >= region.startTick && xToTick(x) <= region.endTick) {
+      // Click inside existing region from bend lane — start region move
+      dragMode = 'region-move';
+      dragStartX = x; dragStartY = y;
+      dragOrigTick = region.startTick;
+      dragOrigPitch = region.highPitch;
       pushUndo();
-      const pt = { id: uuid(), tick: Math.max(0, tick), cents: Math.round(cents) };
+      el.setPointerCapture(e.pointerId);
+    } else {
+      // Defer: click inserts, drag creates region
+      dragMode = 'bend-pending';
+      dragStartX = x; dragStartY = y;
+      selectedBendId = null;
+      selectedNoteId = null;
+      region = null;
+      el.setPointerCapture(e.pointerId);
+    }
+    renderAll();
+  });
+  
+  el.addEventListener('pointermove', (e) => {
+    const rect = el.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const h = rect.height;
+
+    if (dragMode === 'bend' && dragTarget) {
+      const dx = x - dragStartX;
+      const tickDelta = (dx / hZoom) * PPQ;
+      dragTarget.tick = Math.max(0, snapTick(dragOrigBendTick + tickDelta));
+      const rawCents = yToCents(y, h);
+      dragTarget.cents = clamp(snapCents(rawCents), -BEND_MAX_CENTS, BEND_MAX_CENTS);
+      project.pitchBend.sort((a, b) => a.tick - b.tick);
+      ensureTickVisible(dragTarget.tick);
+    } else if (dragMode === 'bend-pending') {
+      if (Math.abs(x - dragStartX) > 4) {
+        dragMode = 'bend-region-create';
+      }
+    } else if (dragMode === 'bend-region-create') {
+      const t1 = xToTick(dragStartX), t2 = xToTick(x);
+      region = {
+        startTick: snapTick(Math.min(t1, t2)),
+        endTick: snapTick(Math.max(t1, t2)),
+        lowPitch: PITCH_MIN,
+        highPitch: PITCH_MAX
+      };
+    } else if (dragMode === 'region-move') {
+      const dx = x - dragStartX;
+      const tickDelta = snapTick((dx / hZoom) * PPQ);
+      const dur = region.endTick - region.startTick;
+      region.startTick = Math.max(0, dragOrigTick + tickDelta);
+      region.endTick = region.startTick + dur;
+    } else {
+      return;
+    }
+    renderAll();
+  });
+  
+  const pointerUp = () => {
+    if (dragMode === 'bend') { autoExtend(); autosave(); }
+    else if (dragMode === 'bend-pending') {
+      // No drag — insert bend point
+      const rect = el.getBoundingClientRect();
+      const h = rect.height;
+      const tick = snapTick(xToTick(dragStartX));
+      const rawCents = yToCents(dragStartY, h);
+      const cents = clamp(snapCents(rawCents), -BEND_MAX_CENTS, BEND_MAX_CENTS);
+      pushUndo();
+      const pt = { id: uuid(), tick: Math.max(0, tick), cents };
       project.pitchBend.push(pt);
       project.pitchBend.sort((a, b) => a.tick - b.tick);
       selectedBendId = pt.id;
       selectedNoteId = null;
       autoExtend();
       autosave();
+      renderAll();
+    } else if (dragMode === 'region-move') {
+      // Apply tick delta to all notes & bends in original region
+      const tickDelta = region.startTick - dragOrigTick;
+      const pitchDelta = region.highPitch - dragOrigPitch;
+      const origEndTick = dragOrigTick + (region.endTick - region.startTick);
+      const origLowPitch = dragOrigPitch - (region.highPitch - region.lowPitch);
+      for (const n of project.notes) {
+        if (isNoteInOrigRegion(n, dragOrigTick, origEndTick, origLowPitch, dragOrigPitch)) {
+          n.startTick = Math.max(0, n.startTick + tickDelta);
+          n.pitch = clamp(n.pitch + pitchDelta, PITCH_MIN, PITCH_MAX);
+        }
+      }
+      for (const b of project.pitchBend) {
+        if (b.tick >= dragOrigTick && b.tick <= origEndTick) {
+          b.tick = Math.max(0, b.tick + tickDelta);
+        }
+      }
+      project.pitchBend.sort((a, b) => a.tick - b.tick);
+      autoExtend();
+      autosave();
+      renderAll();
     }
-    renderAll();
-  });
-  
-  el.addEventListener('pointermove', (e) => {
-    if (dragMode !== 'bend' || !dragTarget) return;
-    const rect = el.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const h = rect.height;
-    const midY = h / 2;
-    const range = project.settings.bendRangeCents;
-    
-    const dx = x - dragStartX;
-    const tickDelta = (dx / hZoom) * PPQ;
-    dragTarget.tick = Math.max(0, snapTick(dragOrigBendTick + tickDelta));
-    dragTarget.cents = clamp(Math.round((midY - y) / midY * range), -range, range);
-    
-    project.pitchBend.sort((a, b) => a.tick - b.tick);
-    renderAll();
-  });
-  
-  const pointerUp = () => {
-    if (dragMode === 'bend') { autoExtend(); autosave(); }
     dragMode = null; dragTarget = null;
   };
   el.addEventListener('pointerup', pointerUp);
@@ -821,8 +1518,10 @@ function setupBendEvents() {
     if (e.ctrlKey || e.metaKey) {
       hZoom = clamp(hZoom * (e.deltaY < 0 ? 1.15 : 0.87), 20, 240);
     } else {
-      scrollX = Math.max(0, scrollX + e.deltaY);
+      if (e.deltaX !== 0) scrollX = Math.max(0, scrollX + e.deltaX);
+      if (e.deltaY !== 0) scrollX = Math.max(0, scrollX + e.deltaY);
     }
+    autoExtend();
     renderAll();
   }, { passive: false });
 }
@@ -844,6 +1543,7 @@ function setupRulerInteractions() {
     } else {
       playStartTick = tick;
     }
+    ensureTickVisible(tick);
     renderAll();
   }
 
@@ -874,7 +1574,7 @@ async function previewNote(note) {
   gain.connect(masterGain);
   const now = audioCtx.currentTime;
   gain.gain.setValueAtTime(0, now);
-  gain.gain.linearRampToValueAtTime(0.12, now + 0.01);
+  gain.gain.linearRampToValueAtTime(0.5, now + 0.01);
   gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
   osc.start(now);
   osc.stop(now + 0.25);
@@ -983,15 +1683,23 @@ function fileTimestamp() {
 // ─── Keyboard Shortcuts ──────────────────────────────────────────────
 function setupKeyboard() {
   document.addEventListener('keydown', (e) => {
-    // Don't capture when typing in inputs
+    // Don't capture when typing in inputs or modal is open
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+    if (!document.getElementById('modal-overlay').classList.contains('hidden')) return;
     
     if (e.code === 'Space') {
       e.preventDefault();
       togglePlay();
+    } else if ((e.ctrlKey || e.metaKey) && e.code === 'KeyC') {
+      e.preventDefault();
+      copyRegion();
+    } else if ((e.ctrlKey || e.metaKey) && e.code === 'KeyV') {
+      e.preventDefault();
+      pasteAtPlayhead();
     } else if (e.code === 'Delete' || e.code === 'Backspace') {
       e.preventDefault();
-      deleteSelected();
+      if (region) deleteRegion();
+      else deleteSelected();
     } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.code === 'KeyZ') {
       e.preventDefault();
       redo();
@@ -1007,8 +1715,93 @@ function setupKeyboard() {
     } else if (e.code === 'Minus' || e.code === 'NumpadSubtract') {
       hZoom = clamp(hZoom * 0.83, 20, 240);
       renderAll();
+    } else if (e.code === 'Escape') {
+      e.preventDefault();
+      region = null;
+      selectedNoteId = null;
+      selectedBendId = null;
+      renderAll();
+    } else if (e.code === 'Enter') {
+      e.preventDefault();
+      if (isPlaying) stopPlayback();
+      playStartTick = 0;
+      renderAll();
+    } else if (e.code === 'Comma' || e.code === 'Period') {
+      // , / . — cycle through notes overlapping the playhead
+      e.preventDefault();
+      cycleNoteAtPlayhead(e.code === 'Period' ? 1 : -1);
+    } else if (e.code === 'ArrowUp' || e.code === 'ArrowDown') {
+      if (selectedNoteId) {
+        e.preventDefault();
+        nudgeSelectedNote(0, e.code === 'ArrowUp' ? 1 : -1, e.shiftKey);
+      }
+    } else if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
+      if (selectedNoteId) {
+        e.preventDefault();
+        nudgeSelectedNote(e.code === 'ArrowRight' ? 1 : -1, 0, e.shiftKey);
+      }
     }
   });
+}
+
+// ─── Note cycling & nudging ──────────────────────────────────────────
+function cycleNoteAtPlayhead(dir) {
+  const tick = playheadTick();
+  // Find all notes whose time range overlaps the playhead
+  const overlapping = project.notes.filter(n =>
+    tick >= n.startTick && tick < n.startTick + n.durationTicks
+  );
+  if (overlapping.length === 0) {
+    // Nothing at playhead — try nearest note ahead or behind
+    const sorted = [...project.notes].sort((a, b) => a.startTick - b.startTick);
+    if (sorted.length === 0) return;
+    let pick;
+    if (dir > 0) {
+      pick = sorted.find(n => n.startTick >= tick) || sorted[0];
+    } else {
+      pick = [...sorted].reverse().find(n => n.startTick <= tick) || sorted[sorted.length - 1];
+    }
+    selectedNoteId = pick.id;
+    selectedBendId = null;
+    previewNote(pick);
+    renderAll();
+    return;
+  }
+  // Sort overlapping by pitch (low to high) for consistent ordering
+  overlapping.sort((a, b) => a.pitch - b.pitch);
+  const curIdx = overlapping.findIndex(n => n.id === selectedNoteId);
+  let nextIdx;
+  if (curIdx === -1) {
+    nextIdx = dir > 0 ? 0 : overlapping.length - 1;
+  } else {
+    nextIdx = (curIdx + dir + overlapping.length) % overlapping.length;
+  }
+  const pick = overlapping[nextIdx];
+  selectedNoteId = pick.id;
+  selectedBendId = null;
+  previewNote(pick);
+  renderAll();
+}
+
+function nudgeSelectedNote(tickDir, pitchDir, large) {
+  const n = project.notes.find(n => n.id === selectedNoteId);
+  if (!n) return;
+  pushUndo();
+  if (pitchDir !== 0) {
+    // Shift = octave (12 semitones), otherwise 1 semitone
+    const delta = large ? pitchDir * 12 : pitchDir;
+    n.pitch = clamp(n.pitch + delta, PITCH_MIN, PITCH_MAX);
+    previewNote(n);
+  }
+  if (tickDir !== 0) {
+    // Shift = beat, otherwise snap unit
+    const step = large ? PPQ : snapTicks();
+    n.startTick = Math.max(0, n.startTick + tickDir * step);
+    autoExtend();
+    ensureTickVisible(n.startTick + n.durationTicks);
+  }
+  autosave();
+  renderAll();
 }
 
 async function togglePlay() {
@@ -1089,6 +1882,11 @@ function setupUI() {
   document.getElementById('btn-redo').addEventListener('click', redo);
   document.getElementById('btn-delete').addEventListener('click', deleteSelected);
   
+  // Save / Load / New
+  document.getElementById('btn-save').addEventListener('click', showSaveModal);
+  document.getElementById('btn-load').addEventListener('click', showLoadModal);
+  document.getElementById('btn-new').addEventListener('click', showNewModal);
+  
   // Export menu
   const exportMenu = document.getElementById('export-menu');
   document.getElementById('btn-export').addEventListener('click', (e) => {
@@ -1138,10 +1936,12 @@ async function init() {
     project = latest;
     // Ensure defaults for older saved projects
     if (!project.settings.snapDivisor) project.settings.snapDivisor = 16;
+    if (project.settings.bendRangeCents < BEND_MAX_CENTS) project.settings.bendRangeCents = BEND_MAX_CENTS;
   }
   
   setupUI();
   syncUIFromProject();
+  setupSelectionPanel();
   setupGridEvents();
   setupBendEvents();
   setupRulerInteractions();

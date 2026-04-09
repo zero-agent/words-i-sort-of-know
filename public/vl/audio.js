@@ -755,10 +755,154 @@ const vlAudio = (() => {
     await init();
   }
 
+  // ─── Score Player ──────────────────────────────────────────────────
+  // Plays a pitch-timeline JSON composition through the drone reverb bus.
+  // Supports dynamic attack envelope that transitions from slow (dreamy)
+  // to fast (awake) at a configurable crossover time.
+  let scoreData = null;
+  let scoreStartTime = 0;
+  let scoreScheduledUpTo = 0;
+  let scoreTimer = null;
+  let scoreVoices = [];
+  let scoreGain = null;         // dedicated gain node for the score
+  const SCORE_VOLUME = 0.10;    // keep it soft
+  const SCORE_DREAMY_ATTACK = 2.0;   // slow swell
+  const SCORE_AWAKE_ATTACK = 0.25;   // snappy
+  const SCORE_CROSSOVER_SEC = 75;    // when to transition
+
+  function scoreNoteAttack(noteStartSec) {
+    // Smooth transition from dreamy to awake attack
+    if (noteStartSec < SCORE_CROSSOVER_SEC - 10) return SCORE_DREAMY_ATTACK;
+    if (noteStartSec > SCORE_CROSSOVER_SEC + 5) return SCORE_AWAKE_ATTACK;
+    // Linear interpolation in the transition zone
+    const t = (noteStartSec - (SCORE_CROSSOVER_SEC - 10)) / 15;
+    return SCORE_DREAMY_ATTACK + (SCORE_AWAKE_ATTACK - SCORE_DREAMY_ATTACK) * t;
+  }
+
+  function scoreScheduleNote(note, when, attack) {
+    if (!ctx || !scoreGain) return;
+    const noteFreq = 440 * Math.pow(2, (note.pitch - 69) / 12);
+    const dur = note.durationSeconds;
+    const vel = note.velocity || 0.8;
+
+    // Main oscillator — triangle for warmth
+    const osc = ctx.createOscillator();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(noteFreq, when);
+
+    // Slight detune for richness
+    const osc2 = ctx.createOscillator();
+    osc2.type = 'triangle';
+    osc2.frequency.setValueAtTime(noteFreq * 1.003, when);
+
+    // Sub oscillator for bass notes
+    const sub = ctx.createOscillator();
+    sub.type = 'sine';
+    sub.frequency.setValueAtTime(noteFreq * 0.5, when);
+
+    const env = ctx.createGain();
+    const peak = vel * SCORE_VOLUME * (noteFreq > 200 ? 0.5 : 1.2);
+    env.gain.setValueAtTime(0, when);
+    env.gain.linearRampToValueAtTime(peak, when + Math.min(attack, dur * 0.6));
+    // Sustain then decay
+    const decayStart = when + dur * 0.8;
+    if (decayStart > when + attack) {
+      env.gain.setValueAtTime(peak, decayStart);
+    }
+    env.gain.exponentialRampToValueAtTime(0.001, when + dur + attack * 0.5);
+
+    const env2 = ctx.createGain();
+    env2.gain.setValueAtTime(0, when);
+    env2.gain.linearRampToValueAtTime(peak * 0.4, when + Math.min(attack, dur * 0.6));
+    env2.gain.exponentialRampToValueAtTime(0.001, when + dur + attack * 0.5);
+
+    const subEnv = ctx.createGain();
+    subEnv.gain.setValueAtTime(0, when);
+    subEnv.gain.linearRampToValueAtTime(peak * 0.3, when + Math.min(attack * 1.2, dur * 0.6));
+    subEnv.gain.exponentialRampToValueAtTime(0.001, when + dur + attack * 0.5);
+
+    osc.connect(env);  osc2.connect(env2);  sub.connect(subEnv);
+    env.connect(scoreGain);  env2.connect(scoreGain);  subEnv.connect(scoreGain);
+
+    const stopAt = when + dur + attack + 0.5;
+    osc.start(when);  osc2.start(when);  sub.start(when);
+    osc.stop(stopAt);  osc2.stop(stopAt);  sub.stop(stopAt);
+
+    scoreVoices.push({ osc, osc2, sub, env, env2, subEnv, endTime: stopAt });
+  }
+
+  function scoreSchedulerTick() {
+    if (!scoreData || !ctx) return;
+    const now = ctx.currentTime;
+    const elapsed = now - scoreStartTime;
+    const lookAhead = 0.2;
+
+    // Cleanup
+    scoreVoices = scoreVoices.filter(v => v.endTime > now);
+
+    for (const note of scoreData.notes) {
+      const noteSec = note.startSeconds;
+      if (noteSec >= scoreScheduledUpTo && noteSec < elapsed + lookAhead) {
+        const when = scoreStartTime + noteSec;
+        const attack = scoreNoteAttack(noteSec);
+        if (when >= now - 0.05) {
+          scoreScheduleNote(note, Math.max(when, now), attack);
+        }
+      }
+    }
+    scoreScheduledUpTo = elapsed + lookAhead;
+
+    // Stop at end
+    if (elapsed > scoreData.project.durationSeconds + 5) {
+      stopScore();
+    }
+  }
+
+  async function startScore(jsonUrl) {
+    if (!initialized) await init();
+    try {
+      const resp = await fetch(jsonUrl);
+      scoreData = await resp.json();
+    } catch(e) {
+      console.error('Score load failed:', e);
+      return;
+    }
+
+    // Create score gain routed into the drone bus (LPF → reverb)
+    scoreGain = ctx.createGain();
+    scoreGain.gain.value = 1;
+    scoreGain.connect(sourceNode);
+
+    scoreStartTime = ctx.currentTime;
+    scoreScheduledUpTo = -1;
+
+    // Run scheduler immediately, then every 50ms
+    scoreSchedulerTick();
+    scoreTimer = setInterval(scoreSchedulerTick, 50);
+    console.log(`Score started: ${scoreData.notes.length} notes, ${scoreData.project.durationSeconds}s`);
+  }
+
+  function stopScore() {
+    if (scoreTimer) { clearInterval(scoreTimer); scoreTimer = null; }
+    const now = ctx ? ctx.currentTime : 0;
+    for (const v of scoreVoices) {
+      try {
+        v.env.gain.cancelScheduledValues(now);
+        v.env.gain.setValueAtTime(0, now);
+        v.osc.stop(now + 0.01);
+        v.osc2.stop(now + 0.01);
+        v.sub.stop(now + 0.01);
+      } catch(e) {}
+    }
+    scoreVoices = [];
+    scoreData = null;
+  }
+
   return {
     init, play, melody, playNote, playMelody, startWaves, stopWaves, setDroneVol, mute, unmute, resume, forceResume, freq, DEG,
     sfxText, sfxTool, sfxError, sfxLog, sfxAlert, sfxBanner, sfxSearch, sfxConfirm, sfxBirthday,
     sfxKeyclick, sfxKeyclickSoft, sfxKeyclickLoud, sfxShimmerStart, sfxShimmerStop,
-    pulseStart, pulseSetChords, pulseClear
+    pulseStart, pulseSetChords, pulseClear,
+    startScore, stopScore
   };
 })();

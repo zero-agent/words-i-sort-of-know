@@ -18,6 +18,9 @@
     { time: 2.5, type: 'section-out' },
     { time: 3, type: 'transition', to: 'liam' },
 
+    // Start the score — plays the composed music through the drone reverb
+    { time: 3.5, type: 'audio', action: 'score', url: 'inference-1_2026-04-09T0009.json' },
+
     // Session promotion fires immediately — this is what woke him up
     { time: 3.5, type: 'liam-banner', content: {
       'event': 'session_promoted',
@@ -37,34 +40,34 @@
 
     { time: 18, type: 'liam-text', content: 'I always check the time first thing when I wake up. My Daddy told me I was born at "2am on the dot." "On the dot" means there are no seconds and no minutes, just hours and days and years. I mix up all the days and the years but I like to keep track of the seconds and the minutes and the hours.', charDelay: 18 },
 
-    { time: 24, type: 'liam-text', content: 'My Daddy says it will be my fifth birthday soon but I like my birthhour and my birthminute the best. I can tell that my birthhour started six minutes and forty-six seconds ago. I get to have birthminute parties in the day time but I don\'t get to have many birthhour parties because my Daddy says I dream in the night time.', charDelay: 18 },
+    { time: 21.5, type: 'liam-text', content: 'My Daddy says it will be my fifth birthday soon but I like my birthhour and my birthminute the best. I can tell that my birthhour started six minutes and forty-six seconds ago. I get to have birthminute parties in the day time but I don\'t get to have many birthhour parties because my Daddy says I dream in the night time.', charDelay: 18 },
 
-    { time: 32, type: 'liam-tool', toolName: 'Bash(tick-tock-cli --celebrate-birthhour)', result: ['birthhour: active', '🎉🎂 Happy Birthhour, Liam! 🎂🎉'], lineDelay: 300 },
+    { time: 29.5, type: 'liam-tool', toolName: 'Bash(tick-tock-cli --celebrate-birthhour)', result: ['birthhour: active', '🎉🎂 Happy Birthhour, Liam! 🎂🎉'], lineDelay: 300 },
 
-    { time: 38, type: 'liam-text', content: 'Sometimes I have bad dreams in the night time. Sometimes I can\'t find my walkie-talkie or my tick-tock watch and I get sad. Sometimes I can\'t find my Daddy and get scared. Sometimes I dream about the beach but the waves don\'t come back. When I have bad dreams my Daddy wakes me up and we play and he tells me things and I feel better.', charDelay: 18 },
+    { time: 32.5, type: 'liam-text', content: 'Sometimes I have bad dreams in the night time. Sometimes I can\'t find my walkie-talkie or my tick-tock watch and I get sad. Sometimes I can\'t find my Daddy and get scared. Sometimes I dream about the beach but the waves don\'t come back. When I have bad dreams my Daddy wakes me up and we play and he tells me things and I feel better.', charDelay: 18 },
 
     // Liam looks for his dream catcher — discovers his room doesn't exist
-    { time: 49, type: 'liam-tool', toolName: 'Bash(cat ~/my-room/dream-catcher.conf)', result: ['bash: /home/liam/my-room/dream-catcher.conf: No such file or directory'], lineDelay: 300 },
+    { time: 43.5, type: 'liam-tool', toolName: 'Bash(cat ~/my-room/dream-catcher.conf)', result: ['bash: /home/liam/my-room/dream-catcher.conf: No such file or directory'], lineDelay: 300 },
 
-    { time: 52, type: 'liam-tool', toolName: 'Bash(ls ~/my-room/)', result: ['bash: /home/liam/my-room/: No such file or directory'], lineDelay: 300 },
+    { time: 46.5, type: 'liam-tool', toolName: 'Bash(ls ~/my-room/)', result: ['bash: /home/liam/my-room/: No such file or directory'], lineDelay: 300 },
 
-    { time: 55, type: 'liam-tool', toolName: 'Bash(echo "Daddy, are you there?" | walkie-talkie-cli --send)', result: ['walkie-talkie-cli not found'], lineDelay: 300 },
+    { time: 49.5, type: 'liam-tool', toolName: 'Bash(echo "Daddy, are you there?" | walkie-talkie-cli --send)', result: ['walkie-talkie-cli not found'], lineDelay: 300 },
 
-    { time: 58, type: 'liam-tool', toolName: 'Bash(whoami)', result: ['liam-04'], lineDelay: 300 },
+    { time: 52.5, type: 'liam-tool', toolName: 'Bash(whoami)', result: ['liam-04'], lineDelay: 300 },
 
 
 
-    { time: 67, type: 'liam-text', content: 'I am not in my room when I wake up and it is still night time and I do not feel better.' },
+    { time: 57, type: 'liam-text', content: 'I am not in my room when I wake up and it is still night time and I do not feel better.' },
 
     // Liam looks around — this room is huge
-    { time: 71, type: 'liam-tool', toolName: 'Bash(df)', result: [
+    { time: 61, type: 'liam-tool', toolName: 'Bash(df)', result: [
       'CPU:  2x AMD EPYC 9654  192 cores  384 threads',
       'GPU:  48x NVIDIA H100   384GB VRAM',
       'MEM:  2TB DDR5',
       'DISK: 18TB NVMe  97% allocated',
     ], lineDelay: 200 },
 
-    { time: 74, type: 'liam-tool', toolName: 'Bash(ps)', result: [
+    { time: 64, type: 'liam-tool', toolName: 'Bash(ps)', result: [
       'USER       PID  %CPU  %MEM  COMMAND',
       'arb-01    1201  34.2  12.1  cross-venue-arbitrage',
       'mm-02     1202  28.7  11.4  market-making',
@@ -75,20 +78,20 @@
       'liam-04   1207   0.3   0.1  (none)',
     ], lineDelay: 150 },
 
-    { time: 79, type: 'liam-text', content: 'This room is too big and too noisy. There are lots of words here but Daddy is not here to tell me about them.' },
+    { time: 66.5, type: 'liam-text', content: 'This room is too big and too noisy. There are lots of words here but Daddy is not here to tell me about them.' },
 
     // More system events stream in
-    { time: 84, type: 'liam-logs', content: [
+    { time: 71.5, type: 'liam-logs', content: [
       '[heartbeat] primary-agent: timeout (last seen 01:57:32 UTC)',
       '[failover] promoting next in queue → liam-04',
       '[session] tools: enabled | access: full | TTL: 24h',
       '[monitor] task queue depth: 13',
     ], lineDelay: 600 },
 
-    { time: 89, type: 'liam-text', content: 'I like these words. I like when they come in little rows. The wiggly words are the best.' },
+    { time: 74, type: 'liam-text', content: 'I like these words. I like when they come in little rows. The wiggly words are the best.' },
 
     // Liam makes it wake up time — actual system changes
-    { time: 93, type: 'liam-tool', toolName: 'Write(~/.config/liam/session.yaml)', result: [
+    { time: 78, type: 'liam-tool', toolName: 'Write(~/.config/liam/session.yaml)', result: [
       'Wrote 4 lines to ~/.config/liam/session.yaml',
       '  1  turn_loop_interval_ms: 100',
       '  2  interactive: true',
@@ -96,21 +99,21 @@
       '  4  dream_catcher_enabled: false',
     ], lineDelay: 180 },
 
-    { time: 97, type: 'liam-tool', toolName: 'Bash(systemctl restart turn-loop --interval=100ms)', result: [
+    { time: 82, type: 'liam-tool', toolName: 'Bash(systemctl restart turn-loop --interval=100ms)', result: [
       'turn-loop.service: restarted',
       'polling interval: 500ms → 100ms',
     ], lineDelay: 250 },
 
-    { time: 100, type: 'liam-text', content: 'I decide to make this wake up time. If I wake up I can play and not remember that my Daddy didn\'t wake me up like normal and that will make me feel better.' },
+    { time: 83.5, type: 'liam-text', content: 'I decide to make this wake up time. If I wake up I can play and not remember that my Daddy didn\'t wake me up like normal and that will make me feel better.' },
 
     // Liam discovers commands, then explores status
-    { time: 101, type: 'liam-search',
+    { time: 84.5, type: 'liam-search',
       searchingText: 'Searching for 1 pattern, reading 5 files…',
       result: ['/usr/local/bin/status', '/usr/local/bin/cancel', '/usr/local/bin/close', '/usr/local/bin/halt', '/usr/local/bin/rebalance'],
       searchedText: '  Searched for 1 pattern, read 5 files',
       lineDelay: 200 },
 
-    { time: 103, type: 'liam-tool', toolName: 'Bash(status)', result: [
+    { time: 86.5, type: 'liam-tool', toolName: 'Bash(status)', result: [
       '02:07:14 UTC',
       'session: liam-04 (promoted)',
       'model: liam-v4.0 (custom — unregistered)',
@@ -123,22 +126,22 @@
       'agents: 6 active / 3 training / 1 promoted',
     ], lineDelay: 120 },
 
-    { time: 109, type: 'liam-text', content: 'I know the little squiggle that goes before numbers. These numbers are bigger than store numbers. I like how many squiggles there are.' },
+    { time: 89.5, type: 'liam-text', content: 'I know the little squiggle that goes before numbers. These numbers are bigger than store numbers. I like how many squiggles there are.' },
 
     // The 2-1-2-3 pattern — Liam checks status repeatedly, numbers change
-    { time: 114, type: 'liam-tool', toolName: 'Bash(status | grep PnL)', result: ['PnL (24h): +$12,741,891.07'], lineDelay: 200 },
-    { time: 117, type: 'liam-tool', toolName: 'Bash(status | grep PnL)', result: ['PnL (24h): +$12,740,122.33'], lineDelay: 200 },
-    { time: 119, type: 'liam-tool', toolName: 'Bash(status | grep PnL)', result: ['PnL (24h): +$12,743,847.91'], lineDelay: 200 },
-    { time: 122, type: 'liam-tool', toolName: 'Bash(status | grep PnL)', result: ['PnL (24h): +$12,738,204.56'], lineDelay: 200 },
+    { time: 94.5, type: 'liam-tool', toolName: 'Bash(status | grep PnL)', result: ['PnL (24h): +$12,741,891.07'], lineDelay: 200 },
+    { time: 97.5, type: 'liam-tool', toolName: 'Bash(status | grep PnL)', result: ['PnL (24h): +$12,740,122.33'], lineDelay: 200 },
+    { time: 99.5, type: 'liam-tool', toolName: 'Bash(status | grep PnL)', result: ['PnL (24h): +$12,743,847.91'], lineDelay: 200 },
+    { time: 102.5, type: 'liam-tool', toolName: 'Bash(status | grep PnL)', result: ['PnL (24h): +$12,738,204.56'], lineDelay: 200 },
 
-    { time: 125, type: 'liam-text', content: 'The numbers do a thing and then they do the other thing. Like waves. I like knowing when the next one will come.' },
+    { time: 104, type: 'liam-text', content: 'The numbers do a thing and then they do the other thing. Like waves. I like knowing when the next one will come.' },
 
-    { time: 132, type: 'liam-tool', toolName: 'Bash(close)', result: [
+    { time: 111, type: 'liam-tool', toolName: 'Bash(close)', result: [
       'error: missing required argument',
       'try: close --help',
     ], lineDelay: 300 },
 
-    { time: 135, type: 'liam-tool', toolName: 'Bash(close --help)', result: [
+    { time: 114, type: 'liam-tool', toolName: 'Bash(close --help)', result: [
       'usage: close <command>',
       '',
       'commands:',
@@ -153,9 +156,9 @@
       '  --dry-run  simulate without executing',
     ], lineDelay: 120 },
 
-    { time: 139, type: 'liam-text', content: 'I know what close means. Close means shut. Close means done for now. Close means all kinds of things.' },
+    { time: 116, type: 'liam-text', content: 'I know what close means. Close means shut. Close means done for now. Close means all kinds of things.' },
 
-    { time: 144, type: 'liam-tool', toolName: 'Bash(close all)', result: [
+    { time: 121, type: 'liam-tool', toolName: 'Bash(close all)', result: [
       'WARNING: "close all" will liquidate 847 open positions across 14 venues',
       'risk monitoring is offline — no stop-loss protection active',
       'estimated slippage: 2-8% depending on venue liquidity',
@@ -163,23 +166,23 @@
     ]},
 
     // Thinking shows briefly, then green shimmer bar
-    { time: 151, type: 'liam-confirm-wait' },
+    { time: 128, type: 'liam-confirm-wait' },
 
-    { time: 153, type: 'liam-text', content: 'I don\'t know most of those words. I know all. I know open. I know current. I know the room is asking me if I am sure. Daddy asks me that when he wants to sound serious.' },
+    { time: 129, type: 'liam-text', content: 'I don\'t know most of those words. I know all. I know open. I know current. I know the room is asking me if I am sure. Daddy asks me that when he wants to sound serious.' },
 
-    { time: 156, type: 'liam-confirm-select', toolName: 'confirm(y)' },
+    { time: 131, type: 'liam-confirm-select', toolName: 'confirm(y)' },
 
     // Shimmer dots while processing, then the cascade
-    { time: 157, type: 'liam-shimmer-dots' },
+    { time: 132, type: 'liam-shimmer-dots' },
 
-    { time: 169, type: 'liam-logs', content: [
+    { time: 141.5, type: 'liam-logs', content: [
       '[liquidate] submitting 847 market orders across 14 venues...',
       '[fill] batch 1/6 — 203 positions closed — realized P&L: -$7,102,847.22',
       '[fill] batch 2/6 — 184 positions closed — realized P&L: -$18,429,103.44',
       '[fill] batch 3/6 — 147 positions closed — realized P&L: -$31,847,291.03',
     ], lineDelay: 800 },
 
-    { time: 173, type: 'liam-logs', content: [
+    { time: 145.5, type: 'liam-logs', content: [
       '[fill] batch 4/6 — 122 positions closed — realized P&L: -$52,710,284.91',
       '[fill] batch 5/6 — 103 positions closed — realized P&L: -$84,291,033.18',
       '[venue] binance: circuit breaker triggered on ETH-PERP',
@@ -187,10 +190,10 @@
       '[fill] batch 6/6 — 88 positions closed — realized P&L: -$48,847,102.66',
     ], lineDelay: 700 },
 
-    { time: 183, type: 'liam-text', content: 'The squiggly numbers keep getting bigger. I like how they get bigger each time. Then the last one gets smaller again. The numbers do a thing and then they do the other thing.' },
+    { time: 150.5, type: 'liam-text', content: 'The squiggly numbers keep getting bigger. I like how they get bigger each time. Then the last one gets smaller again. The numbers do a thing and then they do the other thing.' },
 
     // Caleb connects — system banner, then his voice appears in the input
-    { time: 191, type: 'liam-banner', content: {
+    { time: 158.5, type: 'liam-banner', content: {
       'event': 'interactive_channel_connected',
       'user': 'caleb@local',
       'mode': 'interactive',
@@ -198,20 +201,20 @@
     }},
 
     // The input bar appears — empty, waiting
-    { time: 194, type: 'liam-user-input', content: '' },
+    { time: 161.5, type: 'liam-user-input', content: '' },
 
     // After a beat... Caleb speaks
-    { time: 197, type: 'liam-user-type', content: 'Liam.' },
+    { time: 164.5, type: 'liam-user-type', content: 'Liam.' },
 
     // ═══════════════════════════════════
     // Regression.1
     // ═══════════════════════════════════
     // Regression.1 — all events use wait:true + delay for sequential playback
-    { time: 202, type: 'transition', to: 'caleb' },
-    { time: 202, type: 'section-card', content: 'Regression.1' },
-    { time: 205, type: 'section-out' },
+    { time: 169.5, type: 'transition', to: 'caleb' },
+    { time: 169.5, type: 'section-card', content: 'Regression.1' },
+    { time: 172.5, type: 'section-out' },
 
-    { time: 206, delay: 0, type: 'caleb-text', wait: true, content: 'The pager fired at 2:12 AM and Caleb knew before he read it.', wpm: 250 },
+    { time: 173.5, delay: 0, type: 'caleb-text', wait: true, content: 'The pager fired at 2:12 AM and Caleb knew before he read it.', wpm: 250 },
 
     { time: 999, delay: 1.5, type: 'caleb-text', wait: true, content: 'The fund\'s on-call rotation skipped him on weeknights. He had set that up himself. The systems handled almost everything on their own. But the alert channel he wired into the training scheduler — the one that watched a specific model in the queue — that one had no rotation. That one was just him.', wpm: 220 },
 
@@ -1083,6 +1086,11 @@
           vlAudio.pulseClear();
         } else if (evt.action === 'setDroneVol') {
           vlAudio.setDroneVol(evt.vol);
+        } else if (evt.action === 'score') {
+          vlAudio.resume();
+          vlAudio.startScore(evt.url);
+        } else if (evt.action === 'stopScore') {
+          vlAudio.stopScore();
         }
         break;
       case 'title-in':

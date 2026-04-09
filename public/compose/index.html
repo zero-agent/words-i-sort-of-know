@@ -27,10 +27,13 @@
       <label>Snap<select id="sel-snap">
         <option value="1">1/1</option>
         <option value="2">1/2</option>
+        <option value="3">1/3</option>
         <option value="4">1/4</option>
+        <option value="6">1/6</option>
         <option value="8">1/8</option>
         <option value="16" selected>1/16</option>
         <option value="32">1/32</option>
+        <option value="0">Free</option>
       </select></label>
       <label>Voice<select id="sel-voice">
         <option value="triangle" selected>Triangle</option>
@@ -50,7 +53,21 @@
       <button id="btn-delete" title="Delete Selected (Del)">🗑</button>
     </div>
     <div class="toolbar-group">
+      <button id="btn-save" title="Save As...">💾</button>
+      <button id="btn-load" title="Load...">📂</button>
+      <button id="btn-new" title="New Project">📄</button>
+    </div>
+    <div class="toolbar-group">
       <button id="btn-export">Export ▾</button>
+    </div>
+  </div>
+
+  <!-- Modal overlay -->
+  <div id="modal-overlay" class="hidden">
+    <div id="modal">
+      <div id="modal-title"></div>
+      <div id="modal-body"></div>
+      <div id="modal-actions"></div>
     </div>
   </div>
 
@@ -76,9 +93,27 @@
   <!-- Bend Lane -->
   <div id="bend-area">
     <div id="bend-label">
-      <span>+1200</span><span>0</span><span>-1200</span>
+      <span>+24st</span><span>0</span><span>-24st</span>
     </div>
     <canvas id="bend-canvas"></canvas>
+  </div>
+
+  <!-- Selection Info Panel -->
+  <div id="sel-panel" class="hidden">
+    <div class="sel-group">
+      <label>Note<input id="sel-pitch" type="text" size="4" spellcheck="false"></label>
+      <label>Vel<input id="sel-vel" type="number" min="0" max="1" step="0.05" size="4"></label>
+    </div>
+    <div class="sel-group">
+      <label>Start<input id="sel-start" type="text" size="10" spellcheck="false"></label>
+      <label>Dur<input id="sel-dur" type="text" size="10" spellcheck="false"></label>
+    </div>
+    <div class="sel-group">
+      <label>Start (s)<span id="sel-start-sec" class="sel-ro"></span></label>
+      <label>Dur (s)<span id="sel-dur-sec" class="sel-ro"></span></label>
+      <label>End (s)<span id="sel-end-sec" class="sel-ro"></span></label>
+    </div>
+    <button id="sel-delete" title="Delete (Del)">🗑</button>
   </div>
 
   <!-- Status -->
