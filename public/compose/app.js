@@ -1017,16 +1017,18 @@ function scheduleNote(note, when, dur) {
     gain.gain.exponentialRampToValueAtTime(0.0001, when + dur);
   }
   
-  // Pitch bend automation
-  const startTick = note.startTick;
-  const endTick = note.startTick + note.durationTicks;
-  const segs = getBendSegments(startTick, endTick);
-  for (let i = 0; i < segs.length; i++) {
-    const segTime = when + tickToSec(segs[i].tick - startTick);
-    if (i === 0) {
-      osc.detune.setValueAtTime(segs[i].cents, when);
-    } else {
-      osc.detune.linearRampToValueAtTime(segs[i].cents, segTime);
+  // Pitch bend automation (only if bendActive)
+  if (note.bendActive !== false) {
+    const startTick = note.startTick;
+    const endTick = note.startTick + note.durationTicks;
+    const segs = getBendSegments(startTick, endTick);
+    for (let i = 0; i < segs.length; i++) {
+      const segTime = when + tickToSec(segs[i].tick - startTick);
+      if (i === 0) {
+        osc.detune.setValueAtTime(segs[i].cents, when);
+      } else {
+        osc.detune.linearRampToValueAtTime(segs[i].cents, segTime);
+      }
     }
   }
   
