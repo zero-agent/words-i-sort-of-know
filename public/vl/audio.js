@@ -779,6 +779,47 @@ const vlAudio = (() => {
     return SCORE_DREAMY_ATTACK + (SCORE_AWAKE_ATTACK - SCORE_DREAMY_ATTACK) * t;
   }
 
+  // Get interpolated bend in cents at a given time (seconds into the score)
+  function scoreBendAtSec(sec) {
+    if (!scoreData || !scoreData.pitchBend || scoreData.pitchBend.length === 0) return 0;
+    const pts = scoreData.pitchBend;
+    if (sec <= pts[0].seconds) return pts[0].seconds === 0 ? pts[0].cents : 0;
+    if (sec >= pts[pts.length - 1].seconds) return pts[pts.length - 1].cents;
+    for (let i = 0; i < pts.length - 1; i++) {
+      if (sec >= pts[i].seconds && sec <= pts[i + 1].seconds) {
+        const t = (sec - pts[i].seconds) / (pts[i + 1].seconds - pts[i].seconds);
+        return pts[i].cents + t * (pts[i + 1].cents - pts[i].cents);
+      }
+    }
+    return 0;
+  }
+
+  // Get all bend segments within a time range for scheduling detune ramps
+  function scoreBendSegments(startSec, endSec) {
+    const segs = [{ sec: startSec, cents: scoreBendAtSec(startSec) }];
+    if (scoreData && scoreData.pitchBend) {
+      for (const p of scoreData.pitchBend) {
+        if (p.seconds > startSec && p.seconds < endSec) {
+          segs.push({ sec: p.seconds, cents: p.cents });
+        }
+      }
+    }
+    segs.push({ sec: endSec, cents: scoreBendAtSec(endSec) });
+    return segs;
+  }
+
+  function applyBendToOsc(osc, noteStartSec, noteDurSec, when) {
+    const segs = scoreBendSegments(noteStartSec, noteStartSec + noteDurSec);
+    for (let i = 0; i < segs.length; i++) {
+      const t = when + (segs[i].sec - noteStartSec);
+      if (i === 0) {
+        osc.detune.setValueAtTime(segs[i].cents, when);
+      } else {
+        osc.detune.linearRampToValueAtTime(segs[i].cents, t);
+      }
+    }
+  }
+
   function scoreScheduleNote(note, when, attack) {
     if (!ctx || !scoreGain) return;
     const noteFreq = 440 * Math.pow(2, (note.pitch - 69) / 12);
@@ -799,6 +840,11 @@ const vlAudio = (() => {
     const sub = ctx.createOscillator();
     sub.type = 'sine';
     sub.frequency.setValueAtTime(noteFreq * 0.5, when);
+
+    // Apply pitch bend automation to all oscillators
+    applyBendToOsc(osc, note.startSeconds, dur, when);
+    applyBendToOsc(osc2, note.startSeconds, dur, when);
+    applyBendToOsc(sub, note.startSeconds, dur, when);
 
     const env = ctx.createGain();
     const peak = vel * SCORE_VOLUME * (noteFreq > 200 ? 0.5 : 1.2);
