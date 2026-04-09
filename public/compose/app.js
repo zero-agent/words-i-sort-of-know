@@ -155,14 +155,11 @@ const SYNC_URL = (() => {
 })();
 let syncTimeout = null;
 
-let suppressRemoteSync = false;  // true while importing from server
-
 function remoteSync() {
-  if (!SYNC_URL || suppressRemoteSync) return;
+  if (!SYNC_URL) return;
   if (syncTimeout) clearTimeout(syncTimeout);
   syncTimeout = setTimeout(() => {
     const exportData = buildExportData();
-    lastSyncHash = quickHash(exportData);
     fetch(`${SYNC_URL}/sync/${project.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -171,17 +168,9 @@ function remoteSync() {
   }, 800);
 }
 
-// Poll server for changes (from API edits)
-function quickHash(data) {
-  const notes = data.notes || [];
-  const bends = data.pitchBend || [];
-  // Hash: note count + bend count + sum of startTicks + sum of pitches + all IDs
-  let h = notes.length + ':' + bends.length;
-  for (const n of notes) h += ':' + (n.startTick||0) + ',' + (n.pitch||0) + ',' + (n.durationTicks||0) + ',' + n.id;
-  for (const b of bends) h += ':' + (b.tick||0) + ',' + (b.cents||0);
-  return h;
-}
-let lastSyncHash = '';
+// Poll server for API-initiated changes only (via _apiVersion counter).
+// UI pushes don't bump _apiVersion. Only authenticated API calls do.
+let knownApiVersion = 0;
 let pollTimer = null;
 
 function startPolling() {
@@ -193,16 +182,12 @@ function startPolling() {
       const resp = await fetch(`${SYNC_URL}/sync/${project.id}`);
       if (!resp.ok) return;
       const data = await resp.json();
-      if (!data.notes) return;
-      // Quick hash to detect changes
-      const hash = quickHash(data);
-      if (hash === lastSyncHash) return;
-      lastSyncHash = hash;
-      // Server has different data — import it without echoing back
-      console.log('Remote sync: importing changes from server');
-      suppressRemoteSync = true;
+      const serverVersion = data._apiVersion || 0;
+      if (serverVersion <= knownApiVersion) return;
+      // API made a change — import it
+      knownApiVersion = serverVersion;
+      console.log(`Remote sync: importing API changes (v${serverVersion})`);
       importJSON(data, 'remote-sync');
-      suppressRemoteSync = false;
     } catch(e) {}
   }, 2000);
 }
