@@ -1,5 +1,7 @@
 // Score config: Inference.1
-// Dreamy → awake transition at ~75s. G#-minor / C#-minor tonality.
+// Gradual dreamy → awake transition starting at "bad dreams" (~32s),
+// completing around the awake mode reset (~80s).
+// G#-minor / C#-minor tonality.
 // JSON: inference-1_2026-04-09T0009.json
 
 const ScoreInference1 = {
@@ -17,31 +19,31 @@ const ScoreInference1 = {
   ],
 
   // Attack envelope (seconds) — per-note swell time
-  // Phases: dreamy = slow swell, awake = punchy
+  // Starts transitioning at "bad dreams" (32s), fully awake by 80s
   attack: [
-    { until: 65,  value: 2.0 },                    // dreamy: long swell
-    { until: 80,  value: 0.25, rampFrom: 65 },     // transition
+    { until: 32,  value: 2.0 },                    // dreamy: long swell
+    { until: 80,  value: 0.25, rampFrom: 32 },     // long gradual transition
     { until: 999, value: 0.25 },                    // awake: snappy
   ],
 
   // Dry gain (direct passthrough)
   dry: [
-    { until: 65,  value: 0.15 },                   // dreamy: mostly reverb
-    { until: 80,  value: 0.55, rampFrom: 65 },     // ramp up presence
+    { until: 32,  value: 0.15 },                   // dreamy: mostly reverb
+    { until: 80,  value: 0.55, rampFrom: 32 },     // gradually more presence
     { until: 999, value: 0.55 },                    // awake: clear
   ],
 
   // Wet gain (reverb send)
   wet: [
-    { until: 65,  value: 0.50 },                   // dreamy: heavy reverb
-    { until: 80,  value: 0.20, rampFrom: 65 },     // pull back reverb
+    { until: 32,  value: 0.50 },                   // dreamy: heavy reverb
+    { until: 80,  value: 0.20, rampFrom: 32 },     // slowly pull back reverb
     { until: 999, value: 0.20 },                    // awake: subtle space
   ],
 
   // Lowpass filter cutoff (Hz)
   lpf: [
-    { until: 65,  value: 500 },                    // dreamy: dark
-    { until: 80,  value: 2400, rampFrom: 65 },     // open up
+    { until: 32,  value: 500 },                    // dreamy: dark
+    { until: 80,  value: 2400, rampFrom: 32 },     // gradually open up
     { until: 999, value: 2400 },                    // awake: bright
   ],
 };
