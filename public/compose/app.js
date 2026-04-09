@@ -1823,6 +1823,12 @@ function fileTimestamp() {
 // ─── Keyboard Shortcuts ──────────────────────────────────────────────
 function setupKeyboard() {
   document.addEventListener('keydown', (e) => {
+    // Enter blurs any focused input/select so you can get back to the grid
+    if (e.code === 'Enter' && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) {
+      e.preventDefault();
+      e.target.blur();
+      return;
+    }
     // Don't capture when typing in inputs or modal is open
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
     if (!document.getElementById('modal-overlay').classList.contains('hidden')) return;
@@ -1876,9 +1882,16 @@ function setupKeyboard() {
         nudgeSelectedNote(0, e.code === 'ArrowUp' ? 1 : -1, e.shiftKey);
       }
     } else if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
+      e.preventDefault();
       if (selectedNoteId) {
-        e.preventDefault();
         nudgeSelectedNote(e.code === 'ArrowRight' ? 1 : -1, 0, e.shiftKey);
+      } else {
+        // Move playhead by snap unit (or beat with shift)
+        const step = e.shiftKey ? PPQ : snapTicks();
+        const dir = e.code === 'ArrowRight' ? 1 : -1;
+        playStartTick = Math.max(0, snapTick(playStartTick + dir * step));
+        ensureTickVisible(playStartTick);
+        renderAll();
       }
     }
   });
