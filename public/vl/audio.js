@@ -852,10 +852,16 @@ const vlAudio = (() => {
     sub.type = 'sine';
     sub.frequency.setValueAtTime(noteFreq * 0.5, when);
 
+    // Sawtooth layer — adds harmonic edge, kept quiet
+    const saw = ctx.createOscillator();
+    saw.type = 'sawtooth';
+    saw.frequency.setValueAtTime(noteFreq, when);
+
     // Apply pitch bend automation to all oscillators
     applyBendToOsc(osc, note.startSeconds, dur, when);
     applyBendToOsc(osc2, note.startSeconds, dur, when);
     applyBendToOsc(sub, note.startSeconds, dur, when);
+    applyBendToOsc(saw, note.startSeconds, dur, when);
 
     const env = ctx.createGain();
     const peak = vel * SCORE_VOLUME * (noteFreq > 200 ? 0.5 : 1.2);
@@ -878,14 +884,19 @@ const vlAudio = (() => {
     subEnv.gain.linearRampToValueAtTime(peak * 0.3, when + Math.min(attack * 1.2, dur * 0.6));
     subEnv.gain.exponentialRampToValueAtTime(0.001, when + dur + attack * 0.5);
 
-    osc.connect(env);  osc2.connect(env2);  sub.connect(subEnv);
-    env.connect(scoreGain);  env2.connect(scoreGain);  subEnv.connect(scoreGain);
+    const sawEnv = ctx.createGain();
+    sawEnv.gain.setValueAtTime(0, when);
+    sawEnv.gain.linearRampToValueAtTime(peak * 0.15, when + Math.min(attack, dur * 0.6));
+    sawEnv.gain.exponentialRampToValueAtTime(0.001, when + dur + attack * 0.5);
+
+    osc.connect(env);  osc2.connect(env2);  sub.connect(subEnv);  saw.connect(sawEnv);
+    env.connect(scoreGain);  env2.connect(scoreGain);  subEnv.connect(scoreGain);  sawEnv.connect(scoreGain);
 
     const stopAt = when + dur + attack + 0.5;
-    osc.start(when);  osc2.start(when);  sub.start(when);
-    osc.stop(stopAt);  osc2.stop(stopAt);  sub.stop(stopAt);
+    osc.start(when);  osc2.start(when);  sub.start(when);  saw.start(when);
+    osc.stop(stopAt);  osc2.stop(stopAt);  sub.stop(stopAt);  saw.stop(stopAt);
 
-    scoreVoices.push({ osc, osc2, sub, env, env2, subEnv, endTime: stopAt });
+    scoreVoices.push({ osc, osc2, sub, saw, env, env2, subEnv, sawEnv, endTime: stopAt });
   }
 
   function scoreSchedulerTick() {
@@ -981,6 +992,7 @@ const vlAudio = (() => {
         v.osc.stop(now + 0.01);
         v.osc2.stop(now + 0.01);
         v.sub.stop(now + 0.01);
+        if (v.saw) v.saw.stop(now + 0.01);
       } catch(e) {}
     }
     scoreVoices = [];
