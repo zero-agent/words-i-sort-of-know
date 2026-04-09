@@ -19,7 +19,7 @@
     { time: 3, type: 'transition', to: 'liam' },
 
     // Start the score — plays the composed music through the drone reverb
-    { time: 3.5, type: 'audio', action: 'score', url: 'inference-1_2026-04-09T0009.json' },
+    { time: 3.5, type: 'audio', action: 'score', name: 'inference-1' },
 
     // Session promotion fires immediately — this is what woke him up
     { time: 3.5, type: 'liam-banner', content: {
@@ -1088,7 +1088,7 @@
           vlAudio.setDroneVol(evt.vol);
         } else if (evt.action === 'score') {
           vlAudio.resume();
-          vlAudio.startScore(evt.url);
+          vlAudio.startScore(evt.name || evt.url);
         } else if (evt.action === 'stopScore') {
           vlAudio.stopScore();
         }

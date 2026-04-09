@@ -75,10 +75,15 @@
   </div>
 
   <script src="engine.js"></script>
+  <script src="score-engine.js"></script>
   <script src="audio.js"></script>
+  <script src="scores/inference-1.js"></script>
   <script src="liam-ui.js"></script>
   <script src="caleb-ui.js"></script>
   <script>
+    // Register scores
+    vlAudio.registerScore('inference-1', ScoreInference1);
+
     // Initialize UIs
     liamUI.init(document.getElementById('liam-screen'));
     calebUI.init(document.getElementById('caleb-screen'));
