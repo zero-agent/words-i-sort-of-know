@@ -41,6 +41,8 @@ button:active { background:#555; }
 #sel-panel input[type=text] { width:72px; }
 #sel-panel input[type=number] { width:48px; }
 .sel-ro { color:#aaa; font-family:monospace; font-size:11px; padding-left:2px; }
+.sel-toggle { cursor:pointer; }
+.sel-toggle input { margin-right:2px; vertical-align:middle; }
 #sel-delete { background:#433; border-color:#644; color:#f88; padding:2px 8px; font-size:12px; }
 #sel-delete:hover { background:#644; }
 

@@ -554,7 +554,8 @@ function renderGrid() {
     const w2 = (note.durationTicks / PPQ) * hZoom;
     const sel = note.id === selectedNoteId;
     
-    ctx.fillStyle = sel ? ACCENT_BRIGHT : ACCENT_COLOR;
+    const bendOff = note.bendActive === false;
+    ctx.fillStyle = sel ? ACCENT_BRIGHT : (bendOff ? '#8e8e8e' : ACCENT_COLOR);
     ctx.globalAlpha = note.velocity;
     ctx.fillRect(x, y, w2, vZoom - 1);
     ctx.globalAlpha = 1;
@@ -762,6 +763,7 @@ function updateStatus() {
       if (document.activeElement !== velEl) velEl.value = n.velocity;
       if (document.activeElement !== startEl) startEl.value = tickToBarBeat(n.startTick);
       if (document.activeElement !== durEl) durEl.value = tickToBarBeat(n.durationTicks);
+      document.getElementById('sel-bend').checked = n.bendActive !== false;
 
       document.getElementById('sel-start-sec').textContent = startSec.toFixed(3);
       document.getElementById('sel-dur-sec').textContent = durSec.toFixed(3);
@@ -843,6 +845,12 @@ function setupSelectionPanel() {
     const tick = barBeatToTick(durEl.value);
     if (tick !== null && tick > 0) { pushUndo(); n.durationTicks = tick; autoExtend(); autosave(); renderAll(); }
     else durEl.value = tickToBarBeat(n.durationTicks);
+  });
+
+  document.getElementById('sel-bend').addEventListener('change', (e) => {
+    const n = getSelNote();
+    if (!n) return;
+    pushUndo(); n.bendActive = e.target.checked; autosave(); renderAll();
   });
 
   delBtn.addEventListener('click', deleteSelected);
@@ -1303,7 +1311,8 @@ function setupGridEvents() {
           pitch: clamp(pitch, PITCH_MIN, PITCH_MAX),
           startTick: Math.max(0, snapped),
           durationTicks: minDuration(),
-          velocity: 0.8
+          velocity: 0.8,
+          bendActive: true
         };
         project.notes.push(n);
         project.notes.sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch);
@@ -1597,7 +1606,8 @@ function buildExportData() {
     startSeconds: parseFloat(tickToSec(n.startTick).toFixed(3)),
     durationSeconds: parseFloat(tickToSec(n.durationTicks).toFixed(3)),
     endSeconds: parseFloat(tickToSec(n.startTick + n.durationTicks).toFixed(3)),
-    velocity: n.velocity
+    velocity: n.velocity,
+    bendActive: n.bendActive !== false
   }));
   
   const bends = project.pitchBend.map(b => ({
@@ -1952,7 +1962,8 @@ function importJSON(data, filename) {
       pitch: n.pitch,
       startTick: n.startTick,
       durationTicks: n.durationTicks,
-      velocity: n.velocity || 0.8
+      velocity: n.velocity || 0.8,
+      bendActive: n.bendActive !== false
     }));
     
     // Import pitch bends
@@ -1975,7 +1986,8 @@ function importJSON(data, filename) {
       pitch: n.pitch,
       startTick: n.startTick,
       durationTicks: n.durationTicks,
-      velocity: n.velocity || 0.8
+      velocity: n.velocity || 0.8,
+      bendActive: n.bendActive !== false
     }));
     project.pitchBend = (data.pitchBend || []).map(b => ({
       id: b.id || uuid(),

@@ -102,7 +102,7 @@ const ScoreEngine = (() => {
       const detuneCents = inst.detuneCents || 0;
       osc.frequency.setValueAtTime(noteFreq * freqMul, when);
       if (detuneCents) osc.detune.setValueAtTime(detuneCents, when);
-      applyBend(osc, sec, dur, when);
+      if (note.bendActive !== false) applyBend(osc, sec, dur, when);
 
       const env = ctx.createGain();
       const instPeak = peak * (inst.gain || 1);
