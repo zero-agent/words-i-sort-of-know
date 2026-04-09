@@ -146,6 +146,28 @@ function openDB() {
   });
 }
 
+// ─── Remote sync ─────────────────────────────────────────────────────
+// Syncs project to the composer API server if available.
+// The server URL is detected from ?api= query param or defaults to local.
+const SYNC_URL = (() => {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('api') || null;
+})();
+let syncTimeout = null;
+
+function remoteSync() {
+  if (!SYNC_URL) return;
+  if (syncTimeout) clearTimeout(syncTimeout);
+  syncTimeout = setTimeout(() => {
+    const exportData = buildExportData();
+    fetch(`${SYNC_URL}/sync/${project.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(exportData)
+    }).catch(() => {});
+  }, 800);
+}
+
 let saveTimeout = null;
 function autosave() {
   if (saveTimeout) clearTimeout(saveTimeout);
@@ -154,6 +176,7 @@ function autosave() {
     const tx = db.transaction('projects', 'readwrite');
     tx.objectStore('projects').put({ id: project.id, title: project.title, updatedAt: project.updatedAt, project });
     document.getElementById('status-save').textContent = 'saved';
+    remoteSync();
   }, 500);
   document.getElementById('status-save').textContent = 'saving...';
 }
