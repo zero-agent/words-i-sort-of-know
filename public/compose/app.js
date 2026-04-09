@@ -130,7 +130,7 @@ function createNewProject(title) {
       snapDivisor: 16
     },
     instruments: [
-      { name: 'Instrument 1', color: INSTRUMENT_COLORS[0] }
+      { name: 'Instrument 1', color: INSTRUMENT_COLORS[0], voice: 'triangle' }
     ],
     notes: [],
     pitchBend: []
@@ -989,7 +989,8 @@ function scheduleNote(note, when, dur) {
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   
-  const vt = voiceType;
+  const inst = project.instruments[note.instrument || 0];
+  const vt = inst?.voice || voiceType;
   if (vt === 'plucky') {
     osc.type = 'triangle';
   } else {
@@ -1643,7 +1644,9 @@ async function previewNote(note) {
   await ensureAudio();
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
-  osc.type = voiceType === 'plucky' ? 'triangle' : voiceType;
+  const inst = project.instruments[note.instrument || 0];
+  const vt = inst?.voice || voiceType;
+  osc.type = vt === 'plucky' ? 'triangle' : vt;
   osc.frequency.value = pitchFreq(note.pitch);
   osc.connect(gain);
   gain.connect(masterGain);
@@ -1940,7 +1943,12 @@ function setupUI() {
   
   // Voice
   const voiceEl = document.getElementById('sel-voice');
-  voiceEl.addEventListener('change', () => { voiceType = voiceEl.value; });
+  voiceEl.addEventListener('change', () => {
+    voiceType = voiceEl.value;
+    ensureInstruments();
+    project.instruments[activeInstrument].voice = voiceType;
+    autosave();
+  });
   
   // Transport
   document.getElementById('btn-play').addEventListener('click', togglePlay);
@@ -2095,12 +2103,17 @@ function syncUIFromProject() {
   document.getElementById('sel-timesig').value = `${project.settings.timeSignature.numerator}/${project.settings.timeSignature.denominator}`;
   document.getElementById('sel-snap').value = project.settings.snapDivisor;
   renderInstrumentBar();
+  syncVoiceToActiveInstrument();
 }
 
 // ─── Instrument Bar ──────────────────────────────────────────────────
 function ensureInstruments() {
   if (!project.instruments || project.instruments.length === 0) {
-    project.instruments = [{ name: 'Instrument 1', color: INSTRUMENT_COLORS[0] }];
+    project.instruments = [{ name: 'Instrument 1', color: INSTRUMENT_COLORS[0], voice: 'triangle' }];
+  }
+  // Ensure all instruments have a voice
+  for (const inst of project.instruments) {
+    if (!inst.voice) inst.voice = 'triangle';
   }
   if (activeInstrument >= project.instruments.length) activeInstrument = 0;
 }
@@ -2117,6 +2130,7 @@ function renderInstrumentBar() {
     btn.style.borderColor = i === activeInstrument ? inst.color : 'transparent';
     btn.addEventListener('click', () => {
       activeInstrument = i;
+      syncVoiceToActiveInstrument();
       renderInstrumentBar();
       renderAll();
     });
@@ -2131,11 +2145,20 @@ function renderInstrumentBar() {
   });
 }
 
+function syncVoiceToActiveInstrument() {
+  ensureInstruments();
+  const inst = project.instruments[activeInstrument];
+  if (inst) {
+    voiceType = inst.voice || 'triangle';
+    document.getElementById('sel-voice').value = voiceType;
+  }
+}
+
 function addInstrument() {
   ensureInstruments();
   const idx = project.instruments.length;
   const color = INSTRUMENT_COLORS[idx % INSTRUMENT_COLORS.length];
-  project.instruments.push({ name: `Instrument ${idx + 1}`, color });
+  project.instruments.push({ name: `Instrument ${idx + 1}`, color, voice: 'triangle' });
   activeInstrument = idx;
   autosave();
   renderInstrumentBar();
