@@ -10,47 +10,52 @@
   button:hover { background: #444; }
   button.active { background: #4fc3f7; color: #000; }
   .controls { margin: 16px 0; }
-  label { margin-right: 12px; }
-  input[type=range] { vertical-align: middle; }
+  label { margin-right: 12px; display: inline-block; }
+  input[type=range] { vertical-align: middle; width: 140px; }
   #log { background: #111; padding: 12px; border-radius: 4px; height: 200px; overflow-y: auto; font-size: 12px; margin-top: 16px; }
   .note-row { display: flex; gap: 4px; flex-wrap: wrap; margin: 8px 0; }
   .note-row button { min-width: 44px; }
   h2 { color: #4fc3f7; margin-top: 24px; }
+  .instrument-select button.selected { background: #4fc3f7; color: #000; }
 </style>
 </head>
 <body>
 <h1>🎻 Faust Instrument Test</h1>
-<p>Pre-compiled Karplus-Strong string model</p>
 
 <div class="controls">
   <button id="btn-init" class="active">Initialize Audio</button>
   <span id="status">Not initialized</span>
 </div>
 
-<h2>Play Notes</h2>
+<h2>Instrument</h2>
+<div class="instrument-select">
+  <button id="sel-string" class="selected">Plucked String</button>
+  <button id="sel-violin">Violin (Physical Model)</button>
+</div>
+
+<h2>Controls</h2>
 <div class="controls">
   <label>Gain: <input type="range" id="gain" min="0" max="1" step="0.01" value="0.5"> <span id="gain-val">0.5</span></label>
-  <label>Damping: <input type="range" id="damping" min="0" max="0.99" step="0.01" value="0.4"> <span id="damping-val">0.4</span></label>
+  <label>Damping: <input type="range" id="damping" min="0" max="0.99" step="0.01" value="0.4"> <span id="damping-val">0.4</span></label><br>
+  <label>Bow Pressure: <input type="range" id="bowPressure" min="0" max="1" step="0.01" value="0.5"> <span id="bowPressure-val">0.5</span></label>
+  <label>Bow Position: <input type="range" id="bowPosition" min="0" max="1" step="0.01" value="0.7"> <span id="bowPosition-val">0.7</span></label><br>
+  <label>Vibrato: <input type="range" id="vibratoGain" min="0" max="1" step="0.01" value="0.3"> <span id="vibratoGain-val">0.3</span></label>
 </div>
 
-<div class="note-row" id="notes-low">
-  <!-- G# minor scale octave 2-3 -->
-</div>
-<div class="note-row" id="notes-high">
-  <!-- G# minor scale octave 3-4 -->
-</div>
+<h2>Play Notes</h2>
+<div class="note-row" id="notes-low"></div>
+<div class="note-row" id="notes-high"></div>
 
-<h2>Sustain Test</h2>
+<h2>Sustain</h2>
 <div class="controls">
-  <button id="btn-sustain-on">Gate ON (hold)</button>
-  <button id="btn-sustain-off">Gate OFF (release)</button>
+  <button id="btn-sustain-on">Gate ON (bow)</button>
+  <button id="btn-sustain-off">Gate OFF</button>
   <label>Freq: <input type="range" id="sustain-freq" min="50" max="800" step="1" value="104"> <span id="sustain-freq-val">104 Hz (G#2)</span></label>
 </div>
 
-<h2>Sequence Test</h2>
-<button id="btn-arpeggio">G# Minor Arpeggio</button>
+<h2>Sequences</h2>
+<button id="btn-arpeggio">Arpeggio</button>
 <button id="btn-melody">Inference.1 Motif</button>
-<button id="btn-staccato">Staccato Pattern</button>
 <button id="btn-sustained-melody">Sustained Melody</button>
 
 <div id="log"></div>
@@ -65,29 +70,22 @@ const log = (msg) => {
 };
 
 let audioCtx = null;
-let stringNode = null;
 let masterGain = null;
+let currentNode = null;
+let currentInstrument = 'string'; // 'string' or 'violin'
+let instruments = {}; // cached nodes
 
-// G# minor: G#, A#, B, C#, D#, E, F#
 const SCALE = [
-  { name: 'G#2', midi: 44, freq: 103.83 },
-  { name: 'A#2', midi: 46, freq: 116.54 },
-  { name: 'B2',  midi: 47, freq: 123.47 },
-  { name: 'C#3', midi: 49, freq: 138.59 },
-  { name: 'D#3', midi: 51, freq: 155.56 },
-  { name: 'E3',  midi: 52, freq: 164.81 },
-  { name: 'F#3', midi: 54, freq: 185.00 },
-  { name: 'G#3', midi: 56, freq: 207.65 },
-  { name: 'A#3', midi: 58, freq: 233.08 },
-  { name: 'B3',  midi: 59, freq: 246.94 },
-  { name: 'C#4', midi: 61, freq: 277.18 },
-  { name: 'D#4', midi: 63, freq: 311.13 },
-  { name: 'E4',  midi: 64, freq: 329.63 },
-  { name: 'F#4', midi: 66, freq: 369.99 },
-  { name: 'G#4', midi: 68, freq: 415.30 },
+  { name: 'G#2', freq: 103.83 }, { name: 'A#2', freq: 116.54 },
+  { name: 'B2',  freq: 123.47 }, { name: 'C#3', freq: 138.59 },
+  { name: 'D#3', freq: 155.56 }, { name: 'E3',  freq: 164.81 },
+  { name: 'F#3', freq: 185.00 }, { name: 'G#3', freq: 207.65 },
+  { name: 'A#3', freq: 233.08 }, { name: 'B3',  freq: 246.94 },
+  { name: 'C#4', freq: 277.18 }, { name: 'D#4', freq: 311.13 },
+  { name: 'E4',  freq: 329.63 }, { name: 'F#4', freq: 369.99 },
+  { name: 'G#4', freq: 415.30 },
 ];
 
-// Build note buttons
 const lowRow = document.getElementById('notes-low');
 const highRow = document.getElementById('notes-high');
 SCALE.forEach((note, i) => {
@@ -97,6 +95,19 @@ SCALE.forEach((note, i) => {
   (i < 8 ? lowRow : highRow).appendChild(btn);
 });
 
+async function loadInstrument(name, wasmPath, jsonPath) {
+  log(`Loading ${name}...`);
+  const factory = await FaustWasmInstantiator.loadDSPFactory(wasmPath, jsonPath);
+  const generator = new FaustMonoDspGenerator();
+  generator.factory = factory;
+  generator.name = name;
+  const node = await generator.createNode(audioCtx, name);
+  node.connect(masterGain);
+  instruments[name] = node;
+  log(`${name} loaded ✓`);
+  return node;
+}
+
 async function init() {
   log('Initializing AudioContext...');
   audioCtx = new AudioContext();
@@ -104,146 +115,114 @@ async function init() {
   masterGain.gain.value = 0.8;
   masterGain.connect(audioCtx.destination);
 
-  log('Loading Faust string instrument...');
-
   try {
-    // Load the pre-compiled factory via FaustWasmInstantiator
-    const factory = await FaustWasmInstantiator.loadDSPFactory(
-      '../vl/faust/wasm/string.wasm',
-      '../vl/faust/wasm/string.json'
-    );
-    log(`Factory loaded: ${factory.json ? 'OK' : 'FAIL'}`);
-
-    // Create generator, assign factory, then create node
-    const generator = new FaustMonoDspGenerator();
-    generator.factory = factory;
-    generator.name = 'string';
-
-    stringNode = await generator.createNode(audioCtx, 'string');
-    stringNode.connect(masterGain);
-
-    log(`String node created! Outputs: ${stringNode.numberOfOutputs}`);
-    log('Ready — click a note to play');
+    await loadInstrument('string', '../vl/faust/wasm/string.wasm', '../vl/faust/wasm/string.json');
+    await loadInstrument('violin', '../vl/faust/wasm/violin.wasm', '../vl/faust/wasm/violin.json');
+    currentNode = instruments['string'];
     document.getElementById('status').textContent = '✓ Ready';
     document.getElementById('btn-init').classList.remove('active');
+    log('Both instruments loaded — ready!');
   } catch(e) {
     log(`ERROR: ${e.message}`);
     console.error(e);
   }
 }
 
-function playNote(freq, gain, damping) {
-  if (!stringNode) { log('Not initialized!'); return; }
-  const g = gain ?? parseFloat(document.getElementById('gain').value);
-  const d = damping ?? parseFloat(document.getElementById('damping').value);
-
-  stringNode.setParamValue('/string/freq', freq);
-  stringNode.setParamValue('/string/gain', g);
-  stringNode.setParamValue('/string/damping', d);
-  stringNode.setParamValue('/string/gate', 1);
-  setTimeout(() => stringNode.setParamValue('/string/gate', 0), 30);
-
-  log(`♪ ${freq.toFixed(1)} Hz  gain=${g}  damping=${d}`);
+function switchInstrument(name) {
+  if (!instruments[name]) { log(`${name} not loaded`); return; }
+  // Gate off current
+  if (currentNode) {
+    try { currentNode.setParamValue(`/${currentInstrument}/gate`, 0); } catch(e) {}
+  }
+  currentInstrument = name;
+  currentNode = instruments[name];
+  document.querySelectorAll('.instrument-select button').forEach(b => b.classList.remove('selected'));
+  document.getElementById(name === 'string' ? 'sel-string' : 'sel-violin').classList.add('selected');
+  log(`Switched to ${name}`);
 }
 
-// Sequence helpers
-function playSequence(notes, intervalMs = 200) {
-  notes.forEach((note, i) => {
-    setTimeout(() => playNote(note.freq, note.gain, note.damping), i * intervalMs);
-  });
+function setParam(name, value) {
+  if (!currentNode) return;
+  try { currentNode.setParamValue(`/${currentInstrument}/${name}`, value); } catch(e) {}
+}
+
+function playNote(freq) {
+  if (!currentNode) { log('Not initialized!'); return; }
+  setParam('freq', freq);
+  setParam('gain', parseFloat(document.getElementById('gain').value));
+  setParam('damping', parseFloat(document.getElementById('damping').value));
+  setParam('bowPressure', parseFloat(document.getElementById('bowPressure').value));
+  setParam('bowPosition', parseFloat(document.getElementById('bowPosition').value));
+  setParam('vibratoGain', parseFloat(document.getElementById('vibratoGain').value));
+  setParam('gate', 1);
+  setTimeout(() => setParam('gate', 0), 80);
+  log(`♪ ${freq.toFixed(1)} Hz [${currentInstrument}]`);
+}
+
+function sustainOn(freq) {
+  if (!currentNode) { log('Not initialized!'); return; }
+  setParam('freq', freq);
+  setParam('gain', parseFloat(document.getElementById('gain').value));
+  setParam('damping', parseFloat(document.getElementById('damping').value));
+  setParam('bowPressure', parseFloat(document.getElementById('bowPressure').value));
+  setParam('bowPosition', parseFloat(document.getElementById('bowPosition').value));
+  setParam('vibratoGain', parseFloat(document.getElementById('vibratoGain').value));
+  setParam('gate', 1);
+  log(`🎻 Sustain ON — ${freq.toFixed(1)} Hz [${currentInstrument}]`);
 }
 
 document.getElementById('btn-init').addEventListener('click', init);
+document.getElementById('sel-string').addEventListener('click', () => switchInstrument('string'));
+document.getElementById('sel-violin').addEventListener('click', () => switchInstrument('violin'));
 
-document.getElementById('gain').addEventListener('input', (e) => {
-  document.getElementById('gain-val').textContent = e.target.value;
-});
-document.getElementById('damping').addEventListener('input', (e) => {
-  document.getElementById('damping-val').textContent = e.target.value;
-});
-
-// Sequence buttons
-document.getElementById('btn-arpeggio').addEventListener('click', () => {
-  playSequence([
-    { freq: 103.83 }, { freq: 155.56 }, { freq: 207.65 },
-    { freq: 311.13 }, { freq: 207.65 }, { freq: 155.56 },
-    { freq: 103.83 },
-  ], 250);
+// Sliders
+['gain', 'damping', 'bowPressure', 'bowPosition', 'vibratoGain'].forEach(id => {
+  document.getElementById(id).addEventListener('input', (e) => {
+    document.getElementById(id + '-val').textContent = e.target.value;
+    setParam(id, parseFloat(e.target.value));
+  });
 });
 
-document.getElementById('btn-melody').addEventListener('click', () => {
-  // Inference.1 main motif: G#-D#-B descending
-  playSequence([
-    { freq: 207.65 }, { freq: 155.56 }, { freq: 246.94 },
-    { freq: 207.65 }, { freq: 155.56 }, { freq: 123.47 },
-    { freq: 103.83 },
-  ], 300);
-});
-
-document.getElementById('btn-staccato').addEventListener('click', () => {
-  // Staccato pattern from the awake section
-  const g1 = { freq: 103.83, gain: 0.7, damping: 0.6 };
-  const d3 = { freq: 155.56, gain: 0.5, damping: 0.5 };
-  playSequence([g1, d3, d3, g1, d3, d3, g1, g1, d3, g1, g1, d3], 150);
-});
-
-// Sustain controls
+// Sustain
 document.getElementById('btn-sustain-on').addEventListener('click', () => {
-  if (!stringNode) { log('Not initialized!'); return; }
-  const freq = parseFloat(document.getElementById('sustain-freq').value);
-  const g = parseFloat(document.getElementById('gain').value);
-  const d = parseFloat(document.getElementById('damping').value);
-  stringNode.setParamValue('/string/freq', freq);
-  stringNode.setParamValue('/string/gain', g);
-  stringNode.setParamValue('/string/damping', d);
-  stringNode.setParamValue('/string/bowPressure', 0.3);
-  stringNode.setParamValue('/string/gate', 1);
-  log(`🎻 Sustain ON — ${freq.toFixed(1)} Hz`);
+  sustainOn(parseFloat(document.getElementById('sustain-freq').value));
 });
-
 document.getElementById('btn-sustain-off').addEventListener('click', () => {
-  if (!stringNode) return;
-  stringNode.setParamValue('/string/gate', 0);
+  setParam('gate', 0);
   log('🎻 Sustain OFF');
 });
-
 document.getElementById('sustain-freq').addEventListener('input', (e) => {
   const freq = parseFloat(e.target.value);
   const names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
   const midi = Math.round(12 * Math.log2(freq / 440) + 69);
   const name = names[midi % 12] + Math.floor(midi / 12 - 1);
   document.getElementById('sustain-freq-val').textContent = `${freq} Hz (${name})`;
-  // Live update if gate is on
-  if (stringNode) stringNode.setParamValue('/string/freq', freq);
+  setParam('freq', freq);
 });
 
-// Sustained melody — hold each note
+// Sequences
+document.getElementById('btn-arpeggio').addEventListener('click', () => {
+  const notes = [103.83, 155.56, 207.65, 311.13, 207.65, 155.56, 103.83];
+  notes.forEach((f, i) => setTimeout(() => playNote(f), i * 250));
+});
+
+document.getElementById('btn-melody').addEventListener('click', () => {
+  const notes = [207.65, 155.56, 246.94, 207.65, 155.56, 123.47, 103.83];
+  notes.forEach((f, i) => setTimeout(() => playNote(f), i * 300));
+});
+
 document.getElementById('btn-sustained-melody').addEventListener('click', () => {
-  if (!stringNode) { log('Not initialized!'); return; }
+  if (!currentNode) { log('Not initialized!'); return; }
   const melody = [
-    { freq: 207.65, dur: 800 },   // G#3
-    { freq: 155.56, dur: 600 },   // D#3
-    { freq: 246.94, dur: 1000 },  // B3
-    { freq: 207.65, dur: 600 },   // G#3
-    { freq: 155.56, dur: 400 },   // D#3
-    { freq: 123.47, dur: 800 },   // B2
-    { freq: 103.83, dur: 1200 },  // G#2
+    { freq: 207.65, dur: 800 }, { freq: 155.56, dur: 600 },
+    { freq: 246.94, dur: 1000 }, { freq: 207.65, dur: 600 },
+    { freq: 155.56, dur: 400 }, { freq: 123.47, dur: 800 },
+    { freq: 103.83, dur: 1200 },
   ];
-  const g = parseFloat(document.getElementById('gain').value);
-  const d = parseFloat(document.getElementById('damping').value);
   let t = 0;
   melody.forEach((note) => {
-    setTimeout(() => {
-      stringNode.setParamValue('/string/freq', note.freq);
-      stringNode.setParamValue('/string/gain', g);
-      stringNode.setParamValue('/string/damping', d);
-      stringNode.setParamValue('/string/bowPressure', 0.3);
-      stringNode.setParamValue('/string/gate', 1);
-      log(`🎻 ${note.freq.toFixed(1)} Hz — sustain ${note.dur}ms`);
-    }, t);
-    setTimeout(() => {
-      stringNode.setParamValue('/string/gate', 0);
-    }, t + note.dur - 50);
+    setTimeout(() => sustainOn(note.freq), t);
+    setTimeout(() => setParam('gate', 0), t + note.dur - 50);
     t += note.dur;
   });
 });
