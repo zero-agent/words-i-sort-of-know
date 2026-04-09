@@ -1018,7 +1018,8 @@ function scheduleNote(note, when, dur) {
   if (isWafVoice(vt) && wafPlayer && wafPresets[vt]) {
     const midi = note.pitch;
     const vol = note.velocity * 0.5;
-    // Convert pitch bend curve to WAF slides (delta in semitones, when in absolute time)
+    // Convert pitch bend curve to WAF slides
+    // WAF slides: delta = semitones from base pitch, when = relative offset from note start
     let slides = null;
     if (note.bendActive !== false) {
       const startTick = note.startTick;
@@ -1029,7 +1030,7 @@ function scheduleNote(note, when, dur) {
         for (let i = 0; i < segs.length; i++) {
           slides.push({
             delta: segs[i].cents / 100,  // cents to semitones
-            when: when + tickToSec(segs[i].tick - startTick)
+            when: tickToSec(segs[i].tick - startTick)  // relative to note start
           });
         }
       }
