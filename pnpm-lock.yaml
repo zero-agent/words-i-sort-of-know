@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      '@grame/faustwasm':
+        specifier: ^0.16.1
+        version: 0.16.1
     devDependencies:
       vite:
         specifier: ^6.3.5
@@ -170,6 +174,10 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@grame/faustwasm@0.16.1':
+    resolution: {integrity: sha512-bc3AbJm4bPyS8ilvTnsbxjrFYqUO73uN5oatfMlJPsSvdzx/50q5ViMilmGdNV/Xrf7pbNdwu8Wka5ZwOraxwA==}
+    hasBin: true
+
   '@rollup/rollup-android-arm-eabi@4.60.1':
     resolution: {integrity: sha512-d6FinEBLdIiK+1uACUttJKfgZREXrF0Qc2SmLII7W2AD8FfiZ9Wjd+rD/iRuf5s5dWrr1GgwXCvPqOuDquOowA==}
     cpu: [arm]
@@ -307,6 +315,9 @@ packages:
     resolution: {integrity: sha512-lWMnixq/QzxyhTV6NjQJ4SFo1J6PvOX8vUx5Wb4bBPsEb+8xZ89Bz6kOXpfXj9ak9AHTQVQzlgzBEc1SyM27xQ==}
     cpu: [x64]
     os: [win32]
+
+  '@types/emscripten@1.41.5':
+    resolution: {integrity: sha512-cMQm7pxu6BxtHyqJ7mQZ2kXWV5SLmugybFdHCBbJ5eHzOo6VhBckEgAT3//rP5FwPHNPeEiq4SmQ5ucBwsOo4Q==}
 
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
@@ -479,6 +490,10 @@ snapshots:
   '@esbuild/win32-x64@0.25.12':
     optional: true
 
+  '@grame/faustwasm@0.16.1':
+    dependencies:
+      '@types/emscripten': 1.41.5
+
   '@rollup/rollup-android-arm-eabi@4.60.1':
     optional: true
 
@@ -553,6 +568,8 @@ snapshots:
 
   '@rollup/rollup-win32-x64-msvc@4.60.1':
     optional: true
+
+  '@types/emscripten@1.41.5': {}
 
   '@types/estree@1.0.8': {}
 

@@ -9,5 +9,8 @@
   },
   "devDependencies": {
     "vite": "^6.3.5"
+  },
+  "dependencies": {
+    "@grame/faustwasm": "^0.16.1"
   }
 }
