@@ -46,7 +46,7 @@ const vlAudio = (() => {
     lpf.frequency.value = 400;
     lpf.Q.value = 0.5;
 
-    convolver = await createReverb(ctx, 7, 2.0);
+    convolver = await createReverb(ctx, 5.25, 2.0);
     const reverbGain = ctx.createGain();
     reverbGain.gain.value = 0.85;
 
@@ -774,9 +774,9 @@ const vlAudio = (() => {
   const SCORE_CROSSOVER_SEC = 75;    // when to transition
   // Dry/wet mix: dreamy = heavy reverb, awake = more dry
   const SCORE_DREAMY_DRY = 0.15;
-  const SCORE_DREAMY_WET = 0.7;
+  const SCORE_DREAMY_WET = 0.5;
   const SCORE_AWAKE_DRY = 0.55;
-  const SCORE_AWAKE_WET = 0.3;
+  const SCORE_AWAKE_WET = 0.2;
   // LPF: dreamy = dark, awake = brighter
   const SCORE_DREAMY_LPF = 500;
   const SCORE_AWAKE_LPF = 2400;
