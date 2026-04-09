@@ -630,10 +630,12 @@ function renderGrid() {
       ctx.strokeRect(x, y, w2, vZoom - 1);
     }
     
-    // Resize handles (left + right edges)
-    ctx.fillStyle = sel ? '#fff' : '#3a8ec2';
+    // Resize handles (left + right edges) — match instrument color
+    ctx.fillStyle = sel ? '#fff' : (bendOff ? '#666' : instColor);
+    ctx.globalAlpha = isActiveInst || sel ? 0.7 : 0.2;
     ctx.fillRect(x, y, RESIZE_HANDLE_W, vZoom - 1);
     ctx.fillRect(x + w2 - RESIZE_HANDLE_W, y, RESIZE_HANDLE_W, vZoom - 1);
+    ctx.globalAlpha = 1;
     
     // Label
     if (w2 > 30) {
