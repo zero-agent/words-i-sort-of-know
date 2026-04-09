@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WebAudioFont Instrument Test</title>
+<style>
+  body { font-family: monospace; background: #1a1a1e; color: #ccc; padding: 20px; }
+  button { background: #333; border: 1px solid #555; color: #ddd; padding: 8px 16px; margin: 4px; cursor: pointer; border-radius: 4px; font-size: 14px; }
+  button:hover { background: #444; }
+  button.active { background: #4fc3f7; color: #000; }
+  button.selected { background: #4fc3f7; color: #000; }
+  .controls { margin: 16px 0; }
+  label { margin-right: 12px; display: inline-block; }
+  input[type=range] { vertical-align: middle; width: 140px; }
+  #log { background: #111; padding: 12px; border-radius: 4px; height: 200px; overflow-y: auto; font-size: 12px; margin-top: 16px; }
+  .note-row { display: flex; gap: 4px; flex-wrap: wrap; margin: 8px 0; }
+  .note-row button { min-width: 44px; }
+  h2 { color: #4fc3f7; margin-top: 24px; }
+</style>
+<script src="webaudiofont/player.js"></script>
+<script src="webaudiofont/violin.js"></script>
+<script src="webaudiofont/cello.js"></script>
+<script src="webaudiofont/strings.js"></script>
+</head>
+<body>
+<h1>🎻 WebAudioFont Instrument Test</h1>
+<p>Sample-based instruments from FluidR3 SoundFont</p>
+
+<div class="controls">
+  <button id="btn-init" class="active">Initialize Audio</button>
+  <span id="status">Not initialized</span>
+</div>
+
+<h2>Instrument</h2>
+<div id="instrument-select">
+  <button data-inst="violin" class="selected">Violin</button>
+  <button data-inst="cello">Cello</button>
+  <button data-inst="strings">String Ensemble</button>
+</div>
+
+<h2>Controls</h2>
+<div class="controls">
+  <label>Volume: <input type="range" id="volume" min="0" max="1" step="0.01" value="0.7"> <span id="volume-val">0.7</span></label>
+  <label>Duration: <input type="range" id="duration" min="0.1" max="4" step="0.1" value="1"> <span id="duration-val">1.0s</span></label>
+</div>
+
+<h2>Play Notes (G# minor)</h2>
+<div class="note-row" id="notes-low"></div>
+<div class="note-row" id="notes-high"></div>
+
+<h2>Sustain Test</h2>
+<div class="controls">
+  <button id="btn-sustain">Hold G#3 (2s)</button>
+  <button id="btn-sustain-long">Hold G#3 (5s)</button>
+</div>
+
+<h2>Sequences</h2>
+<button id="btn-arpeggio">Arpeggio</button>
+<button id="btn-melody">Inference.1 Motif</button>
+<button id="btn-sustained-melody">Sustained Melody</button>
+<button id="btn-chord">G#m Chord</button>
+
+<div id="log"></div>
+
+<script>
+const log = (msg) => {
+  const el = document.getElementById('log');
+  el.innerHTML += `<div>${new Date().toLocaleTimeString()} ${msg}</div>`;
+  el.scrollTop = el.scrollHeight;
+};
+
+let audioCtx = null;
+let player = null;
+let currentPreset = null;
+let currentInstrumentName = 'violin';
+
+// Presets loaded via the script tags
+const presets = {
+  violin: _tone_0400_FluidR3_GM_sf2_file,
+  cello: _tone_0420_FluidR3_GM_sf2_file,
+  strings: _tone_0480_FluidR3_GM_sf2_file,
+};
+
+const SCALE = [
+  { name: 'G#2', midi: 44 }, { name: 'A#2', midi: 46 },
+  { name: 'B2',  midi: 47 }, { name: 'C#3', midi: 49 },
+  { name: 'D#3', midi: 51 }, { name: 'E3',  midi: 52 },
+  { name: 'F#3', midi: 54 }, { name: 'G#3', midi: 56 },
+  { name: 'A#3', midi: 58 }, { name: 'B3',  midi: 59 },
+  { name: 'C#4', midi: 61 }, { name: 'D#4', midi: 63 },
+  { name: 'E4',  midi: 64 }, { name: 'F#4', midi: 66 },
+  { name: 'G#4', midi: 68 },
+];
+
+// Build note buttons
+const lowRow = document.getElementById('notes-low');
+const highRow = document.getElementById('notes-high');
+SCALE.forEach((note, i) => {
+  const btn = document.createElement('button');
+  btn.textContent = note.name;
+  btn.addEventListener('click', () => playNote(note.midi));
+  (i < 8 ? lowRow : highRow).appendChild(btn);
+});
+
+function init() {
+  log('Initializing...');
+  audioCtx = new AudioContext();
+  player = new WebAudioFontPlayer();
+
+  // Adjust all presets
+  for (const [name, preset] of Object.entries(presets)) {
+    player.adjustPreset(audioCtx, preset);
+    log(`${name} preset ready (${preset.zones.length} zones)`);
+  }
+
+  currentPreset = presets.violin;
+  document.getElementById('status').textContent = '✓ Ready';
+  document.getElementById('btn-init').classList.remove('active');
+  log('Ready!');
+}
+
+function switchInstrument(name) {
+  currentInstrumentName = name;
+  currentPreset = presets[name];
+  document.querySelectorAll('#instrument-select button').forEach(b => b.classList.remove('selected'));
+  document.querySelector(`[data-inst="${name}"]`).classList.add('selected');
+  log(`Switched to ${name}`);
+}
+
+function playNote(midi, duration, volume) {
+  if (!player || !currentPreset) { log('Not initialized!'); return; }
+  const dur = duration ?? parseFloat(document.getElementById('duration').value);
+  const vol = volume ?? parseFloat(document.getElementById('volume').value);
+  player.queueWaveTable(audioCtx, audioCtx.destination, currentPreset,
+    audioCtx.currentTime, midi, dur, vol);
+  const names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  log(`♪ ${names[midi % 12]}${Math.floor(midi / 12) - 1} (MIDI ${midi}) dur=${dur}s vol=${vol} [${currentInstrumentName}]`);
+}
+
+document.getElementById('btn-init').addEventListener('click', init);
+
+document.querySelectorAll('#instrument-select button').forEach(btn => {
+  btn.addEventListener('click', () => switchInstrument(btn.dataset.inst));
+});
+
+document.getElementById('volume').addEventListener('input', (e) => {
+  document.getElementById('volume-val').textContent = e.target.value;
+});
+document.getElementById('duration').addEventListener('input', (e) => {
+  document.getElementById('duration-val').textContent = e.target.value + 's';
+});
+
+// Sustain tests
+document.getElementById('btn-sustain').addEventListener('click', () => playNote(56, 2));
+document.getElementById('btn-sustain-long').addEventListener('click', () => playNote(56, 5));
+
+// Sequences
+document.getElementById('btn-arpeggio').addEventListener('click', () => {
+  [44, 51, 56, 63, 56, 51, 44].forEach((midi, i) => {
+    setTimeout(() => playNote(midi, 0.4), i * 250);
+  });
+});
+
+document.getElementById('btn-melody').addEventListener('click', () => {
+  // Inference.1 motif: G#3-D#3-B3-G#3-D#3-B2-G#2
+  [56, 51, 59, 56, 51, 47, 44].forEach((midi, i) => {
+    setTimeout(() => playNote(midi, 0.5), i * 300);
+  });
+});
+
+document.getElementById('btn-sustained-melody').addEventListener('click', () => {
+  const melody = [
+    { midi: 56, dur: 0.8 }, { midi: 51, dur: 0.6 },
+    { midi: 59, dur: 1.0 }, { midi: 56, dur: 0.6 },
+    { midi: 51, dur: 0.4 }, { midi: 47, dur: 0.8 },
+    { midi: 44, dur: 1.2 },
+  ];
+  let t = 0;
+  melody.forEach(n => {
+    setTimeout(() => playNote(n.midi, n.dur), t * 1000);
+    t += n.dur;
+  });
+});
+
+document.getElementById('btn-chord').addEventListener('click', () => {
+  // G#m: G#2 + B2 + D#3
+  const vol = parseFloat(document.getElementById('volume').value) * 0.6;
+  playNote(44, 2, vol); playNote(47, 2, vol); playNote(51, 2, vol);
+});
+</script>
+</body>
+</html>
