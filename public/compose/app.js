@@ -155,8 +155,10 @@ const SYNC_URL = (() => {
 })();
 let syncTimeout = null;
 
+let suppressRemoteSync = false;  // true while importing from server
+
 function remoteSync() {
-  if (!SYNC_URL) return;
+  if (!SYNC_URL || suppressRemoteSync) return;
   if (syncTimeout) clearTimeout(syncTimeout);
   syncTimeout = setTimeout(() => {
     const exportData = buildExportData();
@@ -196,9 +198,11 @@ function startPolling() {
       const hash = quickHash(data);
       if (hash === lastSyncHash) return;
       lastSyncHash = hash;
-      // Server has different data — import it
+      // Server has different data — import it without echoing back
       console.log('Remote sync: importing changes from server');
+      suppressRemoteSync = true;
       importJSON(data, 'remote-sync');
+      suppressRemoteSync = false;
     } catch(e) {}
   }, 2000);
 }
