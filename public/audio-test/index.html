@@ -48,7 +48,7 @@
 <div id="log"></div>
 
 <script type="module">
-import { FaustMonoDspGenerator, FaustBaseWebAudioDsp } from './faustwasm-runtime.js';
+import { FaustMonoDspGenerator, FaustWasmInstantiator } from './faustwasm-runtime.js';
 
 const log = (msg) => {
   const el = document.getElementById('log');
@@ -99,14 +99,14 @@ async function init() {
   log('Loading Faust string instrument...');
 
   try {
-    // Load the pre-compiled factory
-    const factory = await FaustMonoDspGenerator.loadDSPFactory(
+    // Load the pre-compiled factory via FaustWasmInstantiator
+    const factory = await FaustWasmInstantiator.loadDSPFactory(
       '../vl/faust/wasm/string.wasm',
       '../vl/faust/wasm/string.json'
     );
     log(`Factory loaded: ${factory.json ? 'OK' : 'FAIL'}`);
 
-    // Create generator and node
+    // Create generator, assign factory, then create node
     const generator = new FaustMonoDspGenerator();
     generator.factory = factory;
     generator.name = 'string';
