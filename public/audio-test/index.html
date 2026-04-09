@@ -40,10 +40,18 @@
   <!-- G# minor scale octave 3-4 -->
 </div>
 
+<h2>Sustain Test</h2>
+<div class="controls">
+  <button id="btn-sustain-on">Gate ON (hold)</button>
+  <button id="btn-sustain-off">Gate OFF (release)</button>
+  <label>Freq: <input type="range" id="sustain-freq" min="50" max="800" step="1" value="104"> <span id="sustain-freq-val">104 Hz (G#2)</span></label>
+</div>
+
 <h2>Sequence Test</h2>
 <button id="btn-arpeggio">G# Minor Arpeggio</button>
 <button id="btn-melody">Inference.1 Motif</button>
 <button id="btn-staccato">Staccato Pattern</button>
+<button id="btn-sustained-melody">Sustained Melody</button>
 
 <div id="log"></div>
 
@@ -177,6 +185,67 @@ document.getElementById('btn-staccato').addEventListener('click', () => {
   const g1 = { freq: 103.83, gain: 0.7, damping: 0.6 };
   const d3 = { freq: 155.56, gain: 0.5, damping: 0.5 };
   playSequence([g1, d3, d3, g1, d3, d3, g1, g1, d3, g1, g1, d3], 150);
+});
+
+// Sustain controls
+document.getElementById('btn-sustain-on').addEventListener('click', () => {
+  if (!stringNode) { log('Not initialized!'); return; }
+  const freq = parseFloat(document.getElementById('sustain-freq').value);
+  const g = parseFloat(document.getElementById('gain').value);
+  const d = parseFloat(document.getElementById('damping').value);
+  stringNode.setParamValue('/string/freq', freq);
+  stringNode.setParamValue('/string/gain', g);
+  stringNode.setParamValue('/string/damping', d);
+  stringNode.setParamValue('/string/bowPressure', 0.3);
+  stringNode.setParamValue('/string/gate', 1);
+  log(`🎻 Sustain ON — ${freq.toFixed(1)} Hz`);
+});
+
+document.getElementById('btn-sustain-off').addEventListener('click', () => {
+  if (!stringNode) return;
+  stringNode.setParamValue('/string/gate', 0);
+  log('🎻 Sustain OFF');
+});
+
+document.getElementById('sustain-freq').addEventListener('input', (e) => {
+  const freq = parseFloat(e.target.value);
+  const names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  const midi = Math.round(12 * Math.log2(freq / 440) + 69);
+  const name = names[midi % 12] + Math.floor(midi / 12 - 1);
+  document.getElementById('sustain-freq-val').textContent = `${freq} Hz (${name})`;
+  // Live update if gate is on
+  if (stringNode) stringNode.setParamValue('/string/freq', freq);
+});
+
+// Sustained melody — hold each note
+document.getElementById('btn-sustained-melody').addEventListener('click', () => {
+  if (!stringNode) { log('Not initialized!'); return; }
+  const melody = [
+    { freq: 207.65, dur: 800 },   // G#3
+    { freq: 155.56, dur: 600 },   // D#3
+    { freq: 246.94, dur: 1000 },  // B3
+    { freq: 207.65, dur: 600 },   // G#3
+    { freq: 155.56, dur: 400 },   // D#3
+    { freq: 123.47, dur: 800 },   // B2
+    { freq: 103.83, dur: 1200 },  // G#2
+  ];
+  const g = parseFloat(document.getElementById('gain').value);
+  const d = parseFloat(document.getElementById('damping').value);
+  let t = 0;
+  melody.forEach((note) => {
+    setTimeout(() => {
+      stringNode.setParamValue('/string/freq', note.freq);
+      stringNode.setParamValue('/string/gain', g);
+      stringNode.setParamValue('/string/damping', d);
+      stringNode.setParamValue('/string/bowPressure', 0.3);
+      stringNode.setParamValue('/string/gate', 1);
+      log(`🎻 ${note.freq.toFixed(1)} Hz — sustain ${note.dur}ms`);
+    }, t);
+    setTimeout(() => {
+      stringNode.setParamValue('/string/gate', 0);
+    }, t + note.dur - 50);
+    t += note.dur;
+  });
 });
 </script>
 </body>
