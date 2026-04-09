@@ -1018,7 +1018,23 @@ function scheduleNote(note, when, dur) {
   if (isWafVoice(vt) && wafPlayer && wafPresets[vt]) {
     const midi = note.pitch;
     const vol = note.velocity * 0.5;
-    wafPlayer.queueWaveTable(audioCtx, masterGain, wafPresets[vt], when, midi, dur, vol);
+    // Convert pitch bend curve to WAF slides (delta in semitones, when in absolute time)
+    let slides = null;
+    if (note.bendActive !== false) {
+      const startTick = note.startTick;
+      const endTick = note.startTick + note.durationTicks;
+      const segs = getBendSegments(startTick, endTick);
+      if (segs.some(s => s.cents !== 0)) {
+        slides = [];
+        for (let i = 0; i < segs.length; i++) {
+          slides.push({
+            delta: segs[i].cents / 100,  // cents to semitones
+            when: when + tickToSec(segs[i].tick - startTick)
+          });
+        }
+      }
+    }
+    wafPlayer.queueWaveTable(audioCtx, masterGain, wafPresets[vt], when, midi, dur, vol, slides);
     return;
   }
 
