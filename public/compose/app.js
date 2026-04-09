@@ -972,6 +972,30 @@ function ensureTickVisible(tick, { margin = 0.15, center = false } = {}) {
   }
 }
 
+// ─── WebAudioFont integration ────────────────────────────────────────
+let wafPlayer = null;
+const wafPresets = {};
+const WAF_VOICES = {
+  'waf-piano': () => typeof _tone_0000_FluidR3_GM_sf2_file !== 'undefined' ? _tone_0000_FluidR3_GM_sf2_file : null,
+  'waf-violin': () => typeof _tone_0400_FluidR3_GM_sf2_file !== 'undefined' ? _tone_0400_FluidR3_GM_sf2_file : null,
+  'waf-cello': () => typeof _tone_0420_FluidR3_GM_sf2_file !== 'undefined' ? _tone_0420_FluidR3_GM_sf2_file : null,
+  'waf-strings': () => typeof _tone_0480_FluidR3_GM_sf2_file !== 'undefined' ? _tone_0480_FluidR3_GM_sf2_file : null,
+};
+
+function isWafVoice(v) { return v && v.startsWith('waf-'); }
+
+function initWaf() {
+  if (wafPlayer || typeof WebAudioFontPlayer === 'undefined') return;
+  wafPlayer = new WebAudioFontPlayer();
+  for (const [name, getter] of Object.entries(WAF_VOICES)) {
+    const preset = getter();
+    if (preset) {
+      wafPlayer.adjustPreset(audioCtx, preset);
+      wafPresets[name] = preset;
+    }
+  }
+}
+
 // ─── Audio Engine ────────────────────────────────────────────────────
 async function ensureAudio() {
   if (!audioCtx) {
@@ -983,14 +1007,23 @@ async function ensureAudio() {
   if (audioCtx.state === 'suspended') {
     await audioCtx.resume();
   }
+  initWaf();
 }
 
 function scheduleNote(note, when, dur) {
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  
   const inst = project.instruments[note.instrument || 0];
   const vt = inst?.voice || voiceType;
+
+  // WebAudioFont voices — use sample playback instead of oscillator
+  if (isWafVoice(vt) && wafPlayer && wafPresets[vt]) {
+    const midi = note.pitch;
+    const vol = note.velocity * 0.5;
+    wafPlayer.queueWaveTable(audioCtx, masterGain, wafPresets[vt], when, midi, dur, vol);
+    return;
+  }
+
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
   if (vt === 'plucky') {
     osc.type = 'triangle';
   } else {
@@ -1644,10 +1677,18 @@ function setupRulerInteractions() {
 // ─── Preview ─────────────────────────────────────────────────────────
 async function previewNote(note) {
   await ensureAudio();
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
   const inst = project.instruments[note.instrument || 0];
   const vt = inst?.voice || voiceType;
+
+  // WAF preview — short sample hit
+  if (isWafVoice(vt) && wafPlayer && wafPresets[vt]) {
+    wafPlayer.queueWaveTable(audioCtx, masterGain, wafPresets[vt],
+      audioCtx.currentTime, note.pitch, 0.3, 0.4);
+    return;
+  }
+
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
   osc.type = vt === 'plucky' ? 'triangle' : vt;
   osc.frequency.value = pitchFreq(note.pitch);
   osc.connect(gain);

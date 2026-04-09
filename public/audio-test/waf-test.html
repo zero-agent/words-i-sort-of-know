@@ -19,6 +19,7 @@
   h2 { color: #4fc3f7; margin-top: 24px; }
 </style>
 <script src="webaudiofont/player.js"></script>
+<script src="webaudiofont/piano.js"></script>
 <script src="webaudiofont/violin.js"></script>
 <script src="webaudiofont/cello.js"></script>
 <script src="webaudiofont/strings.js"></script>
@@ -34,7 +35,8 @@
 
 <h2>Instrument</h2>
 <div id="instrument-select">
-  <button data-inst="violin" class="selected">Violin</button>
+  <button data-inst="piano" class="selected">Piano</button>
+  <button data-inst="violin">Violin</button>
   <button data-inst="cello">Cello</button>
   <button data-inst="strings">String Ensemble</button>
 </div>
@@ -77,6 +79,7 @@ let currentInstrumentName = 'violin';
 
 // Presets loaded via the script tags
 const presets = {
+  piano: _tone_0000_FluidR3_GM_sf2_file,
   violin: _tone_0400_FluidR3_GM_sf2_file,
   cello: _tone_0420_FluidR3_GM_sf2_file,
   strings: _tone_0480_FluidR3_GM_sf2_file,
@@ -114,7 +117,8 @@ function init() {
     log(`${name} preset ready (${preset.zones.length} zones)`);
   }
 
-  currentPreset = presets.violin;
+  currentPreset = presets.piano;
+  currentInstrumentName = 'piano';
   document.getElementById('status').textContent = '✓ Ready';
   document.getElementById('btn-init').classList.remove('active');
   log('Ready!');
