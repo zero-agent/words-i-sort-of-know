@@ -160,12 +160,51 @@ function remoteSync() {
   if (syncTimeout) clearTimeout(syncTimeout);
   syncTimeout = setTimeout(() => {
     const exportData = buildExportData();
+    lastSyncHash = quickHash(exportData);
     fetch(`${SYNC_URL}/sync/${project.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(exportData)
     }).catch(() => {});
   }, 800);
+}
+
+// Poll server for changes (from API edits)
+function quickHash(data) {
+  const notes = data.notes || [];
+  const bends = data.pitchBend || [];
+  // Hash: note count + bend count + sum of startTicks + sum of pitches + all IDs
+  let h = notes.length + ':' + bends.length;
+  for (const n of notes) h += ':' + (n.startTick||0) + ',' + (n.pitch||0) + ',' + (n.durationTicks||0) + ',' + n.id;
+  for (const b of bends) h += ':' + (b.tick||0) + ',' + (b.cents||0);
+  return h;
+}
+let lastSyncHash = '';
+let pollTimer = null;
+
+function startPolling() {
+  if (!SYNC_URL) return;
+  // Push current state on first connect
+  remoteSync();
+  pollTimer = setInterval(async () => {
+    try {
+      const resp = await fetch(`${SYNC_URL}/sync/${project.id}`);
+      if (!resp.ok) return;
+      const data = await resp.json();
+      if (!data.notes) return;
+      // Quick hash to detect changes
+      const hash = quickHash(data);
+      if (hash === lastSyncHash) return;
+      lastSyncHash = hash;
+      // Server has different data — import it
+      console.log('Remote sync: importing changes from server');
+      importJSON(data, 'remote-sync');
+    } catch(e) {}
+  }, 2000);
+}
+
+function stopPolling() {
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
 }
 
 let saveTimeout = null;
@@ -2077,6 +2116,9 @@ async function init() {
   
   // Initial save for new projects
   autosave();
+  
+  // Start polling for remote changes
+  startPolling();
 }
 
 init();
