@@ -764,8 +764,32 @@ const vlAudio = (() => {
     scoreRegistry[name] = config;
   }
 
+  // WAF player for score engine (loaded on demand)
+  let vlWafPlayer = null;
+  let vlWafPresets = {};
+
+  async function ensureWaf() {
+    if (vlWafPlayer) return;
+    if (typeof WebAudioFontPlayer === 'undefined') return;
+    vlWafPlayer = new WebAudioFontPlayer();
+    // Load presets that are available
+    const presetMap = {
+      'waf-piano': typeof _tone_0000_FluidR3_GM_sf2_file !== 'undefined' ? _tone_0000_FluidR3_GM_sf2_file : null,
+      'waf-violin': typeof _tone_0400_FluidR3_GM_sf2_file !== 'undefined' ? _tone_0400_FluidR3_GM_sf2_file : null,
+      'waf-cello': typeof _tone_0420_FluidR3_GM_sf2_file !== 'undefined' ? _tone_0420_FluidR3_GM_sf2_file : null,
+      'waf-strings': typeof _tone_0480_FluidR3_GM_sf2_file !== 'undefined' ? _tone_0480_FluidR3_GM_sf2_file : null,
+    };
+    for (const [name, preset] of Object.entries(presetMap)) {
+      if (preset) {
+        vlWafPlayer.adjustPreset(ctx, preset);
+        vlWafPresets[name] = preset;
+      }
+    }
+  }
+
   async function startScore(nameOrUrl, configOverride) {
     if (!initialized) await init();
+    await ensureWaf();
     // Look up config: either a registered name or a raw URL with config
     let config, jsonUrl;
     if (scoreRegistry[nameOrUrl]) {
@@ -776,7 +800,7 @@ const vlAudio = (() => {
       jsonUrl = nameOrUrl;
       config = configOverride || {};
     }
-    await ScoreEngine.start(ctx, masterGain, convolver, jsonUrl, config);
+    await ScoreEngine.start(ctx, masterGain, convolver, jsonUrl, config, vlWafPlayer, vlWafPresets);
   }
 
   function stopScore() {

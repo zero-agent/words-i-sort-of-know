@@ -11,7 +11,14 @@ const ScoreInference1 = {
   lpfQ: 0.7,
   fadeOut: 2,       // fade to silence over last 2 seconds
 
-  // Instruments — each note spawns one of each
+  // Per-note instrument mapping (by instrument index from composer)
+  // Notes with instrument:0 use the default oscillator layers below
+  // Notes with instrument:1 use WAF cello samples
+  noteInstruments: {
+    1: { type: 'waf-cello', gain: 1.0 }
+  },
+
+  // Default oscillator layers for instrument 0 — each note spawns one of each
   instruments: [
     { type: 'triangle', gain: 1.0 },                              // main — warm body
     { type: 'triangle', gain: 0.4, detuneCents: 5.2 },            // detuned — chorus width

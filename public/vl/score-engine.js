@@ -78,14 +78,54 @@ const ScoreEngine = (() => {
     return phases[phases.length - 1].value;
   }
 
+  // ─── WAF (WebAudioFont) support ─────────────────────────────────
+  let _wafPlayer = null;
+  let _wafPresets = {};
+
+  function isWafType(type) { return type && type.startsWith('waf-'); }
+
+  function scheduleWafNote(note, when, preset) {
+    if (!_wafPlayer || !preset) return;
+    const dur = note.durationSeconds;
+    const vel = note.velocity || 0.8;
+    const vol = vel * (scoreConfig.volume || 0.10) * 3; // WAF needs higher gain to match
+
+    // Build pitch bend slides if active
+    let slides = null;
+    if (note.bendActive !== false) {
+      const segs = bendSegments(note.startSeconds, note.startSeconds + dur);
+      if (segs.some(s => s.cents !== 0)) {
+        slides = segs.map(s => ({
+          delta: s.cents / 100,
+          when: s.sec - note.startSeconds
+        }));
+      }
+    }
+
+    _wafPlayer.queueWaveTable(ctx, scoreGain, preset, when, note.pitch, dur, vol, slides);
+  }
+
   // ─── Note scheduling ─────────────────────────────────────────────
   function scheduleNote(note, when) {
     if (!ctx || !scoreGain || !scoreConfig) return;
+    const cfg = scoreConfig;
+
+    // Check if this note's instrument has a per-note config (WAF or custom)
+    const noteInstIdx = note.instrument || 0;
+    if (cfg.noteInstruments && cfg.noteInstruments[noteInstIdx]) {
+      const ni = cfg.noteInstruments[noteInstIdx];
+      if (isWafType(ni.type) && _wafPresets[ni.type]) {
+        scheduleWafNote(note, when, _wafPresets[ni.type]);
+        return;
+      }
+      // Could add other per-note instrument types here
+    }
+
+    // Default: use the oscillator instrument layers
     const noteFreq = 440 * Math.pow(2, (note.pitch - 69) / 12);
     const dur = note.durationSeconds;
     const vel = note.velocity || 0.8;
     const sec = note.startSeconds;
-    const cfg = scoreConfig;
 
     const attack = phaseValue(cfg.attack, sec);
     const volume = cfg.volume || 0.10;
@@ -94,8 +134,7 @@ const ScoreEngine = (() => {
     const oscs = [];
     const envs = [];
 
-    // Create oscillators from instrument config
-    for (const inst of cfg.instruments) {
+    for (const inst of (cfg.instruments || [])) {
       const osc = ctx.createOscillator();
       osc.type = inst.type;
       const freqMul = inst.freqMultiplier || 1;
@@ -153,11 +192,13 @@ const ScoreEngine = (() => {
   }
 
   // ─── Start / Stop ────────────────────────────────────────────────
-  async function start(audioCtx, masterGain, convolver, jsonUrl, config) {
+  async function start(audioCtx, masterGain, convolver, jsonUrl, config, wafPlayer, wafPresets) {
     ctx = audioCtx;
     _masterGain = masterGain;
     _convolver = convolver;
     scoreConfig = config;
+    _wafPlayer = wafPlayer || null;
+    _wafPresets = wafPresets || {};
 
     try {
       const resp = await fetch(jsonUrl);
