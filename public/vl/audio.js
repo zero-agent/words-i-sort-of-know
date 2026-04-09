@@ -553,13 +553,13 @@ const vlAudio = (() => {
     // Buzzing static — detuned saws + noise
     const o1 = ctx.createOscillator();
     o1.type = 'sawtooth';
-    o1.frequency.value = freq(0, 0); // C3
+    o1.frequency.value = freq(8, -2); // G#1
     const o2 = ctx.createOscillator();
     o2.type = 'sawtooth';
-    o2.frequency.value = freq(0, 0) * 1.015; // wider detune = more buzz
+    o2.frequency.value = freq(8, -2) * 1.015; // wider detune = more buzz
     const o3 = ctx.createOscillator();
     o3.type = 'sawtooth';
-    o3.frequency.value = freq(3, 0); // Eb3 — adds dissonance
+    o3.frequency.value = freq(11, -2); // B1 — adds dissonance
     // Filter opens over time
     const flt = ctx.createBiquadFilter();
     flt.type = 'lowpass';
