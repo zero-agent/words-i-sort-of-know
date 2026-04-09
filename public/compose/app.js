@@ -1907,6 +1907,96 @@ function setupUI() {
   document.getElementById('exp-md-copy').addEventListener('click', () => {
     navigator.clipboard.writeText(exportMarkdown()).then(() => alert('Markdown copied!'));
   });
+  
+  // Import
+  const importFileEl = document.getElementById('import-file');
+  document.getElementById('imp-json').addEventListener('click', () => {
+    importFileEl.click();
+  });
+  importFileEl.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        importJSON(data, file.name);
+      } catch (err) {
+        alert('Invalid JSON: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+    importFileEl.value = ''; // reset so same file can be re-imported
+  });
+}
+
+// ─── Import ──────────────────────────────────────────────────────────
+function importJSON(data, filename) {
+  // Support two formats:
+  // 1. pitch-timeline/v1-export (our export format)
+  // 2. Raw project (from IndexedDB save)
+  
+  if (data.schema === 'pitch-timeline/v1-export') {
+    // Export format — reconstruct a project from it
+    pushUndo();
+    const p = data.project;
+    project.title = p.title || filename.replace(/\.json$/, '') || 'Imported';
+    project.settings.tempoBpm = p.tempoBpm || 120;
+    project.settings.timeSignature = p.timeSignature || { numerator: 4, denominator: 4 };
+    project.settings.bendRangeCents = p.bendRangeCents || BEND_MAX_CENTS;
+    project.settings.totalBars = p.totalBars || 8;
+    
+    // Import notes — convert from export format back to internal
+    project.notes = (data.notes || []).map(n => ({
+      id: uuid(),
+      pitch: n.pitch,
+      startTick: n.startTick,
+      durationTicks: n.durationTicks,
+      velocity: n.velocity || 0.8
+    }));
+    
+    // Import pitch bends
+    project.pitchBend = (data.pitchBend || []).map(b => ({
+      id: uuid(),
+      tick: b.tick,
+      cents: b.cents
+    }));
+    
+    project.notes.sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch);
+    project.pitchBend.sort((a, b) => a.tick - b.tick);
+    
+  } else if (data.schema === 'pitch-timeline/v1' || data.notes) {
+    // Raw project format
+    pushUndo();
+    if (data.title) project.title = data.title;
+    if (data.settings) Object.assign(project.settings, data.settings);
+    project.notes = (data.notes || []).map(n => ({
+      id: n.id || uuid(),
+      pitch: n.pitch,
+      startTick: n.startTick,
+      durationTicks: n.durationTicks,
+      velocity: n.velocity || 0.8
+    }));
+    project.pitchBend = (data.pitchBend || []).map(b => ({
+      id: b.id || uuid(),
+      tick: b.tick,
+      cents: b.cents
+    }));
+  } else {
+    alert('Unrecognized JSON format');
+    return;
+  }
+  
+  selectedNoteId = null;
+  selectedBendId = null;
+  region = null;
+  playStartTick = 0;
+  undoStack = []; redoStack = [];
+  autoExtend();
+  syncUIFromProject();
+  autosave();
+  renderAll();
+  document.getElementById('project-title').value = project.title;
 }
 
 function syncUIFromProject() {
