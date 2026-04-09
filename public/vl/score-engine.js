@@ -84,11 +84,11 @@ const ScoreEngine = (() => {
 
   function isWafType(type) { return type && type.startsWith('waf-'); }
 
-  function scheduleWafNote(note, when, preset) {
+  function scheduleWafNote(note, when, preset, instGain) {
     if (!_wafPlayer || !preset) return;
     const dur = note.durationSeconds;
     const vel = note.velocity || 0.8;
-    const vol = vel * (scoreConfig.volume || 0.10) * 3; // WAF needs higher gain to match
+    const vol = vel * (scoreConfig.volume || 0.10) * (instGain || 1) * 3;
 
     // Build pitch bend slides if active
     let slides = null;
@@ -115,7 +115,7 @@ const ScoreEngine = (() => {
     if (cfg.noteInstruments && cfg.noteInstruments[noteInstIdx]) {
       const ni = cfg.noteInstruments[noteInstIdx];
       if (isWafType(ni.type) && _wafPresets[ni.type]) {
-        scheduleWafNote(note, when, _wafPresets[ni.type]);
+        scheduleWafNote(note, when, _wafPresets[ni.type], ni.gain);
         return;
       }
       // Could add other per-note instrument types here
