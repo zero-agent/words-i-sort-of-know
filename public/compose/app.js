@@ -151,7 +151,7 @@ function openDB() {
 // The server URL is detected from ?api= query param or defaults to local.
 const SYNC_URL = (() => {
   const params = new URLSearchParams(window.location.search);
-  return params.get('api') || null;
+  return params.get('api') || 'https://0agents-macbook-pro.tail7457fd.ts.net';
 })();
 let syncTimeout = null;
 
