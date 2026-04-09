@@ -190,6 +190,14 @@ const ScoreEngine = (() => {
     const t0 = ctx.currentTime;
     scheduleMixAutomation(t0, config);
 
+    // Schedule fadeout if configured
+    if (config.fadeOut && scoreData.project.durationSeconds) {
+      const fadeStart = t0 + scoreData.project.durationSeconds - config.fadeOut;
+      const fadeEnd = t0 + scoreData.project.durationSeconds;
+      scoreGain.gain.setValueAtTime(1, fadeStart);
+      scoreGain.gain.linearRampToValueAtTime(0, fadeEnd);
+    }
+
     scoreStartTime = t0;
     scoreScheduledUpTo = -1;
 

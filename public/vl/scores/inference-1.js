@@ -9,6 +9,7 @@ const ScoreInference1 = {
 
   volume: 0.10,
   lpfQ: 0.7,
+  fadeOut: 2,       // fade to silence over last 2 seconds
 
   // Instruments — each note spawns one of each
   instruments: [
