@@ -219,11 +219,19 @@ const ScoreEngine = (() => {
     scoreDryGain = ctx.createGain();
     scoreWetGain = ctx.createGain();
 
+    // High-pass shelf on the wet path — reduces low-end energy before reverb
+    // to prevent bass mud accumulating in the reverb tail
+    const wetHpf = ctx.createBiquadFilter();
+    wetHpf.type = 'highpass';
+    wetHpf.frequency.value = config.wetHpf || 180;  // cut below ~180Hz
+    wetHpf.Q.value = 0.5;  // gentle slope
+
     // scoreGain → scoreLpf → dry → masterGain
-    //                       → wet → convolver
+    //                       → wetHpf → wet → convolver
     scoreGain.connect(scoreLpf);
     scoreLpf.connect(scoreDryGain);
-    scoreLpf.connect(scoreWetGain);
+    scoreLpf.connect(wetHpf);
+    wetHpf.connect(scoreWetGain);
     scoreDryGain.connect(_masterGain);
     scoreWetGain.connect(_convolver);
 
