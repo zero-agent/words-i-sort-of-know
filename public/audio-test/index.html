@@ -141,9 +141,27 @@ function switchInstrument(name) {
   log(`Switched to ${name}`);
 }
 
+// Param path mapping per instrument
+const paramPaths = {
+  string: {
+    freq: '/string/freq', gain: '/string/gain', gate: '/string/gate',
+    damping: '/string/damping', bowPressure: '/string/bowPressure',
+  },
+  violin: {
+    freq: '/violin/violin/midi/freq', gain: '/violin/violin/otherParams/outGain',
+    gate: '/violin/violin/gate',
+    bowPressure: '/violin/violin/bow/pressure', bowPosition: '/violin/violin/bow/position',
+    vibratoGain: '/violin/violin/otherParams/vibratoGain',
+    brightness: '/violin/body/brightness',
+  }
+};
+
 function setParam(name, value) {
   if (!currentNode) return;
-  try { currentNode.setParamValue(`/${currentInstrument}/${name}`, value); } catch(e) {}
+  const path = paramPaths[currentInstrument]?.[name];
+  if (path) {
+    try { currentNode.setParamValue(path, value); } catch(e) { console.warn('setParam fail:', path, e); }
+  }
 }
 
 function playNote(freq) {
@@ -154,6 +172,7 @@ function playNote(freq) {
   setParam('bowPressure', parseFloat(document.getElementById('bowPressure').value));
   setParam('bowPosition', parseFloat(document.getElementById('bowPosition').value));
   setParam('vibratoGain', parseFloat(document.getElementById('vibratoGain').value));
+  setParam('brightness', parseFloat(document.getElementById('vibratoGain').value));
   setParam('gate', 1);
   setTimeout(() => setParam('gate', 0), 80);
   log(`♪ ${freq.toFixed(1)} Hz [${currentInstrument}]`);
@@ -167,6 +186,7 @@ function sustainOn(freq) {
   setParam('bowPressure', parseFloat(document.getElementById('bowPressure').value));
   setParam('bowPosition', parseFloat(document.getElementById('bowPosition').value));
   setParam('vibratoGain', parseFloat(document.getElementById('vibratoGain').value));
+  setParam('brightness', parseFloat(document.getElementById('vibratoGain').value));
   setParam('gate', 1);
   log(`🎻 Sustain ON — ${freq.toFixed(1)} Hz [${currentInstrument}]`);
 }
