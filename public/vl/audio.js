@@ -764,11 +764,22 @@ const vlAudio = (() => {
   let scoreScheduledUpTo = 0;
   let scoreTimer = null;
   let scoreVoices = [];
-  let scoreGain = null;         // dedicated gain node for the score
+  let scoreGain = null;         // notes connect here
+  let scoreDryGain = null;      // dry passthrough
+  let scoreWetGain = null;      // reverb send
+  let scoreLpf = null;          // per-score lowpass
   const SCORE_VOLUME = 0.10;    // keep it soft
   const SCORE_DREAMY_ATTACK = 2.0;   // slow swell
   const SCORE_AWAKE_ATTACK = 0.25;   // snappy
   const SCORE_CROSSOVER_SEC = 75;    // when to transition
+  // Dry/wet mix: dreamy = heavy reverb, awake = more dry
+  const SCORE_DREAMY_DRY = 0.15;
+  const SCORE_DREAMY_WET = 0.7;
+  const SCORE_AWAKE_DRY = 0.55;
+  const SCORE_AWAKE_WET = 0.3;
+  // LPF: dreamy = dark, awake = brighter
+  const SCORE_DREAMY_LPF = 500;
+  const SCORE_AWAKE_LPF = 2400;
 
   function scoreNoteAttack(noteStartSec) {
     // Smooth transition from dreamy to awake attack
@@ -914,12 +925,44 @@ const vlAudio = (() => {
       return;
     }
 
-    // Create score gain routed into the drone bus (LPF → reverb)
+    // Score's own signal chain: scoreGain → scoreLpf → dry + wet → mixNode
     scoreGain = ctx.createGain();
     scoreGain.gain.value = 1;
-    scoreGain.connect(sourceNode);
 
-    scoreStartTime = ctx.currentTime;
+    scoreLpf = ctx.createBiquadFilter();
+    scoreLpf.type = 'lowpass';
+    scoreLpf.Q.value = 0.7;
+
+    scoreDryGain = ctx.createGain();
+    scoreWetGain = ctx.createGain();
+
+    // scoreGain → scoreLpf → scoreDryGain → masterGain  (dry path)
+    //                       → scoreWetGain → convolver → reverbGain → mixNode → masterGain  (wet path)
+    scoreGain.connect(scoreLpf);
+    scoreLpf.connect(scoreDryGain);
+    scoreLpf.connect(scoreWetGain);
+    scoreDryGain.connect(masterGain);
+    scoreWetGain.connect(convolver);  // shared convolver, reverbGain already routes to masterGain
+
+    // Schedule the dry/wet/LPF automation over the score's lifetime
+    const t0 = ctx.currentTime;
+    const tTransStart = t0 + SCORE_CROSSOVER_SEC - 10;
+    const tTransEnd = t0 + SCORE_CROSSOVER_SEC + 5;
+
+    // Dreamy phase — heavy reverb, dark filter
+    scoreDryGain.gain.setValueAtTime(SCORE_DREAMY_DRY, t0);
+    scoreWetGain.gain.setValueAtTime(SCORE_DREAMY_WET, t0);
+    scoreLpf.frequency.setValueAtTime(SCORE_DREAMY_LPF, t0);
+
+    // Hold dreamy values until transition starts, then ramp to awake
+    scoreDryGain.gain.setValueAtTime(SCORE_DREAMY_DRY, tTransStart);
+    scoreDryGain.gain.linearRampToValueAtTime(SCORE_AWAKE_DRY, tTransEnd);
+    scoreWetGain.gain.setValueAtTime(SCORE_DREAMY_WET, tTransStart);
+    scoreWetGain.gain.linearRampToValueAtTime(SCORE_AWAKE_WET, tTransEnd);
+    scoreLpf.frequency.setValueAtTime(SCORE_DREAMY_LPF, tTransStart);
+    scoreLpf.frequency.linearRampToValueAtTime(SCORE_AWAKE_LPF, tTransEnd);
+
+    scoreStartTime = t0;
     scoreScheduledUpTo = -1;
 
     // Run scheduler immediately, then every 50ms
