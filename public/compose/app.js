@@ -26,6 +26,13 @@ let vZoom = 18;   // px per semitone row
 let scrollX = 0;  // px
 let scrollY = 0;  // px
 let voiceType = 'triangle';
+let activeInstrument = 0; // index into project.instruments[]
+
+// Default instrument palette
+const INSTRUMENT_COLORS = [
+  '#4fc3f7', '#f06292', '#aed581', '#ffb74d', '#ba68c8',
+  '#4dd0e1', '#e57373', '#81c784', '#ffd54f', '#9575cd',
+];
 
 // Undo
 let undoStack = [];
@@ -124,6 +131,9 @@ function createNewProject(title) {
       totalBars: 8,
       snapDivisor: 16
     },
+    instruments: [
+      { name: 'Instrument 1', color: INSTRUMENT_COLORS[0] }
+    ],
     notes: [],
     pitchBend: []
   };
@@ -606,8 +616,13 @@ function renderGrid() {
     const sel = note.id === selectedNoteId;
     
     const bendOff = note.bendActive === false;
-    ctx.fillStyle = sel ? ACCENT_BRIGHT : (bendOff ? '#8e8e8e' : ACCENT_COLOR);
-    ctx.globalAlpha = note.velocity;
+    const instIdx = note.instrument || 0;
+    const inst = project.instruments[instIdx];
+    const instColor = inst ? inst.color : ACCENT_COLOR;
+    const isActiveInst = instIdx === activeInstrument;
+    const noteColor = sel ? '#fff' : (bendOff ? '#8e8e8e' : instColor);
+    ctx.fillStyle = noteColor;
+    ctx.globalAlpha = note.velocity * (isActiveInst || sel ? 1 : 0.3);
     ctx.fillRect(x, y, w2, vZoom - 1);
     ctx.globalAlpha = 1;
     
@@ -820,7 +835,8 @@ function updateStatus() {
       document.getElementById('sel-dur-sec').textContent = durSec.toFixed(3);
       document.getElementById('sel-end-sec').textContent = endSec.toFixed(3);
 
-      document.getElementById('status-sel').textContent = `${pitchName(n.pitch)} | MIDI ${n.pitch}`;
+      const instName = project.instruments[n.instrument || 0]?.name || 'Inst ' + ((n.instrument||0)+1);
+      document.getElementById('status-sel').textContent = `${pitchName(n.pitch)} | MIDI ${n.pitch} | ${instName}`;
     } else {
       panel.classList.add('hidden');
       document.getElementById('status-sel').textContent = '';
@@ -1363,7 +1379,8 @@ function setupGridEvents() {
           startTick: Math.max(0, snapped),
           durationTicks: minDuration(),
           velocity: 0.8,
-          bendActive: true
+          bendActive: true,
+          instrument: activeInstrument
         };
         project.notes.push(n);
         project.notes.sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch);
@@ -1658,7 +1675,8 @@ function buildExportData() {
     durationSeconds: parseFloat(tickToSec(n.durationTicks).toFixed(3)),
     endSeconds: parseFloat(tickToSec(n.startTick + n.durationTicks).toFixed(3)),
     velocity: n.velocity,
-    bendActive: n.bendActive !== false
+    bendActive: n.bendActive !== false,
+    instrument: n.instrument || 0
   }));
   
   const bends = project.pitchBend.map(b => ({
@@ -1679,7 +1697,8 @@ function buildExportData() {
       bendRangeCents: s.bendRangeCents,
       totalBars: s.totalBars,
       durationTicks: totalT,
-      durationSeconds: parseFloat(totalS.toFixed(3))
+      durationSeconds: parseFloat(totalS.toFixed(3)),
+      instruments: project.instruments || []
     },
     notes,
     pitchBend: bends
@@ -2014,8 +2033,14 @@ function importJSON(data, filename) {
       startTick: n.startTick,
       durationTicks: n.durationTicks,
       velocity: n.velocity || 0.8,
-      bendActive: n.bendActive !== false
+      bendActive: n.bendActive !== false,
+      instrument: n.instrument || 0
     }));
+    
+    // Import instruments list
+    if (p.instruments && p.instruments.length > 0) {
+      project.instruments = p.instruments;
+    }
     
     // Import pitch bends
     project.pitchBend = (data.pitchBend || []).map(b => ({
@@ -2038,8 +2063,12 @@ function importJSON(data, filename) {
       startTick: n.startTick,
       durationTicks: n.durationTicks,
       velocity: n.velocity || 0.8,
-      bendActive: n.bendActive !== false
+      bendActive: n.bendActive !== false,
+      instrument: n.instrument || 0
     }));
+    if (data.instruments && data.instruments.length > 0) {
+      project.instruments = data.instruments;
+    }
     project.pitchBend = (data.pitchBend || []).map(b => ({
       id: b.id || uuid(),
       tick: b.tick,
@@ -2067,6 +2096,109 @@ function syncUIFromProject() {
   document.getElementById('inp-tempo').value = project.settings.tempoBpm;
   document.getElementById('sel-timesig').value = `${project.settings.timeSignature.numerator}/${project.settings.timeSignature.denominator}`;
   document.getElementById('sel-snap').value = project.settings.snapDivisor;
+  renderInstrumentBar();
+}
+
+// ─── Instrument Bar ──────────────────────────────────────────────────
+function ensureInstruments() {
+  if (!project.instruments || project.instruments.length === 0) {
+    project.instruments = [{ name: 'Instrument 1', color: INSTRUMENT_COLORS[0] }];
+  }
+  if (activeInstrument >= project.instruments.length) activeInstrument = 0;
+}
+
+function renderInstrumentBar() {
+  ensureInstruments();
+  const list = document.getElementById('instrument-list');
+  list.innerHTML = '';
+  project.instruments.forEach((inst, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'inst-btn' + (i === activeInstrument ? ' active' : '');
+    btn.textContent = inst.name;
+    btn.style.color = inst.color;
+    btn.style.borderColor = i === activeInstrument ? inst.color : 'transparent';
+    btn.addEventListener('click', () => {
+      activeInstrument = i;
+      renderInstrumentBar();
+      renderAll();
+    });
+    btn.addEventListener('dblclick', () => {
+      renameInstrument(i);
+    });
+    btn.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      showInstrumentContextMenu(i, e);
+    });
+    list.appendChild(btn);
+  });
+}
+
+function addInstrument() {
+  ensureInstruments();
+  const idx = project.instruments.length;
+  const color = INSTRUMENT_COLORS[idx % INSTRUMENT_COLORS.length];
+  project.instruments.push({ name: `Instrument ${idx + 1}`, color });
+  activeInstrument = idx;
+  autosave();
+  renderInstrumentBar();
+  renderAll();
+}
+
+function renameInstrument(idx) {
+  const inst = project.instruments[idx];
+  if (!inst) return;
+  showModal('Rename Instrument',
+    `<input type="text" id="modal-inst-name" value="${inst.name.replace(/"/g, '&quot;')}">`,
+    [
+      { label: 'Cancel' },
+      { label: 'Rename', cls: 'modal-btn-primary', fn: () => {
+        inst.name = document.getElementById('modal-inst-name').value.trim() || inst.name;
+        autosave();
+        renderInstrumentBar();
+      }}
+    ]
+  );
+  document.getElementById('modal-inst-name').addEventListener('keydown', (e) => {
+    if (e.code === 'Enter') {
+      e.preventDefault();
+      inst.name = e.target.value.trim() || inst.name;
+      autosave();
+      renderInstrumentBar();
+      closeModal();
+    }
+  });
+}
+
+function showInstrumentContextMenu(idx, event) {
+  // Simple: use a modal for instrument options
+  const inst = project.instruments[idx];
+  const noteCount = project.notes.filter(n => (n.instrument || 0) === idx).length;
+  showModal(`${inst.name}`,
+    `<p style="color:#ccc;font-size:13px">${noteCount} notes</p>` +
+    `<label style="color:#ccc;font-size:13px">Color: <input type="color" id="modal-inst-color" value="${inst.color}"></label>`,
+    [
+      { label: 'Cancel' },
+      project.instruments.length > 1 ? { label: 'Delete', cls: 'modal-btn-danger', fn: () => {
+        pushUndo();
+        // Move notes to instrument 0 or remove
+        project.notes.forEach(n => { if ((n.instrument || 0) === idx) n.instrument = 0; });
+        // Shift higher instrument indices down
+        project.notes.forEach(n => { if ((n.instrument || 0) > idx) n.instrument--; });
+        project.instruments.splice(idx, 1);
+        if (activeInstrument >= project.instruments.length) activeInstrument = 0;
+        autosave(); renderInstrumentBar(); renderAll();
+      }} : null,
+      { label: 'OK', cls: 'modal-btn-primary', fn: () => {
+        inst.color = document.getElementById('modal-inst-color').value;
+        autosave(); renderInstrumentBar(); renderAll();
+      }}
+    ].filter(Boolean)
+  );
+}
+
+function setupInstrumentBar() {
+  document.getElementById('btn-add-instrument').addEventListener('click', addInstrument);
+  renderInstrumentBar();
 }
 
 // ─── Init ────────────────────────────────────────────────────────────
@@ -2094,6 +2226,7 @@ async function init() {
   
   setupUI();
   syncUIFromProject();
+  setupInstrumentBar();
   setupSelectionPanel();
   setupGridEvents();
   setupBendEvents();
@@ -2125,7 +2258,8 @@ window.composer = {
   getNotes: () => project.notes.map(n => ({
     id: n.id, pitch: n.pitch, pitchName: pitchName(n.pitch),
     startTick: n.startTick, durationTicks: n.durationTicks,
-    velocity: n.velocity, bendActive: n.bendActive !== false
+    velocity: n.velocity, bendActive: n.bendActive !== false,
+    instrument: n.instrument || 0
   })),
   
   // Get pitch bend points
