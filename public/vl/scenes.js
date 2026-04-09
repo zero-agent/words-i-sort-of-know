@@ -190,6 +190,10 @@
       '[fill] batch 6/6 — 88 positions closed — realized P&L: -$48,847,102.66',
     ], lineDelay: 700 },
 
+    // Stop the Inference.1 score, start the transition score
+    { time: 150.5, type: 'audio', action: 'stopScore' },
+    { time: 150.5, type: 'audio', action: 'score', name: 'regression-transition' },
+
     { time: 150.5, type: 'liam-text', content: 'The squiggly numbers keep getting bigger. I like how they get bigger each time. Then the last one gets smaller again. The numbers do a thing and then they do the other thing.' },
 
     // Caleb connects — system banner, then his voice appears in the input
