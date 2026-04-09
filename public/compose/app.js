@@ -2057,3 +2057,126 @@ async function init() {
 }
 
 init();
+
+// ─── Public API ──────────────────────────────────────────────────────
+// Accessible via browser console or automation: window.composer
+window.composer = {
+  // Read the full project (internal format)
+  getProject: () => JSON.parse(JSON.stringify(project)),
+  
+  // Read the export format (with seconds, pitchName, etc)
+  getExport: () => buildExportData(),
+  
+  // Get just the notes array
+  getNotes: () => project.notes.map(n => ({
+    id: n.id, pitch: n.pitch, pitchName: pitchName(n.pitch),
+    startTick: n.startTick, durationTicks: n.durationTicks,
+    velocity: n.velocity, bendActive: n.bendActive !== false
+  })),
+  
+  // Get pitch bend points
+  getBends: () => project.pitchBend.map(b => ({ id: b.id, tick: b.tick, cents: b.cents })),
+  
+  // Import a full project or export-format JSON (same as file import)
+  load: (data) => { importJSON(typeof data === 'string' ? JSON.parse(data) : data, 'api'); },
+  
+  // Set individual notes (replaces all notes)
+  setNotes: (notes) => {
+    pushUndo();
+    project.notes = notes.map(n => ({
+      id: n.id || uuid(),
+      pitch: n.pitch,
+      startTick: n.startTick,
+      durationTicks: n.durationTicks,
+      velocity: n.velocity ?? 0.8,
+      bendActive: n.bendActive !== false
+    }));
+    project.notes.sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch);
+    autoExtend(); autosave(); renderAll();
+  },
+  
+  // Set pitch bend points (replaces all bends)
+  setBends: (bends) => {
+    pushUndo();
+    project.pitchBend = bends.map(b => ({
+      id: b.id || uuid(),
+      tick: b.tick,
+      cents: b.cents
+    }));
+    project.pitchBend.sort((a, b) => a.tick - b.tick);
+    autosave(); renderAll();
+  },
+  
+  // Add notes (appends, doesn't replace)
+  addNotes: (notes) => {
+    pushUndo();
+    for (const n of notes) {
+      project.notes.push({
+        id: n.id || uuid(),
+        pitch: n.pitch,
+        startTick: n.startTick,
+        durationTicks: n.durationTicks,
+        velocity: n.velocity ?? 0.8,
+        bendActive: n.bendActive !== false
+      });
+    }
+    project.notes.sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch);
+    autoExtend(); autosave(); renderAll();
+  },
+  
+  // Remove notes by ID
+  removeNotes: (ids) => {
+    const idSet = new Set(ids);
+    pushUndo();
+    project.notes = project.notes.filter(n => !idSet.has(n.id));
+    autosave(); renderAll();
+  },
+  
+  // Update specific note properties by ID
+  updateNote: (id, props) => {
+    const n = project.notes.find(n => n.id === id);
+    if (!n) return false;
+    pushUndo();
+    if (props.pitch !== undefined) n.pitch = props.pitch;
+    if (props.startTick !== undefined) n.startTick = props.startTick;
+    if (props.durationTicks !== undefined) n.durationTicks = props.durationTicks;
+    if (props.velocity !== undefined) n.velocity = props.velocity;
+    if (props.bendActive !== undefined) n.bendActive = props.bendActive;
+    autoExtend(); autosave(); renderAll();
+    return true;
+  },
+  
+  // Bulk update notes by ID
+  updateNotes: (updates) => {
+    pushUndo();
+    for (const { id, ...props } of updates) {
+      const n = project.notes.find(n => n.id === id);
+      if (!n) continue;
+      if (props.pitch !== undefined) n.pitch = props.pitch;
+      if (props.startTick !== undefined) n.startTick = props.startTick;
+      if (props.durationTicks !== undefined) n.durationTicks = props.durationTicks;
+      if (props.velocity !== undefined) n.velocity = props.velocity;
+      if (props.bendActive !== undefined) n.bendActive = props.bendActive;
+    }
+    project.notes.sort((a, b) => a.startTick - b.startTick || a.pitch - b.pitch);
+    autoExtend(); autosave(); renderAll();
+  },
+  
+  // Settings
+  setTempo: (bpm) => { project.settings.tempoBpm = clamp(bpm, 20, 300); autosave(); renderAll(); },
+  setTimeSignature: (num, den) => { project.settings.timeSignature = { numerator: num, denominator: den }; autosave(); renderAll(); },
+  setSnap: (div) => { project.settings.snapDivisor = div; },
+  
+  // Utilities
+  tickToSec, secToTick, pitchName, pitchFreq,
+  PPQ: () => PPQ,
+  barLengthTicks,
+  
+  // Transport
+  play: () => startPlayback(),
+  stop: () => stopPlayback(),
+  rewind: () => { if (isPlaying) stopPlayback(); playStartTick = 0; renderAll(); },
+  
+  // Undo
+  undo, redo,
+};
