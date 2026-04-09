@@ -1,49 +1,51 @@
 // Score config: Regression Transition
 // Starts at "squiggly numbers keep getting bigger" (~150.5s in scene timeline).
-// LPF ramps from nearly closed to full bore over the entire piece.
-// Composed transition → generated driving riff with Inference.1 themes.
-// 138 BPM, 3/4 time, G# minor.
+// LPF ramps from nearly closed to full bore across the entire piece.
+// Composed transition (0-21s) → driving G#1 pulse (4 rounds with pitch bends)
+//   → Inference.1 themes cycling over steady eighth-note ostinato
+// 138 BPM, 3/4 time, G# minor. Runs ~280s to cover all of Regression.1.
 // JSON: regression-transition_2026-04-09T0457.json
 
 const ScoreRegressionTransition = {
   url: 'regression-transition_2026-04-09T0457.json',
 
   volume: 0.12,
-  lpfQ: 1.0,
+  lpfQ: 1.2,
 
-  // Instruments — same palette as Inference.1 but slightly more aggressive
+  // Instruments — sawtooth-forward for this section
   instruments: [
-    { type: 'triangle', gain: 1.0 },                              // main — warm body
-    { type: 'triangle', gain: 0.45, detuneCents: 6.0 },           // detuned — wider chorus
-    { type: 'sine',     gain: 0.35, freqMultiplier: 0.5, attackMultiplier: 1.1 },  // sub — heavier bass
-    { type: 'sawtooth', gain: 0.20 },                              // saw — more edge for the drive
+    { type: 'sawtooth', gain: 1.0 },                              // main — raw harmonic drive
+    { type: 'sawtooth', gain: 0.35, detuneCents: 7.0 },           // detuned — thick chorus
+    { type: 'sine',     gain: 0.4, freqMultiplier: 0.5, attackMultiplier: 1.1 },  // sub — weight
+    { type: 'triangle', gain: 0.25 },                              // triangle — softens the top end
   ],
 
-  // Attack — starts moderate, gets snappy as the riff kicks in
+  // Attack — moderate at start, snappy once the pulse kicks in
   attack: [
-    { until: 10,  value: 1.2 },                    // opening: still somewhat dreamy
-    { until: 22,  value: 0.3, rampFrom: 10 },      // transition into riff
-    { until: 999, value: 0.15 },                    // riff: very snappy, driving
+    { until: 15,  value: 1.0 },                    // composed section: moderate swell
+    { until: 22,  value: 0.12, rampFrom: 15 },     // tighten into the pulse
+    { until: 999, value: 0.12 },                    // driving: very snappy
   ],
 
-  // Dry gain — starts low, ramps to full presence
+  // Dry gain — builds steadily
   dry: [
-    { until: 5,   value: 0.10 },                   // start quiet
-    { until: 22,  value: 0.45, rampFrom: 5 },      // build through transition
-    { until: 999, value: 0.60 },                    // riff: loud and present
+    { until: 10,  value: 0.10 },                   // start quiet
+    { until: 30,  value: 0.40, rampFrom: 10 },     // build through composed section + pulse
+    { until: 60,  value: 0.55, rampFrom: 30 },     // settle into full presence
+    { until: 999, value: 0.55 },
   ],
 
-  // Wet gain — heavy reverb that gradually pulls back
+  // Wet gain — starts heavy, pulls back as it drives
   wet: [
-    { until: 10,  value: 0.50 },                   // opening: reverby
-    { until: 30,  value: 0.20, rampFrom: 10 },     // gradually dry out
-    { until: 999, value: 0.15 },                    // riff: tight, minimal verb
+    { until: 15,  value: 0.45 },                   // opening: reverby
+    { until: 40,  value: 0.18, rampFrom: 15 },     // gradually dry out
+    { until: 999, value: 0.15 },                    // tight
   ],
 
-  // Lowpass filter — THE key automation: ramps from nothing to full bore
+  // Lowpass filter — ramps from nothing to full bore across the ENTIRE piece
   lpf: [
-    { until: 0,   value: 200 },                    // starts nearly closed
-    { until: 48,  value: 4000, rampFrom: 0 },      // opens across the entire piece
-    { until: 999, value: 4000 },                    // full bore
+    { until: 0,   value: 150 },                    // starts nearly closed
+    { until: 280, value: 5000, rampFrom: 0 },      // opens across the full ~280s
+    { until: 999, value: 5000 },
   ],
 };
