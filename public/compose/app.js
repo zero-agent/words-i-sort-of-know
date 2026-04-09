@@ -16,6 +16,10 @@ const KEY_WHITE = '#888';
 const RESIZE_HANDLE_W = 8;
 const BEND_MAX_SEMITONES = 24;
 const BEND_MAX_CENTS = BEND_MAX_SEMITONES * 100; // 2400
+const INSTRUMENT_COLORS = [
+  '#4fc3f7', '#f06292', '#aed581', '#ffb74d', '#ba68c8',
+  '#4dd0e1', '#e57373', '#81c784', '#ffd54f', '#9575cd',
+];
 
 // ─── State ───────────────────────────────────────────────────────────
 let project = createNewProject();
@@ -27,12 +31,6 @@ let scrollX = 0;  // px
 let scrollY = 0;  // px
 let voiceType = 'triangle';
 let activeInstrument = 0; // index into project.instruments[]
-
-// Default instrument palette
-const INSTRUMENT_COLORS = [
-  '#4fc3f7', '#f06292', '#aed581', '#ffb74d', '#ba68c8',
-  '#4dd0e1', '#e57373', '#81c784', '#ffd54f', '#9575cd',
-];
 
 // Undo
 let undoStack = [];
