@@ -36,11 +36,11 @@ const ScoreRegressionTransition = {
     { until: 999, value: 0.50 },
   ],
 
-  // Wet gain — starts heavy, dries out
+  // Wet gain — starts heavy, dries out fast
   wet: [
-    { until: 15,  value: 0.45 },                   // opening: reverby
-    { until: 50,  value: 0.18, rampFrom: 15 },     // dry out
-    { until: 999, value: 0.15 },                    // tight
+    { until: 8,   value: 0.40 },                   // opening: reverby
+    { until: 22,  value: 0.12, rampFrom: 8 },      // dry out quickly
+    { until: 999, value: 0.10 },                    // tight
   ],
 
   // Lowpass filter — ramps from muffled to warm, NOT to harsh
