@@ -46,9 +46,9 @@ const vlAudio = (() => {
     lpf.frequency.value = 400;
     lpf.Q.value = 0.5;
 
-    convolver = await createReverb(ctx, 4.5, 2.2);
+    convolver = await createReverb(ctx, 3.8, 2.4);
     const reverbGain = ctx.createGain();
-    reverbGain.gain.value = 0.7;
+    reverbGain.gain.value = 0.55;
 
     const dryGain = ctx.createGain();
     dryGain.gain.value = 0.2;
