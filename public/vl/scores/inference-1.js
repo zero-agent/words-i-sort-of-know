@@ -7,7 +7,7 @@
 const ScoreInference1 = {
   url: 'inference-1_2026-04-09T0009.json',
 
-  volume: 0.10,
+  volume: 0.09,
   lpfQ: 0.7,
   fadeOut: 2,       // fade to silence over last 2 seconds
 

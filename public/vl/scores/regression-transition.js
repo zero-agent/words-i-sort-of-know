@@ -10,7 +10,7 @@
 const ScoreRegressionTransition = {
   url: 'regression-transition_2026-04-09T0457.json',
 
-  volume: 0.12,
+  volume: 0.108,
   lpfQ: 1.2,
 
   // Instruments — sawtooth-forward, capped by LPF to stay warm
