@@ -28,19 +28,22 @@ const ScoreRegressionTransition = {
     { until: 999, value: 0.12 },                    // driving: very snappy
   ],
 
-  // Dry gain — builds steadily
+  // Dry gain — builds to 90% by the end
   dry: [
     { until: 10,  value: 0.10 },                   // start quiet
     { until: 40,  value: 0.40, rampFrom: 10 },     // build presence
-    { until: 80,  value: 0.50, rampFrom: 40 },     // settle
-    { until: 999, value: 0.50 },
+    { until: 80,  value: 0.60, rampFrom: 40 },     // keep climbing
+    { until: 200, value: 0.90, rampFrom: 80 },     // nearly full dry by end
+    { until: 999, value: 0.90 },
   ],
 
-  // Wet gain — starts heavy, dries out fast
+  // Wet gain — starts heavy, dries out to nearly nothing
   wet: [
     { until: 8,   value: 0.40 },                   // opening: reverby
-    { until: 22,  value: 0.12, rampFrom: 8 },      // dry out quickly
-    { until: 999, value: 0.10 },                    // tight
+    { until: 22,  value: 0.10, rampFrom: 8 },      // dry out quickly
+    { until: 80,  value: 0.05, rampFrom: 22 },     // keep pulling back
+    { until: 200, value: 0.02, rampFrom: 80 },     // almost gone by end
+    { until: 999, value: 0.02 },
   ],
 
   // Lowpass filter — ramps from muffled to warm, NOT to harsh
