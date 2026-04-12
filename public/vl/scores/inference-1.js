@@ -15,7 +15,7 @@ const ScoreInference1 = {
   // Notes with instrument:0 use the default oscillator layers below
   // Notes with instrument:1 use WAF cello samples
   noteInstruments: {
-    1: { type: 'waf-cello', gain: 0.24 }   // atmospheric, sit well behind the oscillators
+    1: { type: 'waf-strings', gain: 0.24 }   // atmospheric, sit well behind the oscillators
   },
 
   // Default oscillator layers for instrument 0 — each note spawns one of each
