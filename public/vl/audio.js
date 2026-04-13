@@ -746,6 +746,9 @@ const vlAudio = (() => {
 
   // Force resume — close old context and re-init fresh (for repeated tab returns)
   async function forceResume() {
+    // Pause the score before killing the context
+    ScoreEngine.pause();
+
     if (ctx) {
       try {
         if (ctx.state !== 'closed') await ctx.close();
@@ -753,6 +756,12 @@ const vlAudio = (() => {
     }
     initialized = false;
     await init();
+    await ensureWaf();
+
+    // Resume score if it was playing
+    if (ScoreEngine.isPaused()) {
+      await ScoreEngine.resumeFrom(ctx, masterGain, convolver, vlWafPlayer, vlWafPresets);
+    }
   }
 
   // ─── Score Player (delegates to ScoreEngine) ──────────────────────

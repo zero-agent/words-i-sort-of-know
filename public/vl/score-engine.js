@@ -280,6 +280,13 @@ const ScoreEngine = (() => {
     scheduleParam(scoreLpf.frequency, config.lpf);
   }
 
+  // Pause state for tab-hide/resume
+  let _pausedAt = 0;       // elapsed seconds when paused
+  let _pausedJsonUrl = null;
+  let _pausedConfig = null;
+  let _pausedWafPlayer = null;
+  let _pausedWafPresets = null;
+
   function stop() {
     if (scoreTimer) { clearInterval(scoreTimer); scoreTimer = null; }
     const now = ctx ? ctx.currentTime : 0;
@@ -293,9 +300,86 @@ const ScoreEngine = (() => {
       } catch (e) {}
     }
     scoreVoices = [];
+    _pausedAt = 0;
+    _pausedJsonUrl = null;
+    _pausedConfig = null;
     scoreData = null;
     scoreConfig = null;
   }
 
-  return { start, stop };
+  function pause() {
+    if (!scoreData || !ctx) return;
+    _pausedAt = ctx.currentTime - scoreStartTime;
+    _pausedJsonUrl = scoreData ? '_cached_' : null;
+    _pausedConfig = scoreConfig;
+    _pausedWafPlayer = _wafPlayer;
+    _pausedWafPresets = _wafPresets;
+    // Stop the scheduler and voices but keep scoreData
+    if (scoreTimer) { clearInterval(scoreTimer); scoreTimer = null; }
+    const now = ctx.currentTime;
+    for (const v of scoreVoices) {
+      try {
+        for (const env of v.envs) {
+          env.gain.cancelScheduledValues(now);
+          env.gain.setValueAtTime(0, now);
+        }
+        for (const osc of v.oscs) osc.stop(now + 0.01);
+      } catch (e) {}
+    }
+    scoreVoices = [];
+  }
+
+  function isPaused() { return _pausedAt > 0 && _pausedConfig != null; }
+  function getPausedElapsed() { return _pausedAt; }
+
+  async function resumeFrom(audioCtx, masterGain, convolver, wafPlayer, wafPresets) {
+    if (!_pausedConfig || !scoreData) return;
+    ctx = audioCtx;
+    _masterGain = masterGain;
+    _convolver = convolver;
+    _wafPlayer = wafPlayer || _pausedWafPlayer;
+    _wafPresets = wafPresets || _pausedWafPresets;
+    scoreConfig = _pausedConfig;
+
+    // Rebuild signal chain
+    scoreGain = ctx.createGain();
+    scoreGain.gain.value = 1;
+    scoreLpf = ctx.createBiquadFilter();
+    scoreLpf.type = 'lowpass';
+    scoreLpf.Q.value = scoreConfig.lpfQ || 0.7;
+    scoreDryGain = ctx.createGain();
+    scoreWetGain = ctx.createGain();
+    const wetHpf = ctx.createBiquadFilter();
+    wetHpf.type = 'highpass';
+    wetHpf.frequency.value = scoreConfig.wetHpf || 180;
+    wetHpf.Q.value = 0.5;
+    scoreGain.connect(scoreLpf);
+    scoreLpf.connect(scoreDryGain);
+    scoreLpf.connect(wetHpf);
+    wetHpf.connect(scoreWetGain);
+    scoreDryGain.connect(_masterGain);
+    scoreWetGain.connect(_convolver);
+
+    // Schedule mix automation from the resumed position
+    const t0 = ctx.currentTime - _pausedAt;
+    scheduleMixAutomation(t0, scoreConfig);
+
+    if (scoreConfig.fadeOut && scoreData.project.durationSeconds) {
+      const fadeStart = t0 + scoreData.project.durationSeconds - scoreConfig.fadeOut;
+      const fadeEnd = t0 + scoreData.project.durationSeconds;
+      scoreGain.gain.setValueAtTime(1, Math.max(fadeStart, ctx.currentTime));
+      scoreGain.gain.linearRampToValueAtTime(0, fadeEnd);
+    }
+
+    scoreStartTime = t0;
+    scoreScheduledUpTo = _pausedAt - 0.1;
+
+    tick();
+    scoreTimer = setInterval(tick, 50);
+    console.log(`Score resumed from ${_pausedAt.toFixed(1)}s`);
+    _pausedAt = 0;
+    _pausedConfig = null;
+  }
+
+  return { start, stop, pause, isPaused, getPausedElapsed, resumeFrom };
 })();
