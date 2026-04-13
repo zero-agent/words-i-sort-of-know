@@ -360,18 +360,57 @@ const ScoreEngine = (() => {
     scoreDryGain.connect(_masterGain);
     scoreWetGain.connect(_convolver);
 
-    // Schedule mix automation from the resumed position
-    const t0 = ctx.currentTime - _pausedAt;
-    scheduleMixAutomation(t0, scoreConfig);
+    // Schedule mix automation — we're resuming at _pausedAt seconds into the score.
+    // The virtual start time is in the past, but all scheduled times must be >= now.
+    // So we schedule from now, using phases shifted by _pausedAt.
+    const now = ctx.currentTime;
+    const virtualT0 = now - _pausedAt;  // virtual start time (may be negative on fresh ctx)
 
-    if (scoreConfig.fadeOut && scoreData.project.durationSeconds) {
-      const fadeStart = t0 + scoreData.project.durationSeconds - scoreConfig.fadeOut;
-      const fadeEnd = t0 + scoreData.project.durationSeconds;
-      scoreGain.gain.setValueAtTime(1, Math.max(fadeStart, ctx.currentTime));
-      scoreGain.gain.linearRampToValueAtTime(0, fadeEnd);
+    // For mix automation, clamp all scheduled times to >= now
+    function scheduleParamResumed(param, phases) {
+      if (!phases || phases.length === 0) return;
+      // Find the current value at _pausedAt
+      let currentVal = phases[0].value;
+      for (let i = 0; i < phases.length; i++) {
+        const p = phases[i];
+        if (_pausedAt >= p.until) {
+          currentVal = p.value;
+        } else if (p.rampFrom != null && _pausedAt >= p.rampFrom) {
+          const prev = i > 0 ? phases[i - 1].value : p.value;
+          const t = (_pausedAt - p.rampFrom) / (p.until - p.rampFrom);
+          currentVal = prev + (p.value - prev) * Math.min(1, t);
+        }
+      }
+      param.setValueAtTime(currentVal, now);
+      // Schedule future phases
+      for (let i = 0; i < phases.length; i++) {
+        const p = phases[i];
+        const tEnd = virtualT0 + p.until;
+        if (tEnd <= now) continue;  // already past
+        if (p.rampFrom != null) {
+          const tStart = virtualT0 + p.rampFrom;
+          if (tStart > now) param.setValueAtTime(i > 0 ? phases[i-1].value : p.value, tStart);
+          param.linearRampToValueAtTime(p.value, tEnd);
+        } else {
+          param.setValueAtTime(p.value, tEnd);
+        }
+      }
     }
 
-    scoreStartTime = t0;
+    scheduleParamResumed(scoreDryGain.gain, scoreConfig.dry);
+    scheduleParamResumed(scoreWetGain.gain, scoreConfig.wet);
+    scheduleParamResumed(scoreLpf.frequency, scoreConfig.lpf);
+
+    if (scoreConfig.fadeOut && scoreData.project.durationSeconds) {
+      const fadeStart = virtualT0 + scoreData.project.durationSeconds - scoreConfig.fadeOut;
+      const fadeEnd = virtualT0 + scoreData.project.durationSeconds;
+      if (fadeEnd > now) {
+        scoreGain.gain.setValueAtTime(1, Math.max(fadeStart, now));
+        scoreGain.gain.linearRampToValueAtTime(0, fadeEnd);
+      }
+    }
+
+    scoreStartTime = virtualT0;
     scoreScheduledUpTo = _pausedAt - 0.1;
 
     tick();

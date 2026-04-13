@@ -232,6 +232,7 @@
       if (document.hidden) {
         // Tab went to background — pause everything
         wasPlayingBeforeHide = engine.isPlaying;
+        ScoreEngine.pause();
         if (engine.isPlaying) {
           engine.pause();
           updatePlayState();
